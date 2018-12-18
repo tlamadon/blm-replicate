@@ -26,4 +26,4 @@ server.static.d2003.clustering.stats()
 
 
 # Mini model
-lin
+server.static.mini.estimate.main()
