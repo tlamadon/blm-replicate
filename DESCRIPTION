@@ -40,5 +40,6 @@ Depends:
     testthat,
     parallel,
     plyr,
-    rmutil
+    rmutil,
+    assertthat
 RoxygenNote: 6.1.1

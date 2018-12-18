@@ -2,7 +2,7 @@
 # load stata files, merge them
 # loadDataRaw is a funciton in dataproc.R that extracts data 2 years before and after the anchoryear = 2003.
 # In turn, loadDataRaw uses the proc loadData:
-rdata = loadDataRaw(2003,path="../data",cache=F)
+rdata = loadDataRaw(2003,path=sprintf("%s/data",local_opts$wdir),cache=F)
 rdata_qtr=rdata[female==0]
 
 # ====== AGGREGATE WORKER DATA TO YEARLY INFO ========
@@ -184,17 +184,17 @@ get.stats <- function(data,movers=FALSE) {
 }
 
 # saving the data
-save(sdata,jdata,file="../data-tmp/tmp-2003-static.dat")
+save(sdata,jdata,file=sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
 
 # saving statistics
 rrs = get.stats(sdata)
 rrj = get.stats(jdata)
 
-save(rrs,rrj,file="../data-tmp//tab-summary-static.dat")
+save(rrs,rrj,file=sprintf("%s/data-tmp/tab-summary-static.dat",local_opts$wdir))
 
 # ======== prepapre poaching rank data ========
-load("../data-tmp/tmp-2003-static.dat")
+load(sprintf("%s/data-tmp/tab-summary-static.dat",local_opts$wdir))
 data_prank = rdata[aret %in% c(2002,2003),list(from_j2j = sum(from==2,na.rm=T),from_u=sum(from==3,na.rm=T)),fid]
-save(data_prank,file="../data-tmp/tmp-2003-prank.dat")
+save(data_prank,file=sprintf("%s/data-tmp/tmp-2003-prank.dat",local_opts$wdir))
 
 
