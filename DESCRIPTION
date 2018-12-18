@@ -41,5 +41,6 @@ Depends:
     parallel,
     plyr,
     rmutil,
-    assertthat
+    assertthat,
+    moments
 RoxygenNote: 6.1.1

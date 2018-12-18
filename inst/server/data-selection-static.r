@@ -193,7 +193,7 @@ rrj = get.stats(jdata)
 save(rrs,rrj,file=sprintf("%s/data-tmp/tab-summary-static.dat",local_opts$wdir))
 
 # ======== prepapre poaching rank data ========
-load(sprintf("%s/data-tmp/tab-summary-static.dat",local_opts$wdir))
+load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
 data_prank = rdata[aret %in% c(2002,2003),list(from_j2j = sum(from==2,na.rm=T),from_u=sum(from==3,na.rm=T)),fid]
 save(data_prank,file=sprintf("%s/data-tmp/tmp-2003-prank.dat",local_opts$wdir))
 
