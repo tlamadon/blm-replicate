@@ -21,6 +21,7 @@ and should be available to the project as a relative path `../data/`. Researcher
 
 
 
+## The main replication file
 
+The main replication file is `inst/main.r`.  It will run all the necessary steps in order to reproduce all the results of the paper. Note however that running through it would take several weeks even when using 15 cpus. 
 
-Replication package for Bonhomme Lamadon and Manresa paper, A distributional framework for matched data
