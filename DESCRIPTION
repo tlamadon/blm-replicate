@@ -1,0 +1,44 @@
+Package: blmrep
+Type: Package
+Title: Replication package for BLM
+Version: 0.2.0
+Authors@R: c( person("Stephane", "Bonhomme", email = "sbonhomme@uchicago.edu",
+    role = "aut"), person("Thibaut", "Lamadon", email = "lamadon@uchicago.edu",
+    role = "cre"), person("Elena", "Manresa", email = "manresa@mit.edu", role =
+    "aut"))
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+License: MIT
+Depends:
+    R (>= 3.0.0),
+    Matrix,
+    SparseM,
+    gtools,
+    reshape,
+    splines,
+    quantreg,
+    ggplot2,
+    nnls,
+    data.table,
+    FactoClass,
+    SDMTools,
+    lpSolve,
+    reshape2,
+    stringr,
+    limSolve,
+    MASS,
+    quadprog,
+    gridExtra,
+    foreign,
+    coneproj,
+    Hmisc,
+    futile.logger,
+    ggm,
+    testthat,
+    parallel,
+    plyr,
+    rmutil
