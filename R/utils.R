@@ -119,7 +119,7 @@ tic.new <- function() {
   return(tic.toc)
 }
 
-#' @export 
+#' @export
 addmom <- function(A1,A2,name,rr=data.frame(),type="mean") {
   rr1 = melt(A1)
   rr2 = melt(A2)
@@ -174,7 +174,7 @@ slm.wfitc <- function(XX,YY,rw,CS,scaling=0) {
   XX = as.matrix.csr(XX)
   # to make sure the problem is positive semi definite, we add
   # the equality constraints to the XX matrix! nice, no?
-  
+
   if (CS$meq>0) {
     XXb = rbind(XX,  as.matrix.csr(CS$C[1:CS$meq,]))
     YYb = c(YY,CS$H[1:CS$meq])
@@ -184,34 +184,34 @@ slm.wfitc <- function(XX,YY,rw,CS,scaling=0) {
     YYb = YY
     rwb = rw
   }
-  
+
   t2 = as(dim(XXb)[1],"matrix.diag.csr")
   t2@ra = rwb
   XXw = t2 %*% XXb
   Dq       = SparseM:::as.matrix(SparseM:::t(XXw) %*% XXb)
   dq       = SparseM:::t(YYb %*% XXw)
-  
+
   # scaling
   #
   if (scaling>0) {
-    sc <- norm(Dq,"2")^scaling 
+    sc <- norm(Dq,"2")^scaling
   } else {
     sc=1
   }
-  
+
   # do quadprod
   tryCatch({
     fit      = solve.QP(Dq/sc,dq/sc,t(CS$C)/sc,CS$H/sc,CS$meq)
   }, error = function(err) {
     browser()
   })
-  
+
   return(fit)
 }
 
 
 
-lognormpdf <- function(Y,mu=0,sigma=1)   -0.5 * (  (Y-mu) / sigma )^2   - 0.5 * log(2.0*pi) - log(sigma)  
+lognormpdf <- function(Y,mu=0,sigma=1)   -0.5 * (  (Y-mu) / sigma )^2   - 0.5 * log(2.0*pi) - log(sigma)
 
 logsumexp <- function(v) {
   vm = max(v)
@@ -226,11 +226,11 @@ mplot <- function(M) {
   ggplot(mm,aes(x=j,y=i,fill=value)) + geom_tile() + theme_bw() + scale_y_reverse()
 }
 
-mvar <- function(x) { 
+mvar <- function(x) {
   if (length(x)<=1) return(0);
   return(var(x))
 }
-mcov <- function(x,y) { 
+mcov <- function(x,y) {
   if (length(x)<=1) return(0);
   return(cov(x,y))
 }
@@ -274,7 +274,7 @@ archive.put <- function(...,m,file) {
 archive.get <- function(name,file) {
   filename=paste(path_archive,file,sep="")
   load(filename)
-  
+
   if (name %in% desc$name) {
     return(get(name))
   } else {
@@ -286,7 +286,7 @@ archive.get <- function(name,file) {
 assert_notna <- function(...) {
   ps = list(...)
   for (n in names(ps)) {
-    if (any(is.na(ps[[n]]))) { stop( paste(n,"has NA values"))} 
+    if (any(is.na(ps[[n]]))) { stop( paste(n,"has NA values"))}
   }
 }
 
@@ -333,8 +333,8 @@ condquant <- function(Y,X,qs,df=15) {
 
 condquant2 <- function(Y,X,qs) {
   # using locfit
-  
-  
+
+
   XX  = model.matrix(Y ~ bs(X, df=15))
   dd = data.frame()
   for (i in 1:length(qs)) {
@@ -345,19 +345,19 @@ condquant2 <- function(Y,X,qs) {
 }
 
 #' reindexed the fids of firms
-#' 
+#'
 #' This does not copy si, it changes it, careful!
 #' @export
 firm.reindex <- function(sim,fids=c()) {
   # get unique fids
   if (length(fids)==0) {
-    fids = unique(c(sim$sdata[,unique(f1)],sim$jdata[,unique(f1)],sim$jdata[,unique(f2)]))  
+    fids = unique(c(sim$sdata[,unique(f1)],sim$jdata[,unique(f1)],sim$jdata[,unique(f2)]))
   } else {
     # we subset
     sim$jdata = sim$jdata[f1 %in% fids][f2 %in% fids]
     sim$sdata = sim$sdata[f1 %in% fids]
   }
-  
+
   fids = data.table(fnew=1:length(fids),f=fids)
   setkey(fids,f)
   setkey(sim$jdata,f1)
@@ -366,7 +366,7 @@ firm.reindex <- function(sim,fids=c()) {
   sim$jdata[,f2:=fids[sim$jdata,fnew]]
   setkey(sim$sdata,f1)
   sim$sdata[,f1:=fids[sim$sdata,fnew]]
-  
+
   return(sim)
 }
 
@@ -377,24 +377,24 @@ cluster.order <- function(sim) {
   I = sim$sdata[,mean(y1),j1][order(j1)][,rank(V1)]
   sim$sdata[,j1:=I[j1]][,j2:=I[j2]]
   sim$jdata[,j1:=I[j1]][,j2:=I[j2]]
-  return(sim)  
+  return(sim)
 
   # sim$sdata = sim$sdata[!is.na(j1)]
   # nf = sim$sdata[,max(j1)]
-  # 
+  #
   # # dealing with the fact that some cluster might be empty
   # V = rep(-Inf,nf)
   # for (jj in 1:nf) {
   #   V[jj] = sim$sdata[j1==jj,mean(y1)]
   # }
   # I = order(V)
-  # 
+  #
   # sim$sdata[,j1:=I[j1]][,j2:=I[j2]]
   # sim$jdata[,j1:=I[j1]][,j2:=I[j2]]
   # return(sim)
 }
-  
-#' Compute the LIML estimator in teh case where 
+
+#' Compute the LIML estimator in teh case where
 #' the dependent variable is 0.
 liml.nodep <- function(X,Z) {
   t = Matrix:::t
@@ -402,7 +402,7 @@ liml.nodep <- function(X,Z) {
   Wx  = t(X) %*% X
   WW  = solve(Wx) %*% Wz
   dec = eigen(WW)
-  b_liml = Re(as.numeric(dec$vectors[,dim(dec$vectors)[2]]))  
+  b_liml = Re(as.numeric(dec$vectors[,dim(dec$vectors)[2]]))
   return(b_liml)
 }
 
@@ -415,7 +415,7 @@ model.connectiveness <- function(model,all=FALSE) {
   pp = model$NNm/sum(model$NNm)
   dd_post <- dd_post[, pr_j1j2 := pp[j1,j2],list(j1,j2)  ]
   dd_post <- dd_post[, pr_j1j2k := pr_j1j2*value]
-  
+
   for (kk in 1:model$nk) {
     # compute adjency matrix
     A1 = acast(dd_post[k==kk, list(pr=pr_j1j2k/sum(pr_j1j2k),j2,j1)],j1~j2,value.var = "pr")
@@ -438,14 +438,14 @@ model.connectiveness2 <- function(model,all=FALSE) {
   pp = model$NNm/sum(model$NNm)
   dd_post <- dd_post[, pr_j1j2 := pp[j1,j2],list(j1,j2)  ]
   dd_post <- dd_post[, pr_j1j2k := pr_j1j2*value]
-  
+
   for (kk in 1:model$nk) {
     M = acast(dd_post[k==kk, list(pr=pr_j1j2k/sum(pr_j1j2k),j2),j1],j1~j2,value.var = "pr")
     A = acast(dd_post[k==kk, list(pr=pr_j1j2k/sum(pr_j1j2k),j2,j1)],j1~j2,value.var = "pr")
     EV[kk] = -sort(-eigen(M)$values)[2]
   }
   if (all==TRUE) return(EV);
-  return(max(abs(EV)))  
+  return(max(abs(EV)))
 }
 
 model.connectiveness3 <- function(model,all=FALSE) {
@@ -455,7 +455,7 @@ model.connectiveness3 <- function(model,all=FALSE) {
   pp = model$NNm/sum(model$NNm)
   dd_post <- dd_post[, pr_j1j2 := pp[j1,j2],list(j1,j2)  ]
   dd_post <- dd_post[, pr_j1j2k := pr_j1j2*value]
-  
+
   for (kk in 1:model$nk) {
     #A = acast(dd_post[k==kk, list(pr=pr_j1j2k/sum(pr_j1j2k),j2,j1)],j1~j2,value.var = "pr")
     M1 = acast(dd_post[k==kk, list(pr=pr_j1j2k/sum(pr_j1j2k),j2),j1],j1~j2,value.var = "pr")
@@ -464,15 +464,15 @@ model.connectiveness3 <- function(model,all=FALSE) {
     EV[kk] = -sort(-eigen(M)$values)[2]
   }
   if (all==TRUE) return(EV);
-  return(max(abs(EV)))  
-}  
+  return(max(abs(EV)))
+}
 
 #' joint melt of multiple arrays
 multimelt <- function(...) {
-  
+
   # I would want somthing like melt(A,c('n','m')) + melt(A,c('n','m')) + ...
-  
-  
+
+
 }
 
 #' compute some stats on data
@@ -482,10 +482,10 @@ sample.stats <- function(sdata,ydep,type="j1",name=type) {
   sdata[,jtmp  := get(type)]
   sdata[,y_pred := mean(y_dep),list(k,jtmp)]
   sdata[,y_eps  := y_dep-y_pred,list(k,jtmp)]
-  
+
   # we compute some statistics
   rt = sdata[,list(mean=mean(y_dep),median=median(y_dep),d1=quantile(y_dep,0.1),
-                   d9=quantile(y_dep,0.9),var=var(y_dep),var_eps=var(y_eps),var_pred=var(y_pred))]    
+                   d9=quantile(y_dep,0.9),var=var(y_dep),var_eps=var(y_eps),var_pred=var(y_pred))]
   rt$type=name
   rt
 }
@@ -524,3 +524,165 @@ sColSums <- function(M) {
 sRowSums <- function(M) {
   return(as.numeric(M %*% rep(1,dim(M)[2])))
 }
+
+#' @export
+lin.proj <- function(sdata,y_col="y",k_col="k",j_col="j",usex=FALSE,do.unc=TRUE) {
+  rr = list()
+
+  sdata2 = copy(data.table(sdata))
+  sdata2[,y_imp := get(y_col)]
+  sdata2[,k_imp := get(k_col)]
+  sdata2[,j     := get(j_col)]
+
+  fit = lm(y_imp ~ factor(k_imp) + factor(j),sdata2)
+  sdata2$res = residuals(fit)
+  pred = predict(fit,type = "terms")
+  sdata2$k_hat = pred[,1]
+  sdata2$l_hat = pred[,2]
+
+  rr$cc = sdata2[,cov.wt( data.frame(y_imp,k_hat,l_hat,res))$cov]
+  rr$rsq1 = summary(fit)$r.squared
+
+  if (do.unc) {
+    fit2 = lm(y_imp ~factor(k_imp) * factor(j),sdata2)
+    rr$rsq2 = summary(fit2)$r.squared
+  }
+
+  get.stats <- function(cc) {
+    r=list()
+    den = cc[2,2] + cc[3,3] + 2 * cc[2,3]
+    r$cor_kl = round(cc[2,3]/sqrt(cc[2,2]*cc[3,3]),4)
+    r$cov_kl = 2*round(cc[2,3]/den,4)
+    r$var_k  = round(cc[2,2]/den,4)
+    r$var_l  = round(cc[3,3]/den,4)
+    r$rsq    = round((cc[1,1] - cc[4,4])/cc[1,1],4)
+    return(r)
+  }
+
+  rr$stats = get.stats(rr$cc)
+  rr$NNs = sdata2[,.N,j][order(j)][,N]
+  print(data.frame(rr$stats))
+
+  return(rr)
+}
+
+#' Computes the linear projection using X
+#' @export
+lin.projx <- function(sdata,y_col="y",k_col="k",j_col="j") {
+  rr = list()
+
+  sdata2 = copy(data.table(sdata))
+  sdata2[,y_imp := get(y_col)]
+  sdata2[,k_imp := get(k_col)]
+  sdata2[,j     := get(j_col)]
+
+  fit = lm(y_imp ~ factor(k_imp) + factor(j) +factor(x),sdata2)
+  sdata2$res = residuals(fit)
+  pred = predict(fit,type = "terms")
+  sdata2$k_hat = pred[,1]
+  sdata2$l_hat = pred[,2]
+  sdata2$x_hat = pred[,3]
+
+  rr$cc = sdata2[,cov.wt( data.frame(y_imp,k_hat,l_hat,res,x_hat))$cov]
+
+  fit2 = lm(y_imp ~factor(k_imp) * factor(j),sdata2)
+
+  rr$rsq1 = summary(fit)$r.squared
+  rr$rsq2 = summary(fit2)$r.squared
+
+  get.stats <- function(cc) {
+    r=list()
+    den = cc[2,2] + cc[3,3] + 2 * cc[2,3]
+    r$cor_kl = round(cc[2,3]/sqrt(cc[2,2]*cc[3,3]),4)
+    r$cov_kl = 2*round(cc[2,3]/den,4)
+    r$var_k  = round(cc[2,2]/den,4)
+    r$var_l  = round(cc[3,3]/den,4)
+    r$rsq    = round((cc[1,1] - cc[4,4])/cc[1,1],4)
+    return(r)
+  }
+
+  rr$stats = get.stats(rr$cc)
+  print(data.frame(rr$stats))
+
+  return(rr)
+}
+
+#' Computes the linear projection using X
+#' @export
+lin.projax <- function(sdata,y_col="y",k_col="k",j_col="j") {
+  rr = list()
+
+  sdata2 = copy(data.table(sdata))
+  sdata2[,y_imp := get(y_col)]
+  sdata2[,k_imp := get(k_col)]
+  sdata2[,j     := get(j_col)]
+
+  fit = lm(y_imp ~ k_imp + factor(j) +factor(x),sdata2)
+  sdata2$res = residuals(fit)
+  pred = predict(fit,type = "terms")
+  sdata2$k_hat = pred[,1]
+  sdata2$l_hat = pred[,2]
+  sdata2$x_hat = pred[,3]
+
+  rr$cc = sdata2[,cov.wt( data.frame(y_imp,k_hat,l_hat,res,x_hat))$cov]
+  rr$rsq1 = summary(fit)$r.squared
+
+  get.stats <- function(cc) {
+    r=list()
+    den = cc[2,2] + cc[3,3] + 2 * cc[2,3]
+    r$cor_kl = round(cc[2,3]/sqrt(cc[2,2]*cc[3,3]),4)
+    r$cov_kl = 2*round(cc[2,3]/den,4)
+    r$var_k  = round(cc[2,2]/den,4)
+    r$var_l  = round(cc[3,3]/den,4)
+    r$rsq    = round((cc[1,1] - cc[4,4])/cc[1,1],4)
+    return(r)
+  }
+
+  rr$stats = get.stats(rr$cc)
+  print(data.frame(rr$stats))
+
+  return(rr)
+}
+
+#' Generate a linear projection decomposition for the model
+#' with continuous worker hetergoneity
+#'
+#' @export
+lin.proja <- function(sdata,y_col="y",k_col="k",j_col="j") {
+  rr = list()
+
+  sdata2 = copy(data.table(sdata))
+  sdata2[,y_imp := get(y_col)]
+  sdata2[,k_imp := get(k_col)]
+  sdata2[,j     := get(j_col)]
+
+  fit = lm(y_imp ~ k_imp + factor(j),sdata2)
+  sdata2$res = residuals(fit)
+  pred = predict(fit,type = "terms")
+  sdata2$k_hat = pred[,1]
+  sdata2$l_hat = pred[,2]
+
+  rr$cc = sdata2[,cov.wt( data.frame(y_imp,k_hat,l_hat,res))$cov]
+  rr$rsq1 = summary(fit)$r.squared
+
+  fit2 = lm(y_imp ~ 0+  k_imp:factor(j) + factor(j),sdata2)
+  rr$rsq2 = 1-mean(resid(fit2)^2)/var(sdata2$y_imp)
+
+  get.stats <- function(cc) {
+    r=list()
+    den = cc[2,2] + cc[3,3] + 2 * cc[2,3]
+    r$cor_kl = round(cc[2,3]/sqrt(cc[2,2]*cc[3,3]),4)
+    r$cov_kl = 2*round(cc[2,3]/den,4)
+    r$var_k  = round(cc[2,2]/den,4)
+    r$var_l  = round(cc[3,3]/den,4)
+    r$rsq    = round((cc[1,1] - cc[4,4])/cc[1,1],4)
+    return(r)
+  }
+
+  rr$stats = get.stats(rr$cc)
+  print(data.frame(rr$stats))
+  rr$NNs = sdata[,.N,j1][order(j1)][,N]
+
+  return(rr)
+}
+
