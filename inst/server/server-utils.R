@@ -1,5 +1,24 @@
 # some utility functions on the server
 
+res.load <- function(name) {
+  destfile = sprintf("%s/%s.dat",local_opts$wdir,name)
+  flog.info("loading %s",destfile)
+
+  # check that dependent resource exists
+  if (!file.exists(destfile)) {
+    flog.error("Resource %s does not exists, you need to run the code that creates it.",name)
+  }
+
+  load(destfile)
+  return(value)
+}
+
+res.save <- function(name,value) {
+  destfile = sprintf("%s/%s.dat",local_opts$wdir,name)
+  flog.info("saving to %s",destfile)
+  save(value,file=res_file_name)
+}
+
 #' combines the different legs of the bootstraps
 m4.getboostrap <- function() {
   res_bs         = rkiv0.load("m4-mixt-d2003-bootstrap") # we do it across bootstraps
