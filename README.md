@@ -12,13 +12,13 @@ Importantly, reproducing the results on Swedish data requires access to the admi
 
 ### Organization of the code
 
- - The main file is [inst/main.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/main.R). It will __run all the necessary steps__ in order to reproduce all the results of the paper. It points to the functions that generate all necessary outputs to generates figures and tables. It also points to the function that generates the figures.
- - All the heavy lifting such as the estimators and simulation codes are in the [R/]() folder. This is the usual way to store functions in an R package.
- - Files that __process the data inputs__ into the prepared data used for the paper are [inst/server/data-section-static.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-static.r) for the static model and [inst/server/data-section-dynamic.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-dynamic.r) for the dynamic.
- - Functions that takes the prepared data files and run the different __estimations__ for the static version of the model are all included in [server/estimation-static.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/estimation-static.r)
- - Functions that takes the data files and run the different __estimations__ for the dynamic version of the model are all included in [server/estimation-dynamic.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/estimation-dynamic.r)
- - Functions that generate each of the __figures and tables__ are available in [inst/server/fig-blm.R](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/fig-blm.R)
-
+ - All the heavy lifting such as the estimators and simulation codes are in the [R/*.r](https://github.com/tlamadon/blm-replicate/tree/master/R) folder. This is the usual way to store functions in an R package.
+ - [inst/server/data-section-static.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-static.r) contains the code that __process the data inputs__ to prepare the data for the static estimation.
+ - [inst/server/data-section-dynamic.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-dynamic.r) contains the code that __process the data inputs__ to prepare the data for the dynamic estimation.
+ - [inst/server/estimation-static.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/estimation-static.r) contains the code that runs the __estimations__ for the static version of the model 
+ - [inst/server/estimation-dynamic.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/estimation-dynamic.r) contains code tha run the different __estimations__ for the dynamic version of the model.
+ - [inst/server/fig-blm.R](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/fig-blm.R) contrains functions that generate all of the __figures and tables__ in the paper.
+ - Finally we are collecting the sequence of calls that generates all the results in [inst/main.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/main.R). It will __run all the necessary steps__ in order to reproduce all the results of the paper. 
 
 ### The data source: the swedish registry
 
