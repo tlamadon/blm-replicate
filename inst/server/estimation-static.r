@@ -572,71 +572,32 @@ server.static.mini.d2003.estimate.within_re <- function() {
 
 server.static.mixture.d2003.estimate <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata = sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  # get clsuters
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  sim = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # --- MAIN ESTIMATION ---- #
   set.seed(87954352)
-  rs    = rkiv0.start("m2-mixt-y2003-main-fixb",deps="m2-mixt-y2003-groups",
-                      info="static 2003 main estimate")
+
+  # --- use cluster ---#
+  cl = makeCluster(15)
+  clusterEvalQ(cl,require(blm))
+
+  # --- MAIN ESTIMATION -  STATIONARY INTERACTIONS ---- #
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  rkiv0.put(rs,res_mixt)
+  res.save("m2-mixt-d2003-main-fixb",res_mixt)
 
   # --- MAIN ESTIMATION - NON STATIONARY ---- #
-  rs    = rkiv0.start("m2-mixt-y2003-main-ns",deps="m2-mixt-y2003-groups",
-                      info="static 2003 main estimate, non stationary, 45 starting values")
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=FALSE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  rkiv0.put(rs,res_mixt)
+  res.save("m2-mixt-d2003-main-ns",res_mixt)
 
-  # --- SPLITTING SAMPLEs ----- #
-  set.seed(5314990)
-  rs    = rkiv0.start("m2-mixt-y2003-splits",dependson="m2-mixt-y2003-groups",
-                      info="static 2003 main estimate")
-  sim$sdata[,splitdata := rank(runif(.N)) - 0.5 +0.1*(runif(1)-0.5) <= .N/2,f1] # splitting stayers
-  sim$jdata[,splitdata := rank(runif(.N)) - 0.5 +0.1*(runif(1)-0.5) <= .N/2,f1] # splitting movers
-
-  sim.sp          = list(sdata= sim$sdata[splitdata==TRUE],jdata = sim$jdata[splitdata==TRUE])
-  ms              = grouping.getMeasures(sim.sp,"ecdf",Nw=20,y_var = "y1")
-  grps            = grouping.classify.once(ms,k=10, nstart= 1000, iter.max=200)
-  sim.sp          = grouping.append(sim.sp,grps$best_cluster)
-  res_mixt_split1 =  m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
-
-  sim.sp          = list(sdata= sim$sdata[splitdata==FALSE],jdata = sim$jdata[splitdata==FALSE])
-  ms              = grouping.getMeasures(sim.sp,"ecdf",Nw=20,y_var = "y1")
-  grps            = grouping.classify.once(ms,k=10, nstart= 1000, iter.max=200)
-  sim.sp          = grouping.append(sim.sp,grps$best_cluster)
-  res_mixt_split2 = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  rkiv0.put(rs,list(split1=res_mixt_split1,split2=res_mixt_split2))
-
-  # ------ decomposition on best likelihood ----- #
-  # get main estimate
-  res_main  = rkiv0.load("m2-mixt-y2003-main-fixb")
-  rrm.order = res_main$second_stage_reps
-  name = rrm.order[order(-lik_mixt)][1,i]
-  res  = res_main$second_stage_reps_all[[name]]
-  sim$sdata[,sample := rank(runif(.N))/.N<=ctrl$sdata_subsample,j1]
-  res$model = m2.mixt.stayers(sim$sdata[sample==1], res$model,ctrl)
-  proj = m2.mixt.vdec(res$model,1e6,sim$sdata[,.N]/(sim$sdata[,.N]+sim$jdata[,.N]),"y1")
-  res$vdec = proj
-
-  rs    = rkiv0.start("m2-mixt-d2003-main-highestlik",
-                      info="static 2003 main estimate, vdec on highest likelihood of movers")
-  rkiv0.put(rs,res)
-
-
+  stopCluster(cl)
 }
 
 server.static.mixture.d2003.estimate.withx <- function() {

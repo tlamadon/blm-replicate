@@ -19,11 +19,14 @@ source("inst/server/data-selection-dynamic.r")
 # ===== static estimation ========
 source("inst/server/estimation-static.r")
 
-# estimate groups for static model
+# estimate groups for static model & save descritptive statistics
 server.static.d2003.clustering()
-# save group stats
 server.static.d2003.clustering.stats()
 
+# Main mixture results & bootstrap
+server.static.mixture.d2003.estimate()
 
-# Mini model
+# Compute counterfactuals
+
+# Main regression results
 server.static.mini.estimate.main()
