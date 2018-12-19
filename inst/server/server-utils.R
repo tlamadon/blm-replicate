@@ -19,6 +19,8 @@ res.save <- function(name,value) {
   save(value,file=destfile)
 }
 
+
+
 #' combines the different legs of the bootstraps
 m4.getboostrap <- function() {
   res_bs         = rkiv0.load("m4-mixt-d2003-bootstrap") # we do it across bootstraps

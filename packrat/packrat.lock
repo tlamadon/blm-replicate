@@ -1,5 +1,5 @@
 PackratFormat: 1.4
-PackratVersion: 0.5.0.2
+PackratVersion: 0.4.9.2
 RVersion: 3.4.2
 Repos: CRAN=https://ftp.ussg.iu.edu/CRAN/
 
@@ -79,7 +79,7 @@ Hash: c7273c0f0bc9f5e41f4c52a8cf571f0f
 Package: RcppArmadillo
 Source: CRAN
 Version: 0.8.600.0.0
-Hash: 740a7ae97430a8f83faddecf2001324e
+Hash: 34d3afd99478b52061cdcb10aaa4781c
 Requires: Rcpp
 
 Package: SDMTools
@@ -170,7 +170,7 @@ Hash: 77f4ba718e2bad1877ef26e48cf8fa43
 Package: coneproj
 Source: CRAN
 Version: 1.14
-Hash: 52fb01349768b7ce622569c8e0f2ce16
+Hash: 41fc0470383e46a98b70892155221ca1
 Requires: Rcpp, RcppArmadillo
 
 Package: crayon
@@ -181,7 +181,7 @@ Hash: ff2840dd9b0d563fc80377a5a45510cd
 Package: curl
 Source: CRAN
 Version: 3.2
-Hash: 82a7cf5bb702ef52329b6d23ea6132a7
+Hash: e3318ec2d42d15a38485bab047d114ba
 
 Package: data.table
 Source: CRAN
@@ -191,7 +191,7 @@ Hash: 67c877937c790a0cadb71284febb6b34
 Package: desc
 Source: CRAN
 Version: 1.2.0
-Hash: a0a3ca939997679a52816bae4ed6aaae
+Hash: a1fd2baa29d4954951e3d1816deab6af
 Requires: R6, assertthat, crayon, rprojroot
 
 Package: devtools
@@ -226,7 +226,7 @@ Hash: 6cb09ceba757189aff90eb9bb72c8983
 Package: fs
 Source: CRAN
 Version: 1.2.6
-Hash: 8ffb8b293a18e26e435465307cc47f75
+Hash: d12b2a43b7c98febcbdb9e07584bc634
 Requires: Rcpp
 
 Package: futile.logger
@@ -256,13 +256,13 @@ Requires: MASS, digest, gtable, lazyeval, mgcv, plyr, reshape2, rlang,
 Package: gh
 Source: CRAN
 Version: 1.0.1
-Hash: 3f8812accd1320227d744bca620e8c42
+Hash: 0fafa863f1a86a1f1966e5d5b46a48b5
 Requires: httr, ini, jsonlite
 
 Package: git2r
 Source: CRAN
 Version: 0.23.0
-Hash: ea0a8f265d61f9356d17fff4d9e1613b
+Hash: f7190a7a4b5c5f0983b4b6ee29ed7bc3
 
 Package: glue
 Source: CRAN
@@ -350,7 +350,7 @@ Hash: a17af00010c92198f159cebf1467e111
 Package: lattice
 Source: CRAN
 Version: 0.20-35
-Hash: 4cf72973da5480d40d5ee94d93eebb9c
+Hash: 26b9d7f0d0cb4e1d1bbb97f867c82d89
 
 Package: latticeExtra
 Source: CRAN
@@ -402,10 +402,15 @@ Source: CRAN
 Version: 0.5
 Hash: 463550cf44fb6f0a2359368f42eebe62
 
+Package: moments
+Source: CRAN
+Version: 0.14
+Hash: 9567ad51228ea45d2ff6112f4ab20424
+
 Package: munsell
 Source: CRAN
 Version: 0.4.3
-Hash: 59881f1f8920fe55d7d05afa1bfd83af
+Hash: f96d896947fcaf9b6d0074002e9f4f9d
 Requires: colorspace
 
 Package: nlme
@@ -443,7 +448,7 @@ Requires: cli, crayon, rlang, utf8
 Package: pkgbuild
 Source: CRAN
 Version: 1.0.2
-Hash: 770e918f4c389e4fef9a891d043bf84f
+Hash: 63d38eff6b5a7fce20d0f24851ab4b0a
 Requires: R6, callr, cli, crayon, desc, prettyunits, rprojroot, withr
 
 Package: pkgconfig
@@ -460,7 +465,7 @@ Requires: desc, pkgbuild, rlang, rprojroot, rstudioapi, withr
 Package: plyr
 Source: CRAN
 Version: 1.8.4
-Hash: ec185c885aab7ec91693d78c20cb5d1a
+Hash: 1ca393a9f51341b8fa034f743adf1f53
 Requires: Rcpp
 
 Package: praise
@@ -505,14 +510,14 @@ Requires: Matrix, MatrixModels, SparseM
 Package: rcmdcheck
 Source: CRAN
 Version: 1.3.2
-Hash: 162a63e909423b7c5f44c30711135481
+Hash: 629060c5fa6e01e082bad4cfe5d6b215
 Requires: R6, callr, cli, crayon, desc, digest, pkgbuild, prettyunits,
     rprojroot, sessioninfo, withr, xopen
 
 Package: remotes
 Source: CRAN
 Version: 2.0.2
-Hash: cfcf5e119ed5e6af4b47530ba59101f3
+Hash: 7ce52c748688713b0569596bda4f52cc
 
 Package: reshape
 Source: CRAN
@@ -562,7 +567,7 @@ Hash: e2ebaff8160aff3e6b32e6e78a693c2d
 Package: scales
 Source: github
 Version: 0.5.0.9000
-Hash: 36b175eaff3e36b3d47faac42e94a9b0
+Hash: 7dce80b60ab6c7ebc00e8f10e2722d4f
 Requires: R6, RColorBrewer, Rcpp, dichromat, labeling, munsell, plyr,
     viridisLite
 GithubRepo: scales
@@ -578,7 +583,7 @@ Hash: 3c2907170a496ebb2e2bf92742574124
 Package: sessioninfo
 Source: CRAN
 Version: 1.1.1
-Hash: 9e50c8458e611f166ba702277cbb5096
+Hash: cebf58aa0945e47a46f23b3b60fac24f
 Requires: cli, withr
 
 Package: stringi
@@ -650,19 +655,19 @@ GithubSha1: 79d7b0da9f08e853b3195101c09d291f98bba5f3
 Package: xml2
 Source: CRAN
 Version: 1.2.0
-Hash: 3f00e5347a6d7ccad2237fe1bc1df6d0
+Hash: c6b404c18c699513de6753858d8617a6
 Requires: Rcpp
 
 Package: xopen
 Source: CRAN
 Version: 1.0.0
-Hash: 22c2708f177f9fd9f8a52012bac61d6a
+Hash: 8b6f6fc52d89c441e9532ba6efc47961
 Requires: processx
 
 Package: xtable
 Source: CRAN
 Version: 1.8-2
-Hash: fc07fb412c629e44331a2b8a40686452
+Hash: 7293235cfcc14cdff1ce7fd1a0212031
 
 Package: yaml
 Source: CRAN

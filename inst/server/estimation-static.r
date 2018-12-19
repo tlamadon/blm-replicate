@@ -581,7 +581,7 @@ server.static.mixture.d2003.estimate <- function() {
 
   # --- use cluster ---#
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   # --- MAIN ESTIMATION -  STATIONARY INTERACTIONS ---- #
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
