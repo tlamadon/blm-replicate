@@ -39,6 +39,13 @@ server.static.d2003.clustering.stats()
 server.static.mixture.d2003.estimate()
 server.static.mixture.estimate.boostrap()
 
+# Generate main figure
+fig.static.mixt.means()
+
+# Generate appendix tables
+table.movers.count()
+table.movers.wages()
+
 # Compute counterfactuals
 
 # Main regression results
