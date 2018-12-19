@@ -10,7 +10,17 @@ Importantly, reproducing the results on Swedish data requires access to the admi
 
 # Overview of the replication package
 
-## The data source: the swedish registry
+### Organization of the code
+
+ - The main file is [inst/main.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/main.R). It will __run all the necessary steps__ in order to reproduce all the results of the paper. It points to the functions that generate all necessary outputs to generates figures and tables. It also points to the function that generates the figures.
+ - All the heavy lifting such as the estimators and simulation codes are in the [R/]() folder. This is the usual way to store functions in an R package.
+ - Files that __process the data inputs__ into the prepared data used for the paper are [inst/server/data-section-static.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-static.r) for the static model and [inst/server/data-section-dynamic.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-dynamic.r) for the dynamic.
+ - Functions that takes the prepared data files and run the different __estimations__ for the static version of the model are all included in [server/estimation-static.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/estimation-static.r)
+ - Functions that takes the data files and run the different __estimations__ for the dynamic version of the model are all included in [server/estimation-dynamic.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/estimation-dynamic.r)
+ - Functions that generate each of the __figures and tables__ are available in [inst/server/fig-blm.R](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/fig-blm.R)
+
+
+### The data source: the swedish registry
 
 The main data source should be the following list of:
 
