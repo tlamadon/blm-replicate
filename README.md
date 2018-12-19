@@ -2,11 +2,11 @@
 
 This git repository contains all the code to replicate the results of Bonhomme Lamadon and Manresa "A distributional Framework for matched employer-employee data". The working-paper version is available [here](http://lamadon.com/paper/blm.pdf). Virtually all code is based on the R platform. 
 
-If you are looking for the R package to use the method, you should look at the [rblm package](https://tlamadon.github.io/rblm/index.html). It includes most of the estimators available here, and we keep updating it, whereas we keep the code here to the version we used to generate the paper.
+If you are looking for the R package to use the method, you should look at the [rblm package](https://tlamadon.github.io/rblm/index.html). It includes most of the estimators available here, and we keep updating it.
 
-The present replication package is build as an R package that can be easily installed on any system. All package dependencies are handled using [packrat](https://rstudio.github.io/packrat/). This guarantees that results can be reproduced using the exact versions of all the libraries that were used at the time the paper was written.
+The present replication package is built as an R package that can be easily installed on any system. All package dependencies are handled using [packrat](https://rstudio.github.io/packrat/). This guarantees that results can be reproduced using the exact versions of all the libraries that were used at the time the paper was written.
 
-Importantly, reproducing the results on Swedish data requires access to the administrative data from Sweden. Researcher have to apply to get access to such data. We recommend contacting the [IFAU](https://www.ifau.se/). The institute is hosting this replication package that can be accessed and ran on the data on their servers with their data.
+Importantly, reproducing the results on Swedish data requires access to the administrative data from Sweden. Researchers need to apply to get access to such data. We recommend contacting the [IFAU](https://www.ifau.se/). The institute is hosting this replication package that can be accessed and ran on the data on their servers.
 
 # Overview of the replication package
 

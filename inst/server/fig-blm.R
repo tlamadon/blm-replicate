@@ -20,7 +20,6 @@ fig.main <- function() {
 
   # S16
   # SS17
-
 }
 
 tables.all <- function() {
