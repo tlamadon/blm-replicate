@@ -868,19 +868,12 @@ server.static.mixture.estimate.robust.fsize <- function() {
 #' estimates.
 server.static.mixture.estimate.boostrap <- function(){
 
-  # get data
-  arch_static = "res-2003-static.dat"
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
-  sdata[,x:=1]
-  sdata = sdata[move==FALSE]
-  sim = list(sdata=sdata,jdata=jdata)
-
-  # get groups
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  sim = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main  = rkiv0.load("m2-mixt-y2003-main-fixb")
+  res_main  = res.load("m2-mixt-y2003-main-fixb")
   model_true = res_main$model
 
   ctrl      = em.control(nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
@@ -891,11 +884,9 @@ server.static.mixture.estimate.boostrap <- function(){
   clusterEvalQ(cl,require(blm))
 
   # now we bootstrap with clustering
-  load("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-mixt-45s-100to200.dat")
-  reps = setdiff(1:100,as.integer(names(rr_mixt)))
-  #rrr=data.frame()
-  #rr_mixt = list()
-  for (i in reps) {
+  rrr=data.frame()
+  rr_mixt = list()
+  for (i in 1:200) {
     tryCatch({
     sdata.sim = m2.mixt.impute.stayers(sim$sdata,model_true)
     jdata.sim = m2.mixt.impute.movers(sim$jdata,model_true)
@@ -929,7 +920,6 @@ server.static.mixture.estimate.boostrap <- function(){
     rr2$rep=i
     rrr = rbind(rrr,rr2)
 
-    save(rrr,rr_mixt,file="L:\\Tibo\\qtrdata\\tmp-static-bootstrap-mixt-45s-100to200.dat")
     flog.info("done with rep %i",i)
 
     print(rrr)
@@ -938,21 +928,13 @@ server.static.mixture.estimate.boostrap <- function(){
 
   stopCluster(cl)
 
-  load("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-mixt-45s-100to200.dat")
   rr_mixt2 = lapply(rr_mixt,function(r) { r$second_stage_reps_all=NULL;r})
   rs      = rkiv0.start("m2-mixt-d2003-bootstrap-leg2")
-  rs$info = "parametric bootstrap of static mixture on 2003 data reps 100 to 200"
-  rkiv0.put(rs,list(vdecs=rrr,mixt_all=rr_mixt2))
-
-
-
-  load("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-mixt.dat")
-  archive.put(mixt_bs = rr_mixt ,m="all realisation of the mixture model in each bootstrap result",file = arch_static)
+  res.save("m2-mixt-d2003-bootstrap",list(vdecs=rrr,mixt_all=rr_mixt2))
 }
 
 
-#' Boostrapping the main results. We use the value for the bias-corrected
-#' estimates.
+#' Boostrapping the fixed-effect estimator
 server.static.mixture.estimate.boostrap.akm <- function(){
 
   # get data

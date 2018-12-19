@@ -37,6 +37,7 @@ server.static.d2003.clustering.stats()
 
 # Main mixture results & bootstrap
 server.static.mixture.d2003.estimate()
+server.static.mixture.estimate.boostrap()
 
 # Compute counterfactuals
 
