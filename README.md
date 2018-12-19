@@ -6,7 +6,7 @@ If you are looking for the R package to use the method, you should look at the [
 
 The present replication package is built as an R package that can be easily installed on any system. All package dependencies are handled using [packrat](https://rstudio.github.io/packrat/). This guarantees that results can be reproduced using the exact versions of all the libraries that were used at the time the paper was written.
 
-Importantly, reproducing the results on Swedish data requires access to the administrative data from Sweden. Researchers need to apply to get access to such data. We recommend contacting the [IFAU](https://www.ifau.se/). The institute is hosting this replication package that can be accessed and ran on the data on their servers.
+Importantly, reproducing the results on Swedish data requires access to the administrative data from Sweden. Researchers need to apply to get access to such data. We recommend contacting the [IFAU](https://www.ifau.se/). The institute is hosting this replication package that can be accessed and ran on the data on their servers. The reference name for our project is `IFAU-2015-65`.
 
 # Overview of the replication package
 
