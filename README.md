@@ -32,7 +32,7 @@ The main data source should be the following list of:
 - `selectedf1educ3.dta` 
 - `selectedfirms9708.dta`
 
-and should be available to the project as a relative path `../data/`. Researchers can appy for access at the IFAU.
+and should be available to the project as a relative path `../data/`. Researchers can apply for access at the [IFAU](https://www.ifau.se/).
 
  
 
