@@ -1,0 +1,73 @@
+<% 
+# to run do: brew("../figures/src/tab-estimation-dynamic.br")
+require(data.table)
+source("R/utils.r")
+
+path_archive = "../figures/res/"
+arch_dyn = "res-2003-dynamic.dat"
+rr_dyn_ksize       = archive.get("mini_ksize_vardec",arch_dyn)
+rr_dyn_ksize2      = archive.get("mini_ksize",arch_dyn)
+rr_dyn_vardec      = archive.get("mini_model_vdec",arch_dyn)
+rr_dyn_mini        = archive.get("mini_model",arch_dyn)
+rr_dyn_bs_vardec   = data.table(archive.get("mini_bs_vardec",arch_dyn))
+rr_dyn_bs          = data.table(archive.get("mini_bs_vardec",arch_dyn))
+mini_bs            = archive.get("mini_bs",arch_dyn)
+model_mini         = archive.get("mini_model",arch_dyn)
+
+# prepare the decomposition for repetitions
+res_bs_mean = as.list(rr_dyn_bs_vardec[,lapply(.SD,mean), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+res_bs_qt1 = as.list(rr_dyn_bs_vardec[,lapply(.SD,quantile,0.025), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+res_bs_qt2 = as.list(rr_dyn_bs_vardec[,lapply(.SD,quantile,0.975), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+
+# compute quantiles of rhos
+r1=rep(0,length(mini_bs))
+r4=rep(0,length(mini_bs))
+for (i in 1:length(mini_bs)) {
+  r1[i] =  mini_bs[[paste(i)]]$r1
+  r4[i] =  mini_bs[[paste(i)]]$r4
+}
+
+print_vals     <-function(key,f=function(a) a) 
+{ paste(f(c(cstats[[key]][2:11],cstats[[key]][[1]])),collapse=" & ") }
+bm <- function(x) format(x,big.mark=",",scientific=FALSE)
+print_vals_bm <- function(x) print_vals(x,bm)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_perc <- function(x) print_vals(x,perc)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+
+print_vals_round <- function(x,r=4) {
+  rr = function(x) round(x,r)
+  print_vals(x,rr)
+}
+
+print_vardec <- function(vardec) {
+ paste(c( perc(vardec$var_k),perc(vardec$var_l),perc(vardec$cov_kl),round(vardec$cor_kl,3)),collapse=" & ")
+}
+
+print_rhos <-function(res_unc) {
+ paste( round(c( res_unc$r1, res_unc$r4 ),4),collapse= " & ")
+}
+
+
+-%>
+\begin{tabular}{ l rr rrrr }
+  \toprule 
+    & $\frac{Var(\alpha)}{Var(\alpha+\psi)}$ & $\frac{Var(\psi)}{Var(\alpha+\psi)}$ & $\frac{2 Cov(\alpha,\psi)}{Var(\alpha+\psi)}$ &  $Corr(\alpha,\psi)$  & $\rho_{1|2}$ & $\rho_{4|3}$  \\
+  \midrule
+  &\multicolumn{6}{c}{ \bf \footnotesize Data ($K=10$)  } \\[-4pt]
+  \cmidrule{2-5} \cmidrule{6-7}
+         estimate      &  <%= print_vardec(rr_dyn_vardec$stats) %>  & <%= print_rhos(model_mini) %> \\
+  &\multicolumn{6}{c}{ \bf \footnotesize Monte-Carlo ($K=10$, $100$ reps) } \\[-4pt]
+  \cmidrule{2-5} \cmidrule{6-7}
+  mean                &  <%= print_vardec(res_bs_mean) %>  & <%= print_rhos(list(r1=mean(r1),r4=mean(r4))) %> \\
+  0.025 quantile         &  <%= print_vardec(res_bs_qt1) %>  & <%= print_rhos(list(r1=quantile(r1,0.025),r4=quantile(r4,0.025))) %> \\
+  0.975 quantile         &  <%= print_vardec(res_bs_qt2) %>  & <%=print_rhos(list(r1=quantile(r1,0.975),r4=quantile(r4,0.975))) %> \\
+  &\multicolumn{6}{c}{ \bf \footnotesize Varying the number of classes  } \\[-4pt]
+  \cmidrule{2-5} \cmidrule{6-7}
+  $K=5$               &  <%= print_vardec(rr_dyn_ksize[["5"]]$stats) %>  & <%= print_rhos(rr_dyn_ksize2[["5"]]) %> \\
+  $K=15$               &  <%= print_vardec(rr_dyn_ksize[["15"]]$stats) %>  & <%= print_rhos(rr_dyn_ksize2[["15"]]) %> \\
+  $K=20$               &  <%= print_vardec(rr_dyn_ksize[["20"]]$stats) %>  & <%= print_rhos(rr_dyn_ksize2[["20"]]) %> \\
+\bottomrule
+\end{tabular}
+% decomposition, rsq1 <%= rr_dyn_vardec$rsq1 %> and rsq2 <%= rr_dyn_vardec$rsq2 %>
+

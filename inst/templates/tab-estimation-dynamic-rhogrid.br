@@ -1,0 +1,49 @@
+<% 
+# to run do: brew("../figures/src/tab-estimation-dynamic-rhogrid.br")
+require(data.table)
+suppressMessages(suppressWarnings(source("R/utils.r")))
+
+path_archive = "../figures/res/"
+arch_dyn = "res-2003-dynamic.dat"
+vdec       = archive.get("mini_model_vedc_rhogrid",arch_dyn)
+rr_dyn_vardec      = archive.get("mini_model_vdec",arch_dyn)
+model_mini         = archive.get("mini_model",arch_dyn)
+
+print_vals     <-function(key,f=function(a) a) 
+{ paste(f(c(cstats[[key]][2:11],cstats[[key]][[1]])),collapse=" & ") }
+bm <- function(x) format(x,big.mark=",",scientific=FALSE)
+print_vals_bm <- function(x) print_vals(x,bm)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_perc <- function(x) print_vals(x,perc)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+
+print_vals_round <- function(x,r=4) {
+  rr = function(x) round(x,r)
+  print_vals(x,rr)
+}
+
+print_vardec <- function(vardec) {
+ paste(c( perc(vardec$var_k),perc(vardec$var_l),perc(vardec$cov_kl),round(vardec$cor_kl,3)),collapse=" & ")
+}
+
+print_rhos <-function(res_unc) {
+ paste( round(c( res_unc$r1, res_unc$r4 ),4),collapse= " & ")
+}
+
+
+-%>
+\begin{tabular}{ l rr rrrr }
+  \toprule 
+    & $\frac{Var(\alpha)}{Var(\alpha+\psi)}$ & $\frac{Var(\psi)}{Var(\alpha+\psi)}$ & $\frac{2 Cov(\alpha,\psi)}{Var(\alpha+\psi)}$ &  $Corr(\alpha,\psi)$  & $\rho_{1|2}$ & $\rho_{4|3}$  \\
+  \midrule
+  &\multicolumn{6}{c}{ \bf \footnotesize Data ($K=10$)  } \\[-4pt]
+  \cmidrule{2-5} \cmidrule{6-7}
+         estimate      &  <%= print_vardec(rr_dyn_vardec$stats) %>  & <%= print_rhos(model_mini) %> \\
+  &\multicolumn{6}{c}{ \bf \footnotesize Varying $\rho_{1|2}$ and $\rho_{4|3}$} \\[-4pt]
+  \cmidrule{2-5} \cmidrule{6-7}
+<% for (i in seq(1,15,by=2))  { -%>
+      &  <%= print_vardec(as.list(vdec[i,])) %>  & <%= print_rhos(list(r1=vdec[i,"r1"],r4=vdec[i,"r4"])) %> \\
+<% } -%>
+\bottomrule
+\end{tabular}
+

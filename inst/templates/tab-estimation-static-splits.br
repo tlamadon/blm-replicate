@@ -1,0 +1,76 @@
+<% 
+# to run do: brew("../figures/src/tab-estimation-static-splits.br")
+require(data.table)
+require(blm)
+require(plyr)
+
+path_archive = "../figures/res/"
+arch_static = "res-2003-static.dat"
+
+res = blm:::archive.get("mini_splits",arch_static)
+
+print_vals     <-function(key,f=function(a) a) 
+{ paste(f(c(cstats[[key]][2:11],cstats[[key]][[1]])),collapse=" & ") }
+bm <- function(x) format(x,big.mark=",",scientific=FALSE)
+print_vals_bm <- function(x) print_vals(x,bm)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_perc <- function(x) print_vals(x,perc)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+
+print_vals_round <- function(x,r=4) {
+  rr = function(x) round(x,r)
+  print_vals(x,rr)
+}
+
+print_vardec <- function(model) {
+ vardec = model$vdec$stats
+ paste(c( perc(vardec$var_k),perc(vardec$var_l),perc(vardec$cov_kl),round(vardec$cor_kl,3),round(model$vdec$rsq1,3),round(model$vdec$rsq2,3),bm(sum(model$Nm,na.rm=T))),collapse=" & ")
+}
+
+print_rhos <-function(res_unc) {
+ paste( round(c( res_unc$r1, res_unc$r4 ),4),collapse= " & ")
+}
+
+-%>
+\begin{tabular}{  ll rrrrrrr }
+  \toprule 
+  group & K  & $\frac{Var(\alpha)}{Var(\alpha+\psi)}$ & $\frac{Var(\psi)}{Var(\alpha+\psi)}$ & $\frac{2 Cov(\alpha,\psi)}{Var(\alpha+\psi)}$ &  $Corr(\alpha,\psi)$  & $r_1^2$ & $r_2^2$ & $N_m$ \\
+  \midrule
+  &&\multicolumn{6}{c}{ \bf \footnotesize by education } \\[-4pt]
+  \cmidrule{3-8}
+    educ 1   & 10 &  <%= print_vardec(res[["educ-1-c10"]]) %>   \\
+    educ 1   & 8  &  <%= print_vardec(res[["educ-1-c8"]]) %>   \\
+    educ 1   & 6  &  <%= print_vardec(res[["educ-1-c6"]]) %>   \\
+    educ 2   & 10 &  <%= print_vardec(res[["educ-2-c10"]]) %>   \\
+    educ 2   & 8  &  <%= print_vardec(res[["educ-2-c8"]]) %>   \\
+    educ 2   & 6  &  <%= print_vardec(res[["educ-2-c6"]]) %>   \\
+    educ 3   & 10 &  <%= print_vardec(res[["educ-1-c10"]]) %>   \\
+    educ 3   & 8  &  <%= print_vardec(res[["educ-1-c8"]]) %>   \\
+    educ 3   & 6  &  <%= print_vardec(res[["educ-1-c6"]]) %>   \\
+  &&\multicolumn{6}{c}{ \bf \footnotesize by age } \\[-4pt]
+  \cmidrule{3-8} 
+    0-30 & 10 &  <%= print_vardec(res[["age-(0,30]-c10"]]) %>   \\
+    0-30   & 8  &  <%= print_vardec(res[["age-(0,30]-c8"]]) %>   \\
+    0-30   & 6  &  <%= print_vardec(res[["age-(0,30]-c6"]]) %>   \\
+    31-50   & 10 &  <%= print_vardec(res[["age-(30,50]-c10"]]) %>   \\
+    31-50   & 8  &  <%= print_vardec(res[["age-(30,50]-c8"]]) %>   \\
+    31-50   & 6  &  <%= print_vardec(res[["age-(30,50]-c6"]]) %>   \\
+    51-$\infty$   & 10 &  <%= print_vardec(res[["age-(50,150]-c10"]]) %>   \\
+    51-$\infty$   & 8  &  <%= print_vardec(res[["age-(50,150]-c8"]]) %>   \\
+    51-$\infty$   & 6  &  <%= print_vardec(res[["age-(50,150]-c6"]]) %>   \\
+  &&\multicolumn{6}{c}{ \bf \footnotesize by industry } \\[-4pt]
+  \cmidrule{3-8}
+    Manufacturing   & 10 &  <%= print_vardec(res[["ind-Manufacturing-c10"]]) %>   \\
+    Manufacturing   & 8  &  <%= print_vardec(res[["ind-Manufacturing-c8"]]) %>   \\
+    Manufacturing   & 6  &  <%= print_vardec(res[["ind-Manufacturing-c6"]]) %>   \\
+    Services   & 10 &  <%= print_vardec(res[["ind-Services-c10"]]) %>   \\
+    Services   & 8  &  <%= print_vardec(res[["ind-Services-c8"]]) %>   \\
+    Services   & 6  &  <%= print_vardec(res[["ind-Services-c6"]]) %>   \\
+    Retail   & 10 &  <%= print_vardec(res[["ind-Retail trade-c10"]]) %>   \\
+    Retail   & 8  &  <%= print_vardec(res[["ind-Retail trade-c8"]]) %>   \\
+    Retail   & 6  &  <%= print_vardec(res[["ind-Retail trade-c6"]]) %>   \\
+    Construction   & 10 &  <%= print_vardec(res[["ind-Construction etc.-c10"]]) %>   \\
+    Construction   & 8  &  <%= print_vardec(res[["ind-Construction etc.-c8"]]) %>   \\
+    Construction   & 6  &  <%= print_vardec(res[["ind-Construction etc.-c6"]]) %>   \\
+\bottomrule
+\end{tabular}

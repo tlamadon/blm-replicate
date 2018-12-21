@@ -1,0 +1,58 @@
+<% 
+
+# to run do: brew("../figures/src/tab-summary.br","../figures/build/tab-summary.tex")
+library(xtable); library(ggplot2)
+load("../figures/res/tab-summary-dynamic.dat")
+rrs_dyn = rrs
+rrj_dyn = rrj
+load("../figures/res/tab-summary-static.dat")
+rrs_stat = rrs
+rrj_stat = rrj
+load("../figures/res/tab-summary-all.dat")
+rrs_all = rrs
+rrj_all = rrj
+print_vals     <-function(key,f=function(a) a) 
+{ paste(c(f(rrs_all[[key]]),f(rrj_all[[key]]),f(rrs_stat[[key]]),f(rrj_stat[[key]]),f(rrs_dyn[[key]]),f(rrj_dyn[[key]])),collapse=" & ") 
+}
+bm <- function(x) format(x,big.mark=",",scientific=FALSE)
+print_vals_bm <- function(x) print_vals(x,bm)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_perc <- function(x) print_vals(x,perc)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_round <- function(x,r=4) {
+  rr = function(x) round(x,r)
+  print_vals(x,rr)
+}
+
+-%>
+\begin{tabular}{ l rrrrrr }
+  \toprule 
+         &  \multicolumn{2}{c}{all}    & \multicolumn{4}{c}{continuing firms, full year employed} \\
+  years: & \multicolumn{2}{c}{2002-2004} & \multicolumn{2}{c}{2002-2004} &  \multicolumn{2}{c}{2001-2005} \\
+         & \multicolumn{1}{c}{all}        & \multicolumn{1}{c}{movers}    &  \multicolumn{1}{c}{all}      & \multicolumn{1}{c}{movers}    &  \multicolumn{1}{c}{all}       & \multicolumn{1}{c}{movers}\\
+  \midrule
+  number of workers                       & <%= print_vals_bm("nwid")                          %> \\
+  number of firms                         & <%= print_vals_bm("nfid")                          %> \\
+  number of firms $\geq10$                & <%= print_vals_bm("nfirm_reportedsize_ge10")       %> \\
+  number of firms $\geq50$                & <%= print_vals_bm("nfirm_reportedsize_ge50")       %> \\
+  mean firm reported size                 & <%= print_vals_round("firm_reportedsize_mean",2)   %> \\
+  median firm reported size               & <%= print_vals_bm("firm_reportedsize_median")      %> \\
+  firm reported size for median worker    & <%= print_vals_bm("firm_reportedsize_median_worker") %> \\
+  firm actual size for median worker      & <%= print_vals_bm("firm_actualsize_median_worker")   %> \\[9pt]
+  \% high school drop out                 & <%= print_vals_perc("worker_share_educ1")          %> \\
+  \% high school graduates                & <%= print_vals_perc("worker_share_educ2")          %> \\
+  \% some college                         & <%= print_vals_perc("worker_share_educ3")          %> \\[9pt]
+  \% workers younger than 30              & <%= print_vals_perc("worker_share_age_0_30")       %> \\
+  \% workers between 31 and 50            & <%= print_vals_perc("worker_share_age_31_50")      %> \\
+  \% workers older than 51                & <%= print_vals_perc("worker_share_age_51_inf")     %> \\[9pt]
+  \% workers in manufacturing             & <%= print_vals_perc("worker_share_ind_manu")       %> \\
+  \% workers in services                  & <%= print_vals_perc("worker_share_ind_serv")       %> \\
+  \% workers in retail and trade          & <%= print_vals_perc("worker_share_ind_retail")     %> \\
+  \% workers in construction              & <%= print_vals_perc("worker_share_ind_cons")       %> \\[9pt]
+  mean log-earnings                       & <%= print_vals_round("worker_mean_log_wage",2)     %> \\
+  variance of log-earnings                & <%= print_vals_round("worker_var_log_wage",3)      %> \\
+  between-firm variance of log-earnings   & <%= print_vals_round("between_firm_wage_var",4)    %> \\
+  mean log-value-added per worker         & <%= print_vals_round("firm_mean_log_va",2)         %> \\
+\bottomrule
+\end{tabular}
+

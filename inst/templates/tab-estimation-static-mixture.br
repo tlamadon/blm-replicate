@@ -1,0 +1,58 @@
+<% 
+# to run do: brew("../figures/src/tab-estimation-static-mixture.br")
+require(data.table)
+require(blm)
+require(plyr)
+
+path_archive = "../figures/res/"
+arch_static = "res-2003-static.dat"
+
+mixt_bs                   = blm:::archive.get("mixt_bs",arch_static)
+model_mixt                = blm:::archive.get("model_mixt",arch_static)
+model_mixt_vardec         = blm:::archive.get("model_mixt_vdec",arch_static)
+
+rr_static_bs = data.table(ldply(mixt_bs,function(v) data.frame(v$vdec$stats)))
+
+# prepare the decomposition for repetitions
+res_bs_mean = as.list(rr_static_bs[,lapply(.SD,mean), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+res_bs_sd   = as.list(rr_static_bs[,lapply(.SD,sd), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+# res_bs_qt1 = as.list(rr_dyn_bs_vardec[,lapply(.SD,quantile,0.025), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+# res_bs_qt2 = as.list(rr_dyn_bs_vardec[,lapply(.SD,quantile,0.975), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+
+print_vals     <-function(key,f=function(a) a) 
+{ paste(f(c(cstats[[key]][2:11],cstats[[key]][[1]])),collapse=" & ") }
+bm <- function(x) format(x,big.mark=",",scientific=FALSE)
+print_vals_bm <- function(x) print_vals(x,bm)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_perc <- function(x) print_vals(x,perc)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+
+print_vals_round <- function(x,r=4) {
+  rr = function(x) round(x,r)
+  print_vals(x,rr)
+}
+
+print_vardec <- function(vardec) {
+ paste(c( perc(vardec$var_k),perc(vardec$var_l),perc(vardec$cov_kl),round(vardec$cor_kl,3)),collapse=" & ")
+}
+
+print_rhos <-function(res_unc) {
+ paste( round(c( res_unc$r1, res_unc$r4 ),4),collapse= " & ")
+}
+
+
+-%>
+\begin{tabular}{  l rrrr }
+  \toprule 
+    & $\frac{Var(\alpha)}{Var(\alpha+\psi)}$ & $\frac{Var(\psi)}{Var(\alpha+\psi)}$ & $\frac{2 Cov(\alpha,\psi)}{Var(\alpha+\psi)}$ &  $Corr(\alpha,\psi)$    \\
+  \midrule
+  &\multicolumn{4}{c}{ \bf \footnotesize Data ($K=10$) } \\[-4pt]
+  \cmidrule{2-5} 
+          estimate          &  <%= print_vardec(model_mixt_vardec$stats) %>   \\
+  &\multicolumn{4}{c}{ \bf \footnotesize Monte-Carlo ($K=10$, $\sim 20$ reps) } \\[-4pt]
+  \cmidrule{2-5} 
+  mean                &  <%= print_vardec(res_bs_mean) %>     \\
+  sd                  &  <%= print_vardec(res_bs_sd) %>     \\
+\bottomrule
+\end{tabular}
+% decomposition mixture, rsq1 <%= model_mixt_vardec$rsq1 %> and rsq2 <%= model_mixt_vardec$rsq2 %>

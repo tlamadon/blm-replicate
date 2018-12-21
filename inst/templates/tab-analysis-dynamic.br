@@ -1,0 +1,75 @@
+<% 
+# to run do: brew("../figures/src/tab-analysis-dynamic.br")
+require(data.table)
+source("R/utils.r")
+
+path_archive = "../figures/res/"
+arch_static = "res-2003-static.dat"
+arch_dyn    = "res-2003-dynamic.dat"
+reg = archive.get("reg_analysis",arch_dyn)
+
+ana_y2_move = reg[["ana_y2_move"]]     
+ana_y2_move_i = reg[["ana_y2_move_i"]]   
+ana_y2_k1k2 = reg[["ana_y2_k1k2"]]     
+ana_y3_k1k2 = reg[["ana_y3_k1k2"]]     
+ana_y3_k1k2y2 = reg[["ana_y3_k1k2y2"]]   
+ana_y3_k1k2y2_i = reg[["ana_y3_k1k2y2_i"]] 
+
+print_vals     <-function(key,f=function(a) a) 
+{ paste(f(c(cstats[[key]][2:11],cstats[[key]][[1]])),collapse=" & ") }
+
+bm <- function(x) format(x,big.mark=",",scientific=FALSE)
+print_vals_bm <- function(x) print_vals(x,bm)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_perc <- function(x) print_vals(x,perc)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_round <- function(x,r=4) {
+  rr = function(x) round(x,r)
+  print_vals(x,rr)
+}
+
+print_vardec <- function(vardec) {
+ paste(c( perc(vardec$var_k),perc(vardec$var_l),perc(vardec$cov_kl),vardec$cor_kl),collapse=" & ")
+}
+
+print_rhos <-function(res_unc) {
+ paste( round(c( res_unc$r1, res_unc$r4 ),4),collapse= " & ")
+}
+
+print_coefs <- function(i) {
+vs = c(
+  "-", #round(ana_y2_move[sprintf('factor(j1)%i',i)],3),
+  "-", #round(ana_y2_move_i[sprintf('factor(j1)%i',i)],3), 
+  " ",
+  round(ana_y3_k1k2[sprintf('factor(j1)%i',i)],3),
+  round(ana_y3_k1k2y2[sprintf('factor(j1)%i',i)],3),
+  round(ana_y3_k1k2y2_i[sprintf('factor(j1)%i',i)],3))
+return(paste(c(sprintf("$k_1{=}%i$",i),vs),collapse=" & "))
+}
+
+print_coefs2 <- function() {
+vs = c(
+  round(ana_y2_move[["k_imp"]],3),
+  " - ", #round(ana_y2_move_i[["k_imp"]],3), 
+  " ",
+  round(ana_y3_k1k2[["k_imp"]],3),
+  round(ana_y3_k1k2y2[["k_imp"]],3),
+  " - " #round(ana_y3_k1k2y2_i[["k_imp"]],3)
+  )
+return(paste(vs,collapse=" & "))
+}
+
+-%>
+\begin{tabular}{ l rr r rrr }
+  \toprule 
+   dependent &  \multicolumn{2}{c}{ $Y_2$  } &&   \multicolumn{3}{c}{ $Y_3$  } \\
+   \cmidrule{2-3} \cmidrule{5-7}
+    $k \times \alpha$ & no & yes && no & no & yes \\
+  \midrule
+move &  <%= round(ana_y2_move[["moveTRUE"]],3) %> &  <%= round(ana_y2_move_i[["moveTRUE"]],3) %> && - & - & - \\
+$y_2$ & - & - && -  & <%= round(ana_y3_k1k2y2[["y2_imp"]],3) -%>  & <%= round(ana_y3_k1k2y2_i[["y2_imp"]],3) %> \\
+<% for (i in 2:10) { %>
+<%=print_coefs(i) -%> \\
+<% } %>
+\bottomrule
+\end{tabular}

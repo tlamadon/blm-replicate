@@ -1,0 +1,84 @@
+<% 
+# to run do: brew("../figures/src/tab-estimation-static.br")
+require(data.table)
+suppressMessages(require(blm))
+require(plyr)
+
+path_archive = "../figures/res/"
+arch_static = "res-2003-static.dat"
+
+rr_dyn_ksize       = blm:::archive.get("mini_ksize_vardec",arch_static)
+rr_dyn_ksize2      = blm:::archive.get("mini_ksize",arch_static)
+rr_dyn_vardec      = blm:::archive.get("mini_model_vdec",arch_static)
+rr_dyn_mini        = blm:::archive.get("mini_model",arch_static)
+rr_dyn_bs_vardec   = data.table(archive.get("mini_bs_vardec",arch_static))
+rr_dyn_bs          = data.table(archive.get("mini_bs_vardec",arch_static))
+mini_bs            = blm:::archive.get("mini_bs",arch_static)
+model_mini         = blm:::archive.get("mini_model",arch_static)
+model_mixt_vardec  = blm:::archive.get("model_mixt_vdec",arch_static)
+mixt_bs            = blm:::archive.get("mixt_bs",arch_static)
+
+# prepare the decomposition for repetitions
+# --- MINI ---
+res_bs_mean = as.list(rr_dyn_bs_vardec[,lapply(.SD,mean), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+res_bs_qt1  = as.list(rr_dyn_bs_vardec[,lapply(.SD,quantile,0.025), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+res_bs_qt2  = as.list(rr_dyn_bs_vardec[,lapply(.SD,quantile,0.975), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+# --- MIXT ---
+res_mixt_bs = data.table(ldply(mixt_bs,function(x) data.frame(x$vdec$stats)))
+res_mixt_bs_mean = as.list(res_mixt_bs[,lapply(.SD,mean), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+res_mixt_bs_qt1  = as.list(res_mixt_bs[,lapply(.SD,quantile,0.025), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+res_mixt_bs_qt2  = as.list(res_mixt_bs[,lapply(.SD,quantile,0.975), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
+
+
+
+print_vals     <-function(key,f=function(a) a) 
+{ paste(f(c(cstats[[key]][2:11],cstats[[key]][[1]])),collapse=" & ") }
+bm <- function(x) format(x,big.mark=",",scientific=FALSE)
+print_vals_bm <- function(x) print_vals(x,bm)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+print_vals_perc <- function(x) print_vals(x,perc)
+perc <- function(x) paste(100*round(x,3),"\\%",sep="")
+
+print_vals_round <- function(x,r=4) {
+  rr = function(x) round(x,r)
+  print_vals(x,rr)
+}
+
+print_vardec <- function(vardec) {
+ paste(c( perc(vardec$var_k),perc(vardec$var_l),perc(vardec$cov_kl),round(vardec$cor_kl,3)),collapse=" & ")
+}
+
+print_rhos <-function(res_unc) {
+ paste( round(c( res_unc$r1, res_unc$r4 ),4),collapse= " & ")
+}
+
+
+-%>
+\begin{tabular}{  l rrrr }
+  \toprule 
+    & $\frac{Var(\alpha)}{Var(\alpha+\psi)}$ & $\frac{Var(\psi)}{Var(\alpha+\psi)}$ & $\frac{2 Cov(\alpha,\psi)}{Var(\alpha+\psi)}$ &  $Corr(\alpha,\psi)$    \\
+  \midrule
+  &\multicolumn{4}{c}{ \bf \footnotesize Data ($K=10$) } \\[-4pt]
+  \cmidrule{2-5} 
+          estimate          &  <%= print_vardec(rr_dyn_vardec$stats) %>   \\
+  &\multicolumn{4}{c}{ \bf \footnotesize Monte-Carlo ($K=10$, $100$ reps) } \\[-4pt]
+  \cmidrule{2-5} 
+  mean                &  <%= print_vardec(res_bs_mean) %>     \\
+  0.025 quantile         &  <%= print_vardec(res_bs_qt1) %>     \\
+  0.975 quantile         &  <%= print_vardec(res_bs_qt2) %>    \\
+  &\multicolumn{4}{c}{ \bf \footnotesize  Varying the number of classes  } \\[-4pt]
+  \cmidrule{2-5} 
+  $K=5$               &  <%= print_vardec(rr_dyn_ksize[["5"]]$stats) %>    \\
+  $K=15$               &  <%= print_vardec(rr_dyn_ksize[["15"]]$stats) %>     \\
+  $K=20$               &  <%= print_vardec(rr_dyn_ksize[["20"]]$stats) %>   \\
+  &\multicolumn{4}{c}{ \bf \footnotesize  Mixture model  } \\[-4pt]
+  \cmidrule{2-5} 
+          estimate          &  <%= print_vardec(model_mixt_vardec$stats) %>   \\
+  &\multicolumn{4}{c}{ \bf \footnotesize Monte-Carlo ($K=10$, $100$ reps) } \\[-4pt]
+  mean                   &  <%= print_vardec(res_mixt_bs_mean) %>     \\
+  0.025 quantile         &  <%= print_vardec(res_mixt_bs_qt1) %>     \\
+  0.975 quantile         &  <%= print_vardec(res_mixt_bs_qt2) %>    \\
+\bottomrule
+\end{tabular}
+% decomposition linear, rsq1 <%= rr_dyn_vardec$rsq1 %> and rsq2 <%= rr_dyn_vardec$rsq2 %>
+% decomposition mixture, rsq1 <%= model_mixt_vardec$rsq1 %> and rsq2 <%= model_mixt_vardec$rsq2 %>

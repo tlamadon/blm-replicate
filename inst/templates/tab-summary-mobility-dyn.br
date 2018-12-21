@@ -1,0 +1,21 @@
+<% 
+# to run do: brew("../figures/src/tab-summary-mobility.br")
+library(xtable); library(ggplot2)
+require(data.table)
+load("../figures/res/tab-summary-static-clusters.dat")
+setkey(cstats,j1)
+cstats = data.frame(cstats)
+nf = max(mstats$j1)
+-%>
+\begin{tabular}{ rr| <%= paste(rep("c",nf),collapse ="") %> }
+\toprule 
+ && \multicolumn{<%= nf %>}{c}{firm class in period 2} \\
+ && <%= paste(1:nf,collapse ="&") %> \\
+ \midrule 
+ \multirow{10}{*}{\rotatebox[origin=c]{90}{firm class in period 1}}
+<% for (f1 in 1:nf) { %>
+ & <%= paste(c(f1,mstats[j1==f1][order(j2)][,N]),collapse = " & ") -%> \\
+<% } %>
+\bottomrule
+\end{tabular}
+
