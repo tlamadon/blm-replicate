@@ -95,8 +95,7 @@ table.static.clusters <- function() {
   tab = tt_tabularize(tt,"l rrrrrrrrrr|r")
   tt_save(tab,filename="inst/figures/tab-summary-clusters-m2-tmp.tex",stand_alone=F)
 
-  brew("inst/templates/tab-summary-clusters.br","inst/fig/build/tab-summary-clusters-m2.tex")
-  file.copy("inst/fig/build/tab-summary-clusters-m2.tex","inst/figures",overwrite = T)
+  brew("inst/templates/tab-summary-clusters.br","inst/figures/tab-summary-clusters-m2.tex")
 
 
 
@@ -104,8 +103,8 @@ table.static.clusters <- function() {
   # create table for dynamic
   m4stats = res.load("m4-stats-d2003")
   gstats  = m4stats$gstats
-  brew("inst/templates/tab-summary-clusters.br","inst/fig/build/tab-summary-clusters-m4.tex")
-  file.copy("inst/fig/build/tab-summary-clusters-m4.tex","inst/figures",overwrite=T)
+  brew("inst/templates/tab-summary-clusters.br","inst/figures/tab-summary-clusters-m4.tex")
+
 }
 
 table.dynamic.clusters <- function() {
@@ -143,8 +142,7 @@ table.dynamic.clusters <- function() {
   tab = tt_tabularize(tt,"l rrrrrrrrrr|r")
   tt_save(tab,filename="inst/figures/tab-summary-clusters-m4.tex",stand_alone=F)
 
-  brew("inst/templates/tab-summary-clusters.br","inst/fig/build/tab-summary-clusters-m2.tex")
-  file.copy("inst/fig/build/tab-summary-clusters-m2.tex","inst/figures",overwrite = T)
+  brew("inst/templates/tab-summary-clusters.br","inst/figures/tab-summary-clusters-m2.tex")
 
 
 
@@ -152,8 +150,8 @@ table.dynamic.clusters <- function() {
   # create table for dynamic
   m4stats = res.load("m4-stats-d2003")
   gstats  = m4stats$gstats
-  brew("inst/templates/tab-summary-clusters.br","inst/fig/build/tab-summary-clusters-m4.tex")
-  file.copy("inst/fig/build/tab-summary-clusters-m4.tex","inst/figures",overwrite=T)
+  brew("inst/templates/tab-summary-clusters.br","inst/figures/tab-summary-clusters-m4.tex")
+
 }
 
 
@@ -184,14 +182,12 @@ table.movers.count <- function() {
   m2stats = res.load("m2-stats-d2003")
   cstats = m2stats$cstats
   mstats = m2stats$mstats
-  brew('inst/templates/tab-summary-mobility.br','inst/fig/build/tab-summary-mobility.tex')
-  file.copy('inst/fig/build/tab-summary-mobility.tex',"inst/figures",overwrite = T)
+  brew('inst/templates/tab-summary-mobility.br','inst/figures/tab-summary-mobility.tex')
 
   m2stats = res.load("m4-stats-d2003")
   cstats = m2stats$cstats
   mstats = m2stats$mstats
-  brew('inst/templates/tab-summary-mobility.br','inst/fig/build/tab-summary-mobility-m4.tex')
-  file.copy('inst/fig/build/tab-summary-mobility-m4.tex',"inst/figures",overwrite = T)
+  brew('inst/templates/tab-summary-mobility.br','inst/figures/tab-summary-mobility-m4.tex')
 }
 
 table.movers.wages <- function() {
