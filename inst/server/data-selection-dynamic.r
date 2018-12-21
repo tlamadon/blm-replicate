@@ -12,7 +12,7 @@ require(SDMTools)
 # load stata files, merge them
 # loadDataRaw is a funciton in dataproc.R that extracts data 2 years before and after the anchoryear = 2003.
 # In turn, loadDataRaw uses the proc loadData:
-rdata = loadDataRaw(2003,path="L:/Tibo/qtrdata2012",cache=F)
+rdata = loadDataRaw(2003,path=sprintf("%s/data",local_opts$wdir),cache=F)
 rdata_qtr=rdata[female==0]
 
 # ====== AGGREGATE WORKER DATA TO YEARLY INFO ========
@@ -218,9 +218,8 @@ rr = melt(rr,id.vars = c("m",'N'),measure.vars = c('y1','y2','y3','y4'))
 ggplot(rr,aes(x=m,y=value,color=factor(variable))) + geom_line() +geom_point(aes(size=N))+theme_bw()
 ggplot(rr,aes(x=factor(variable),y=value,color=factor(m),group=factor(m))) + geom_line() +geom_point(aes(size=N))+theme_bw()
 
-
-save(rrs,rrj,file="../data/tab-summary-dynamic.dat")
-save(sdata,jdata,file="../data/tmp-2003-dynamic.dat")
+save(rrs,rrj,file=sprintf("%s/data-tmp/tab-summary-dynamic.dat",local_opts$wdir))
+save(sdata,jdata,file=sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
 
 
 

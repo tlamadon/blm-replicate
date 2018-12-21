@@ -93,10 +93,10 @@ table.static.clusters <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,"l rrrrrrrrrr|r")
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-summary-clusters-m2-tmp.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-summary-clusters-m2-tmp.tex",stand_alone=F)
 
   brew("inst/fig/src/tab-summary-clusters.br","inst/fig/build/tab-summary-clusters-m2.tex")
-  file.copy("inst/fig/build/tab-summary-clusters-m2.tex","~/Dropbox/sortingwithlda/figures/build/",overwrite = T)
+  file.copy("inst/fig/build/tab-summary-clusters-m2.tex","inst/figures",overwrite = T)
 
 
 
@@ -105,7 +105,7 @@ table.static.clusters <- function() {
   m4stats = res.load("m4-stats-d2003")
   gstats  = m4stats$gstats
   brew("inst/fig/src/tab-summary-clusters.br","inst/fig/build/tab-summary-clusters-m4.tex")
-  file.copy("inst/fig/build/tab-summary-clusters-m4.tex","~/Dropbox/sortingwithlda/figures/build/",overwrite=T)
+  file.copy("inst/fig/build/tab-summary-clusters-m4.tex","inst/figures",overwrite=T)
 }
 
 table.dynamic.clusters <- function() {
@@ -141,10 +141,10 @@ table.dynamic.clusters <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,"l rrrrrrrrrr|r")
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-summary-clusters-m4.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-summary-clusters-m4.tex",stand_alone=F)
 
   brew("inst/fig/src/tab-summary-clusters.br","inst/fig/build/tab-summary-clusters-m2.tex")
-  file.copy("inst/fig/build/tab-summary-clusters-m2.tex","~/Dropbox/sortingwithlda/figures/build/",overwrite = T)
+  file.copy("inst/fig/build/tab-summary-clusters-m2.tex","inst/figures",overwrite = T)
 
 
 
@@ -153,7 +153,7 @@ table.dynamic.clusters <- function() {
   m4stats = res.load("m4-stats-d2003")
   gstats  = m4stats$gstats
   brew("inst/fig/src/tab-summary-clusters.br","inst/fig/build/tab-summary-clusters-m4.tex")
-  file.copy("inst/fig/build/tab-summary-clusters-m4.tex","~/Dropbox/sortingwithlda/figures/build/",overwrite=T)
+  file.copy("inst/fig/build/tab-summary-clusters-m4.tex","inst/figures",overwrite=T)
 }
 
 
@@ -174,7 +174,7 @@ table.cluster.extra.moments <- function() {
       tt_numeric_column(gstats$worker_kurtosis_log_wage,dec=1)
 
   tab = tt_tabularize(tt,header = "rrrrrr", pretty_rules=T)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-cluster-extra-moments.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-cluster-extra-moments.tex",stand_alone=F)
 
 }
 
@@ -185,13 +185,13 @@ table.movers.count <- function() {
   cstats = m2stats$cstats
   mstats = m2stats$mstats
   brew('inst/fig/src/tab-summary-mobility.br','inst/fig/build/tab-summary-mobility.tex')
-  file.copy('inst/fig/build/tab-summary-mobility.tex',"~/Dropbox/sortingwithlda/figures/build/",overwrite = T)
+  file.copy('inst/fig/build/tab-summary-mobility.tex',"inst/figures",overwrite = T)
 
   m2stats = res.load("m4-stats-d2003")
   cstats = m2stats$cstats
   mstats = m2stats$mstats
   brew('inst/fig/src/tab-summary-mobility.br','inst/fig/build/tab-summary-mobility-m4.tex')
-  file.copy('inst/fig/build/tab-summary-mobility-m4.tex',"~/Dropbox/sortingwithlda/figures/build/",overwrite = T)
+  file.copy('inst/fig/build/tab-summary-mobility-m4.tex',"inst/figures",overwrite = T)
 }
 
 table.movers.wages <- function() {
@@ -205,7 +205,7 @@ table.movers.wages <- function() {
   ggplot(rr1,aes(x=factor(j2),y=V1,group=j1b,color=factor(j1b))) +
     geom_line() + theme_bw() + xlab("firm class k in period 2") + ylab("mean log earnings") +
     theme(legend.position = "none") +  coord_cartesian(ylim=c(9.6,10.75))
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-static-k2_on_y1.pdf",dpi=100,width = 6,height = 5)
+  ggsave("inst/figuresfig-static-k2_on_y1.pdf",dpi=100,width = 6,height = 5)
 
 
   mstats[,j2b := ceiling(j2/2)]
@@ -214,7 +214,7 @@ table.movers.wages <- function() {
   ggplot(rr2,aes(x=factor(j1),y=V1,group=j2b,color=factor(j2b))) +
     geom_line() + theme_bw() + xlab("firm class k in period 1") + ylab("mean log earnings") +
     theme(legend.position = "none") +  coord_cartesian(ylim=c(9.6,10.75))
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-static-k1_on_y2.pdf",dpi=100,width = 6,height = 5)
+  ggsave("inst/figuresfig-static-k1_on_y2.pdf",dpi=100,width = 6,height = 5)
 }
 
 # =========================  STATIC -- MIXTURE =====================
@@ -344,7 +344,7 @@ table.static.mixt.vdec <- function() {
     tt_rule_bottom()
 
 	tab = tt_tabularize(tt,header = "ccccc", pretty_rules=F)
-	tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-static-main.tex",stand_alone=F)
+	tt_save(tab,filename="inst/figures/tab-static-main.tex",stand_alone=F)
 	tt_save(tab,filename="~/tmp/tmp.tex",stand_alone=T)
 
 	vnames = c("var_k_tshare","var_l_tshare","cov_kl_tshare","var_e_tshare","cor_kl")
@@ -376,7 +376,7 @@ table.static.mixt.vdec <- function() {
 	tt_rule_bottom()
 
 	tab = tt_tabularize(tt,header = "lccccc", pretty_rules=F)
-	tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-static-main-bootstrap-details.tex",stand_alone=F)
+	tt_save(tab,filename="inst/figures/tab-static-main-bootstrap-details.tex",stand_alone=F)
 
 }
 
@@ -445,7 +445,7 @@ table.dynamic.mixt.vdec <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,header = "ccccc", pretty_rules=F)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-dynamic-main.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-dynamic-main.tex",stand_alone=F)
   tt_save(tab,filename="~/tmp/tmp.tex",stand_alone=T)
 
 
@@ -476,7 +476,7 @@ table.dynamic.mixt.vdec <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,header = "lccccc", pretty_rules=F)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-dynamic-main-bootstrap-details.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-dynamic-main-bootstrap-details.tex",stand_alone=F)
 
 }
 
@@ -494,7 +494,7 @@ fig.static.mixt.means.residuals <- function() {
   gp = wplot(res_main$model$A1[If,I]) + xlab("firm class k") +theme_bw() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none") +
     scale_color_brewer(palette="Spectral")
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-mixt2-d2003-resid-wage.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figures/fig-mixt2-d2003-resid-wage.pdf",gp,width = 6.5,height = 5)
 
   # proportions
   dpk1 = m2.get.pk1(res_main$model)
@@ -514,7 +514,7 @@ fig.static.mixt.means.residuals <- function() {
     xlab("firm class k") + ylab("type proportions") +
     scale_fill_brewer(palette="Spectral")
 
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-mixt2-d2003-resid-pk.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figures/fig-mixt2-d2003-resid-pk.pdf",gp,width = 6.5,height = 5)
 }
 
 
@@ -531,7 +531,7 @@ fig.static.mixt.means.withx <- function() {
     xlab("firm class k") + ylab("type proportions") +
     scale_fill_brewer(palette="Spectral")
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt2-d2003-pk-withx.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt2-d2003-pk-withx.pdf",gp,width = 6.5,height = 5)
 }
 
 #' plotting the means and proportions for the split sample
@@ -543,7 +543,7 @@ fig.static.mixt.splits <- function() {
   gp = wplot(res_split$split1$model$A1[,I]) +  xlab("firm class k") +theme_bw() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none") +
     scale_color_brewer(palette="Spectral")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt2-d2003-S1-wage.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt2-d2003-S1-wage.pdf",gp,width = 6.5,height = 5)
 
   dpk1 = m2.get.pk1(res_split$split1$model)
   pk_m  = acast(dpk1[,sum(pr_j1j2k),list(j1,k)],j1~k,value.var = "V1")
@@ -556,13 +556,13 @@ fig.static.mixt.splits <- function() {
   gp = pplot(pk_unc)+
     theme(legend.position = "none") +  xlab("firm class k") + ylab("type proportions") +
     scale_fill_brewer(palette="Spectral")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt2-d2003-S1-pk.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt2-d2003-S1-pk.pdf",gp,width = 6.5,height = 5)
 
   I = order(-colSums(res_split$split2$model$A1))
   gp = wplot(res_split$split2$model$A1[,I]) +  xlab("firm class k") +theme_bw() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")  +
     scale_color_brewer(palette="Spectral")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt2-d2003-S2-wage.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt2-d2003-S2-wage.pdf",gp,width = 6.5,height = 5)
 
   dpk1 = m2.get.pk1(res_split$split2$model)
   pk_m  = acast(dpk1[,sum(pr_j1j2k),list(j1,k)],j1~k,value.var = "V1")
@@ -575,7 +575,7 @@ fig.static.mixt.splits <- function() {
   gp = pplot(pk_unc)+
     theme(legend.position = "none") + xlab("firm class k") + ylab("type proportions") +
     scale_fill_brewer(palette="Spectral")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt2-d2003-S2-pk.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt2-d2003-S2-pk.pdf",gp,width = 6.5,height = 5)
 }
 
 #' this plots the connectedness versus likelood for the 50
@@ -591,7 +591,7 @@ fig.static.mixt.connectedness <- function() {
     scale_shape_manual(values=c(20,17,8)) +
       theme(legend.position = "none")
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt2-d2003-startings.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt2-d2003-startings.pdf",gp,width = 6.5,height = 5)
 }
 
 #' ploits the earnings before and after a move
@@ -613,7 +613,7 @@ fig.static.y1plusy2_k1k2 <- function() {
   # computes share of movers moving up
   rr1[j1<j2][m12b>m12,sum(N)]/rr1[j1<j2][,sum(N)]
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-ymobility.pdf",dpi=100,width = 8,height = 7)
+  ggsave("inst/figuresfig-ymobility.pdf",dpi=100,width = 8,height = 7)
 }
 
 fig.static.mixture.fit <- function() {
@@ -622,12 +622,12 @@ fig.static.mixture.fit <- function() {
   gp = ggplot(m2.fit$dd_m,aes(x=x,y=y1)) + geom_line() + geom_line(aes(y=y2),color="red",linetype=2) +
     facet_grid(j1b~j2b) + theme_bw()  +
     scale_x_continuous("log earnings",breaks=c(9.0,10.0,11.0)) + ylab("period 1 density")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-m2-fit-density-movers.pdf",gp,dpi=100,width = 6,height = 5)
+  ggsave("inst/figuresfig-m2-fit-density-movers.pdf",gp,dpi=100,width = 6,height = 5)
 
   gp = ggplot(m2.fit$dd_s,aes(x=x,y=y1)) + geom_line() + geom_line(aes(y=y2),color="red",linetype=2) +
     facet_wrap(~j1,nrow=2) + theme_bw()  +
     xlab("log earnings") + ylab("period 1 density")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-m2-fit-density-stayers.pdf",gp,dpi=100,width = 7.5,height = 5)
+  ggsave("inst/figuresfig-m2-fit-density-stayers.pdf",gp,dpi=100,width = 7.5,height = 5)
 
   # fit ov mean/covariance
   dd1 = data.table(m2.fit$rr_s)
@@ -646,7 +646,7 @@ fig.static.mixture.fit <- function() {
     geom_abline() + theme_bw() + ylim(-0.2,0.3) + xlab("covariance data") + ylab("covariance model") +
     theme(legend.position = "none")
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-m2-fit-density-cov.pdf",gp,dpi=100,width = 5,height = 5)
+  ggsave("inst/figuresfig-m2-fit-density-cov.pdf",gp,dpi=100,width = 5,height = 5)
 
 }
 
@@ -665,7 +665,7 @@ fig.static.mixture.mobility <- function() {
     geom_point(aes(y=factor(j2),alpha=pr_tr,size=pr_tr)) + facet_wrap(~wn,nrow=2) + theme_bw() +
     xlab("firm class k, period 1") + ylab("firm class k', period 2") +
     theme(legend.position = "none")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixture-dynamic-mobility-joint.pdf",gp,dpi=100,width = 7.5,height = 5)
+  ggsave("inst/figuresfig-mixture-dynamic-mobility-joint.pdf",gp,dpi=100,width = 7.5,height = 5)
 
   #dpk1[, pr_tr := pr_j1j2k/sum(pr_j1j2k),list(j1,k)]
   dpkb = dpk1[,wtd.mean(j2,pr_tr),list(j1,k)]
@@ -702,7 +702,7 @@ fig.akm <- function() {
     ylab("variance of firm effect") + xlab("minimum number of movers per firm") +
     scale_x_continuous(breaks=c(5,10,15,20,25,30,35,40),limits = c(4,40))
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-akm-fe.pdf",gp,dpi=100,width = 6,height = 5)
+  ggsave("inst/figuresfig-akm-fe.pdf",gp,dpi=100,width = 6,height = 5)
 }
 
 # =========================  DYNAMIC -- MIXTURE =====================
@@ -720,7 +720,7 @@ fig.dynamic.mixt.connectedness <- function() {
     scale_shape_manual(values=c(20,17,8)) +
     theme(legend.position = "none")
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt4-d2003-startings.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt4-d2003-startings.pdf",gp,width = 6.5,height = 5)
 }
 
 #' plotting the means and proportions for the main estimate
@@ -760,7 +760,7 @@ fig.dynamic.mixt.means <- function() {
     #geom_ribbon(aes(ymin=m1-2*sd1,ymax=m1+2*sd1,x=j1,y=m1),data=cstats,alpha=0.05,color=NA)+
     scale_color_brewer(palette="Spectral")
 
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-mixt4-d2003-wage.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figures/fig-mixt4-d2003-wage.pdf",gp,width = 6.5,height = 5)
   flog.info("creating fig-mixt4-d2003-wage.png")
 
   gp = wplot(res_main$model$A2s[,I]) + xlab("firm class k") +theme_bw() +
@@ -770,7 +770,7 @@ fig.dynamic.mixt.means <- function() {
     # geom_ribbon(aes(ymin=m1-2*sd1,ymax=m1+2*sd1,x=j1,y=m1),data=cstats,alpha=0.05,color=NA) +
     scale_color_brewer(palette="Spectral")
 
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-mixt4-d2003-wage-uc.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figures/fig-mixt4-d2003-wage-uc.pdf",gp,width = 6.5,height = 5)
   flog.info("creating fig-mixt4-d2003-wage-uc.png")
 
   # proportions
@@ -789,7 +789,7 @@ fig.dynamic.mixt.means <- function() {
     xlab("firm class k") + ylab("type proportions") +
     scale_fill_brewer(palette="Spectral")
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt4-d2003-pk.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt4-d2003-pk.pdf",gp,width = 6.5,height = 5)
   flog.info("creating fig-mixt4-d2003-pk.png")
 }
 
@@ -803,7 +803,7 @@ fig.dynamic.mixt.splits <- function() {
   gp = wplot(res_split$split1$mixt$model$A2s[,I]) +  xlab("firm class k") +theme_bw() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none") +
     scale_color_brewer(palette="Spectral")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt4-d2003-S1-wage.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt4-d2003-S1-wage.pdf",gp,width = 6.5,height = 5)
 
   dpk1 = m2.get.pk1(res_split$split1$mixt$model)
   pk_m  = acast(dpk1[,sum(pr_j1j2k),list(j1,k)],j1~k,value.var = "V1")
@@ -816,13 +816,13 @@ fig.dynamic.mixt.splits <- function() {
   gp = pplot(pk_unc)+
     theme(legend.position = "none") +  xlab("firm class k") + ylab("type proportions") +
     scale_fill_brewer(palette="Spectral")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt4-d2003-S1-pk.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-mixt4-d2003-S1-pk.pdf",gp,width = 6.5,height = 5)
 
   # I = order(-colSums(res_split$split2$model$A1))
   # gp = wplot(res_split$split2$model$A1[,I]) +  xlab("firm class k") +theme_bw() +
   #   scale_y_continuous("log-earnings")+theme(legend.position = "none") +
   #   scale_color_brewer(palette="Spectral")
-  # ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt2-d2003-S2-wage.png",gp,width = 6.5,height = 5)
+  # ggsave("inst/figuresfig-mixt2-d2003-S2-wage.png",gp,width = 6.5,height = 5)
   #
   # dpk1 = m2.get.pk1(res_split$split2$model)
   # pk_m  = acast(dpk1[,sum(pr_j1j2k),list(j1,k)],j1~k,value.var = "V1")
@@ -835,7 +835,7 @@ fig.dynamic.mixt.splits <- function() {
   # gp = pplot(pk_unc)+
   #   theme(legend.position = "none") +
   #   scale_fill_brewer(palette="Spectral")
-  # ggsave("~/Dropbox/sortingwithlda/figures/build/fig-mixt2-d2003-S2-pk.png",gp,width = 6.5,height = 5)
+  # ggsave("inst/figuresfig-mixt2-d2003-S2-pk.png",gp,width = 6.5,height = 5)
 }
 
 
@@ -845,12 +845,12 @@ fig.dynamic.mixture.fit <- function() {
   gp = ggplot(m2.fit$dd_m,aes(x=x,y=y1)) + geom_line() + geom_line(aes(y=y2),color="red",linetype=2) +
     facet_grid(j1b~j2b) + theme_bw()  +
     scale_x_continuous("log earnings",breaks=c(9.0,10.0,11.0)) + ylab("period 2 density")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-m4-fit-density-movers.pdf",gp,dpi=100,width = 6,height = 5)
+  ggsave("inst/figuresfig-m4-fit-density-movers.pdf",gp,dpi=100,width = 6,height = 5)
 
   gp = ggplot(m2.fit$dd_s,aes(x=x,y=y1)) + geom_line() + geom_line(aes(y=y2),color="red",linetype=2) +
     facet_wrap(~j1,nrow = 2) + theme_bw()  +
     xlab("log earnings") + ylab("period 2 density")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-m4-fit-density-stayers.pdf",gp,dpi=100,width = 6,height = 5)
+  ggsave("inst/figuresfig-m4-fit-density-stayers.pdf",gp,dpi=100,width = 6,height = 5)
 
   # fit ov mean/covariance
   dd1 = data.table(m2.fit$rr_s)
@@ -869,17 +869,17 @@ fig.dynamic.mixture.fit <- function() {
     geom_abline() + theme_bw() + ylim(-0.2,0.3) + xlab("covariance data") + ylab("covariance model") +
     theme(legend.position = "none")
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-m4-fit-density-cov.pdf",gp,dpi=100,width = 5,height = 5)
+  ggsave("inst/figuresfig-m4-fit-density-cov.pdf",gp,dpi=100,width = 5,height = 5)
 
   gp = ggplot(m2.fit$dd_m_g,aes(x=x,y=y1)) + geom_line() + geom_line(aes(y=y2),color="red",linetype=2) +
     facet_grid(j1b~j2b) + theme_bw()  +
     scale_x_continuous("log earnings",breaks=c(-0.5,0.0,0.5)) + ylab("density of wage growth (t=1,2), stayers")
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-m4-fit-density-movers-growth.pdf",gp,dpi=100,width = 6,height = 5)
+  ggsave("inst/figures/fig-m4-fit-density-movers-growth.pdf",gp,dpi=100,width = 6,height = 5)
 
   gp = ggplot(m2.fit$dd_s_g,aes(x=x,y=y1)) + geom_line() + geom_line(aes(y=y2),color="red",linetype=2) +
     facet_wrap(~j1,nrow = 2) + theme_bw()  +
     xlab("log earnings") + ylab("earning growth density")
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-m4-fit-density-stayers-growth.pdf",gp,dpi=100,width = 6,height = 5)
+  ggsave("inst/figures/fig-m4-fit-density-stayers-growth.pdf",gp,dpi=100,width = 6,height = 5)
 
 
 
@@ -895,7 +895,7 @@ fig.dyn.rho <-function() {
   ggplot(rho_evals[name!="rho32"],aes(x=x,y=y)) + geom_line() + facet_grid(~name) +
     theme_bw() + geom_vline(aes(xintercept=best),linetype=2) +
     coord_cartesian(ylim = c(0,40)) + xlab("value of rho") + ylab("value of the objective")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-rho-slice.pdf",dpi=100,width = 8,height = 4)
+  ggsave("inst/figuresfig-rho-slice.pdf",dpi=100,width = 8,height = 4)
 }
 
 fig.dyn.rho.fit <-function() {
@@ -906,7 +906,7 @@ fig.dyn.rho.fit <-function() {
   ggplot(ddres,aes(x=data,y=model,size=w^4)) +geom_point(alpha=0.3) +
     geom_abline(linetype=2)  + theme_bw() +
     theme(legend.position = "none")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-rho-fit.pdf",dpi=100,width = 5,height = 4)
+  ggsave("inst/figuresfig-rho-fit.pdf",dpi=100,width = 5,height = 4)
 
   res_main_rho   = res.load("m4-mixt-d2003-rho-check")
   res_rhos = res_main_rho$res_rhos
@@ -915,7 +915,7 @@ fig.dyn.rho.fit <-function() {
   ggplot(ddres,aes(x=data,y=model,size=w^4)) +geom_point(alpha=0.3) +
     geom_abline(linetype=2)  + theme_bw() +
     theme(legend.position = "none")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-rho-diff-fit.pdf",dpi=100,width = 5,height = 4)
+  ggsave("inst/figuresfig-rho-diff-fit.pdf",dpi=100,width = 5,height = 4)
 }
 
 table.m4.parameters <- function() {
@@ -964,7 +964,7 @@ table.m4.parameters <- function() {
     tt_rule_bottom()
 
     tab = tt_tabularize(tt,"l ccccccccc")
-    tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-dyn-params.tex",stand_alone=F)
+    tt_save(tab,filename="inst/figures/tab-dyn-params.tex",stand_alone=F)
 
 
 }
@@ -1008,7 +1008,7 @@ table.endogeneousMobility <- function() {
     tt_rule_top()
 
   tab = tt_tabularize(tt,header = "l cccc", pretty_rules=F)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-dyn-endogenous-mobility.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-dyn-endogenous-mobility.tex",stand_alone=F)
 }
 
 table.statedependence <- function() {
@@ -1041,7 +1041,7 @@ table.statedependence <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,header = "l ccc", pretty_rules=F)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-dyn-state-dependence.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-dyn-state-dependence.tex",stand_alone=F)
 
 
 
@@ -1066,7 +1066,7 @@ fig.shimersmith.model <- function() {
   plotM2  <- levelplot(value ~ x* y, melt(ifelse(model.nam$S<=0,-Inf,model.nam$S),c('x','y')),zlab="",main="Surplus"  )
   #grid.arrange(plotF1,plotF2,plotS1,plotS2,plotH1,plotH2, ncol=2)
 
-  pdf("~/Dropbox/sortingwithlda/figures/build/plot-shimer-model.pdf",width=12,height = 9)
+  pdf("inst/figuresplot-shimer-model.pdf",width=12,height = 9)
   grid.arrange(plotF1,plotS1,plotH1,plotF2,plotS2,plotH2, ncol=3)
   dev.off()
 }
@@ -1094,7 +1094,7 @@ fig.shimersmith.cardkline <- function() {
   gp = ggplot(rrw,aes(x=factor(l),y=value,group=factor(k),color=factor(k))) +
     geom_line() + geom_point() +theme_bw() +  theme(legend.position = "none") +
     xlab("firm class") + ylab("log earnings")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-shimersmith-wages.pdf",gp,width = 4.5,height = 3)
+  ggsave("inst/figuresfig-shimersmith-wages.pdf",gp,width = 4.5,height = 3)
 
   # construct the plot for movers between 2 periods
   jdata = cdata[mover>0]
@@ -1115,7 +1115,7 @@ fig.shimersmith.cardkline <- function() {
   gp <- ggplot(rrm[t1%in%c(4,10)][t2%in%c(4,10)],aes(x=factor(period),y=value,color=interaction(t1,t2),group=interaction(t1,t2),linetype=factor(ltype) )) +
     geom_line(size=1.5) + theme_bw() + xlab("period") + ylab("log earnings") + theme(legend.position = "none")
 
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-shimersmith-CK.pdf",gp,width = 4.5,height = 3)
+  ggsave("inst/figuresfig-shimersmith-CK.pdf",gp,width = 4.5,height = 3)
 
 }
 
@@ -1127,36 +1127,36 @@ fig.shimersmith.wages <- function() {
   model = res_ss$pam_6x10$model
   gp = wplot(t(log(model$wage))) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-shimersmith-pam_6x10_model.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-shimersmith-pam_6x10_model.pdf",gp,width = 6.5,height = 5)
 
   model = res_ss$pam_6x10$res_mixt$model
   gp = wplot(model$A2) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-shimersmith-pam_6x10_estimate.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-shimersmith-pam_6x10_estimate.pdf",gp,width = 6.5,height = 5)
 
   # NAM model
   model = res_ss$nam_6x10$model
   gp = wplot(t(log(model$wage))) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-shimersmith-nam_6x10_model.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-shimersmith-nam_6x10_model.pdf",gp,width = 6.5,height = 5)
 
   model = res_ss$nam_6x10$res_mixt$model
   I = order(-model$pk0[1,,6])
   gp = wplot(model$A2[I,]) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-shimersmith-nam_6x10_estimate.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-shimersmith-nam_6x10_estimate.pdf",gp,width = 6.5,height = 5)
 
   cstats = res_ss$pam_6x10$cstats
   gp = ggplot(melt(cstats,id.vars = c('j1','m','sd')), aes(x=factor(j1),y=value,group=variable)) +
     geom_point() + geom_line() + theme_bw() + xlab("firm class k") + scale_y_continuous("log-earnings") +
     geom_line(data=cstats,aes(y=m,group=NA),size=1.5)
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-shimersmith-pam_6x10_distr.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-shimersmith-pam_6x10_distr.pdf",gp,width = 6.5,height = 5)
 
   cstats = res_ss$nam_6x10$cstats
   gp = ggplot(melt(cstats,id.vars = c('j1','m','sd')), aes(x=factor(j1),y=value,group=variable)) +
     geom_point() + geom_line() + theme_bw() + xlab("firm class k") + scale_y_continuous("log-earnings") +
     geom_line(data=cstats,aes(y=m,group=NA),size=1.5)
-  ggsave("~/Dropbox/sortingwithlda/figures/build/fig-shimersmith-nam_6x10_distr.pdf",gp,width = 6.5,height = 5)
+  ggsave("inst/figuresfig-shimersmith-nam_6x10_distr.pdf",gp,width = 6.5,height = 5)
 
   # re-simulate from the model to compute mstats
   model = res_ss$pam_6x10$model
@@ -1191,7 +1191,7 @@ fig.shimersmith.wages <- function() {
   # computes share of movers moving up
   rr1[j1<j2][m12b>m12,sum(N)]/rr1[j1<j2][,sum(N)]
 
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-shimersmith-pam_6x10_moverplot.pdf",gp,width = 5,height = 5)
+  ggsave("inst/figures/fig-shimersmith-pam_6x10_moverplot.pdf",gp,width = 5,height = 5)
 }
 
 fig.shimersmith.narrow <- function() {
@@ -1200,18 +1200,18 @@ fig.shimersmith.narrow <- function() {
   model = rr$model
   gp1 = wplot(t(log(model$wage))) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")  +scale_color_grey()
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-shimersmith-narrow_model.pdf",gp1,width = 6.5,height = 5)
+  ggsave("inst/figures/fig-shimersmith-narrow_model.pdf",gp1,width = 6.5,height = 5)
 
   rr = data.table(melt(model$S,c("x","y")))
   gp3 = ggplot(rr[value>=0],aes(x=x,y=y,fill=value)) + geom_tile() + theme_bw() + ylab("firms") + xlab("workers") +
      theme(legend.position = "none") +scale_fill_grey()
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-shimersmith-narrow_matchset.pdf",gp3,width = 5,height = 5)
+  ggsave("inst/figures/fig-shimersmith-narrow_matchset.pdf",gp3,width = 5,height = 5)
 
   model = rr$res_mixt$model
   I = order(model$pk0[1,,6])
   gp2 = wplot(model$A2[I,]) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")   +scale_color_grey()
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-shimersmith-narrow_estimate.pdf",gp2,width = 6.5,height = 5)
+  ggsave("inst/figures/fig-shimersmith-narrow_estimate.pdf",gp2,width = 6.5,height = 5)
 
 
   require(textables)
@@ -1240,7 +1240,7 @@ fig.shimersmith.narrow <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,header = "lrrrrr", pretty_rules=F)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-shimersmith-narrow_vdec.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-shimersmith-narrow_vdec.tex",stand_alone=F)
 
 }
 
@@ -1419,13 +1419,13 @@ plot.static.proba.gibbs <- function() {
   gp = ggplot(rrm,aes(x=step,y=value,color=factor(model),linetype=factor(model))) +
     geom_line() + theme_bw() + facet_wrap(~variable,scales = "free") +
     theme(legend.position = "none")
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-proba-vdec.pdf",plot = gp,width = 6,height = 4)
+  ggsave("inst/figures/fig-proba-vdec.pdf",plot = gp,width = 6,height = 4)
 
   for (vv in c("var_l","var_k","cor_kl","cov_kl")) {
     gp = ggplot(rrm[variable==vv],aes(x=step,y=value,color=factor(model),linetype=factor(model))) +
       geom_line() + theme_bw() +
       theme(legend.position = "none") + ylab("") + xlab("")
-    ggsave(sprintf("~/Dropbox/paper-blm1/figures/build/fig-proba-vdec-%s.pdf",vv),plot = gp,width = 4,height = 3)
+    ggsave(sprintf("inst/figures/fig-proba-vdec-%s.pdf",vv),plot = gp,width = 4,height = 3)
   }
 
 
@@ -1444,7 +1444,7 @@ plot.static.proba.gibbs <- function() {
   rrm[variable=="lik",variable:="total likelihood"][variable=="likm",variable:="movers likelihood"]
   rrm[variable=="liks",variable:="stayers likelihood"][variable=="likg",variable:="classification prior probabilities"]
   gp = ggplot(rrm,aes(x=step,y=value/1e6,color=factor(model),linetype=factor(model))) + geom_line() + theme_bw() + facet_wrap(~variable,scales = "free") + theme(legend.position = "none")
-  ggsave("~/Dropbox/paper-blm1/figures/build/fig-proba-liks.pdf",plot = gp,width = 6,height = 4)
+  ggsave("inst/figures/fig-proba-liks.pdf",plot = gp,width = 6,height = 4)
 
 }
 
@@ -1462,7 +1462,7 @@ figure.hybrid <- function() {
     annotate("text", x = 24, y = 0.07, label = "between-and-within-class variance")
 
 
-  proj = list(path_figures = "~/Dropbox/paper-blm1/figures/build/")
+  proj = list(path_figures = "inst/figures/")
   ggsave(file.path(proj$path_figures,"fig-within-re.pdf"),plot = gp,width = 6,height = 4)
 }
 
@@ -1488,7 +1488,7 @@ tab.akm_discretization <- function() {
     tt_numeric_column(rr$cov,dec=3)
 
   tab = tt_tabularize(tt,header = "llrrr", pretty_rules=T)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-akm-discretization-effect.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-akm-discretization-effect.tex",stand_alone=F)
 }
 
 tab.dirty_iteration <- function() {
@@ -1531,7 +1531,7 @@ tab.dirty_iteration <- function() {
     tt_user("resid",lseq,"Using residual earnings")
 
   tab = tt_tabularize(tt,header = "rrrrrr", pretty_rules=T)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-dirty-iteration.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-dirty-iteration.tex",stand_alone=F)
 
   tt =
     tt_rule_top() +
@@ -1547,7 +1547,7 @@ tab.dirty_iteration <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,header = "rrrrrr", pretty_rules=F)
-  tt_save(tab,filename="~/Dropbox/paper-blm1/figures/build/tab-dirty-iteration-dyn.tex",stand_alone=F)
+  tt_save(tab,filename="inst/figures/tab-dirty-iteration-dyn.tex",stand_alone=F)
 
 }
 

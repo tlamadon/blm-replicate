@@ -57,12 +57,7 @@ server.static.d2003.clustering.stats <- function() {
 
 server.static.mini.d2003.estimate <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata = sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
+  sim = server.static.data()
   # get clsuters
   grps  = rkiv0.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
@@ -168,7 +163,7 @@ server.static.mini.estimate.bootstrap <-function() {
 server.static.mini.estimate.mainx <- function(){
   arch_static = "res-2003-static.dat"
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,ageg:= (age<=30) + 2*((age >= 31)&(age<=50)) + 3*(age>50)]
   sdata[,x := educ + 3*(ageg-1)]
   sdata[, x := as.integer(x)]
@@ -188,7 +183,7 @@ server.static.mini.estimate.mainx <- function(){
 server.static.mini.estimate.main.randomclusters <- function(){
   arch_static = "res-2003-static.dat"
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   clus = unique(sdata[,list(fid=f1,clus=j1)])
   clus[,clus:=sample.int(10,.N,replace=T)]
   jdata =  cluster.append.data(jdata,clus)
@@ -211,7 +206,7 @@ server.static.mini.estimate.main.randomclusters <- function(){
 server.static.mini.estimate.bootstrap.leave10out <- function() {
 
   arch = "res-2003-static.dat"
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
 
   fids = sdata[,.N,f1][N>=25,f1]
   sdata = sdata[f1 %in% fids][f2 %in% fids]
@@ -338,7 +333,7 @@ server.static.mini.estimate.bootstrap.firmsize <- function() {
   fsize=1
 
   arch = "res-2003-static.dat"
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
 
   fids = sdata[,.N,f1][N>=fsize,f1]
   sdata = sdata[f1 %in% fids][f2 %in% fids]
@@ -421,7 +416,7 @@ server.static.mini.estimate.bootstrap.firmsize <- function() {
 server.static.mini.estimate.ksize <- function() {
 
   arch = "res-2003-static.dat"
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
 
   load(file="L:\\Tibo\\qtrdata\\tmp-2003-clusters.dat")
   rr_models = list()
@@ -466,7 +461,7 @@ server.static.mini.estimate.splits <- function() {
   arch_static = "res-2003-static.dat"
 
   nc = 8 # nuber of clusters
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,ageg:= (age<=30) + 2*((age >= 31)&(age<=50)) + 3*(age>50)]
   sdata[,x := educ + 3*(ageg-1)]
   sdata[, x := as.integer(x)]
@@ -520,7 +515,7 @@ server.static.mini.d2003.estimate.within_re <- function() {
 
   for (nc in (5:30)) {
 
-    load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+    load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
     sdata[,x:=1][,y1_bu:=y1]
     sdata = sdata[move==FALSE]
 
@@ -602,7 +597,7 @@ server.static.mixture.d2003.estimate <- function() {
 
 server.static.mixture.d2003.estimate.withx <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,ageg:= (age<=30) + 2*((age >= 31)&(age<=50)) + 3*(age>50)]
   sdata[,x := educ + 3*(ageg-1)]
   sdata[,x := as.integer(x)]
@@ -639,7 +634,7 @@ server.static.mixture.d2003.estimate.withx <- function() {
 # here we retain 10% of the stayers in classification
 server.static.mixture.d2003.estimate.holdout <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata = sdata[move==FALSE]
   sim = list(jdata=jdata,sdata=sdata)
@@ -672,7 +667,7 @@ server.static.mixture.d2003.estimate.holdout <- function() {
 server.static.mixture.d2003.estimate.holdout2 <- function() {
 
   # try to include half the stayers in clustering
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
 
   # split movers in 2
@@ -703,7 +698,7 @@ server.static.mixture.d2003.estimate.holdout2 <- function() {
 
 server.static.mixture.d2003.fit <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sim = list(jdata=jdata,sdata=sdata)
   rm(sdata,jdata)
@@ -752,7 +747,7 @@ server.static.mixture.d2003.fit <- function() {
 #' robustness. We recluster every time
 server.static.mixture.estimate.robust.nf <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1]
   sdata=sdata[move==FALSE]
   sim = list(jdata=jdata,sdata=sdata)
@@ -786,7 +781,7 @@ server.static.mixture.estimate.robust.nf <- function() {
 server.static.mixture.estimate.robust.nk <- function() {
 
   # load data
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1]
   sim = list(jdata=jdata,sdata=sdata)
   rm(sdata,jdata)
@@ -828,7 +823,7 @@ server.static.mixture.estimate.robust.nk <- function() {
 #' we estimate for small firms and for large firms
 server.static.mixture.estimate.robust.fsize <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1]
   sdata=sdata[move==FALSE]
   sim = list(jdata=jdata,sdata=sdata)
@@ -939,7 +934,7 @@ server.static.mixture.estimate.boostrap.akm <- function(){
 
   # get data
   arch_static = "res-2003-static.dat"
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1]
   sdata = sdata[move==FALSE]
   sim = list(sdata=sdata,jdata=jdata)
@@ -994,7 +989,7 @@ server.static.mixture.estimate.boostrap.akm <- function(){
 server.static.estimate.poachingrank <- function() {
 
   arch_static = "res-2003-static.dat"
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sim=list(sdata=sdata,jdata=jdata)
   rm(sdata,jdata)
   #sim$jdata$fids=NULL
@@ -1071,7 +1066,7 @@ server.static.estimate.clustersplits <- function() {
   # 2 sub-groups, one with high IN, one with low IN
   # then use it for estimation
   arch_static = "res-2003-static.dat"
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sim=list(sdata=sdata,jdata=jdata)
   rm(sdata,jdata)
 
@@ -1112,7 +1107,7 @@ server.static.estimate.clustersplits <- function() {
   clus = rr[,jn]
   names(clus) = rr[,f]
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sim=list(sdata=sdata,jdata=jdata)
   rm(sdata,jdata)
@@ -1134,7 +1129,7 @@ server.static.estimate.clustersplits <- function() {
 
 server.static.mixt.estimate.reclassify <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata= sdata[move==FALSE]
   sim=list(sdata=sdata,jdata=jdata)
@@ -1248,7 +1243,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
   require(Ckmeans.1d.dp)
 
   # ===== POACHING RANK ========= #
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata= sdata[move==FALSE]
   sim=list(sdata=sdata,jdata=jdata)
@@ -1266,7 +1261,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
   rkiv0.put(rs,res)
 
   # ===== RATIO OF MOVERS ========= #
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
 
   fmean = sdata[,list(V1=sum(move==TRUE)/.N,.N),f1]
@@ -1289,7 +1284,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
   # see section on residuals
 
   # ===== START WITH MAIN RESULTS ========= #
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata= sdata[move==FALSE]
   sim=list(sdata=sdata,jdata=jdata)
@@ -1304,7 +1299,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
   rkiv0.put(rs,res)
 
   # ===== START WITH VALUE ADDED ========= #
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata= sdata[move==FALSE]
   sim=list(sdata=sdata,jdata=jdata)
@@ -1322,7 +1317,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
   rkiv0.put(rs,res)
 
   # ===== START WITH MEANS ========= #
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata= sdata[move==FALSE]
   sim=list(sdata=sdata,jdata=jdata)
@@ -1339,7 +1334,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
   rkiv0.put(rs,res)
 
   # ===== START WITH AKM ========= #
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata= sdata[move==FALSE]
   sim=list(sdata=sdata,jdata=jdata)
@@ -1388,7 +1383,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
 
 server.static.mixt.estimate.fit.bs <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sim = list(jdata=jdata,sdata=sdata)
   rm(sdata,jdata)
@@ -1419,7 +1414,7 @@ server.static.mixt.estimate.fit.bs <- function() {
 # Werun the whole BLM procedure but only using residuals
 server.static.mixt.estimate.robustess.residuals <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
 
   # create some variables
@@ -1491,7 +1486,7 @@ server.static.mixt.estimate.robustess.residuals <- function() {
 server.static.mixture.mixtofmixt <- function() {
 
   # load data
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1]
   sdata <- sdata[move==0]
   sim = list(jdata=jdata,sdata=sdata)
@@ -1538,7 +1533,7 @@ server.static.mixture.mixtofmixt <- function() {
 
 server.static.proba.evallik <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sim = list(jdata=jdata,sdata=sdata)
   rm(sdata,jdata)
@@ -1582,7 +1577,7 @@ server.static.proba.evallik <- function() {
 
 server.static.proba.feclass <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata=sdata[move==FALSE]
   sim = list(jdata=jdata,sdata=sdata)
@@ -1735,7 +1730,7 @@ server.static.proba.feclass <- function() {
 #' This checks the effect of discretizing heterogeneity
 #' on the AKM decomposition
 server.fe.effect_of_discrete <- function() {
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata=sdata[move==FALSE]
   sim = list(jdata=jdata,sdata=sdata)
@@ -1791,7 +1786,7 @@ server.fe.effect_of_discrete <- function() {
 
 sever.fe.trace <- function() {
 
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
+  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sdata=sdata[move==FALSE]
   sim = list(jdata=jdata,sdata=sdata)
