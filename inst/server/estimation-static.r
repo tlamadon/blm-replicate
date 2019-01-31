@@ -654,7 +654,7 @@ server.static.mixture.d2003.estimate.holdout <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=34,est_nbest=10,sdata_subsample=1,sdata_subredraw=FALSE)
   cl = makeCluster(17)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   sim$sdata[,sample:=HO]
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
@@ -689,7 +689,7 @@ server.static.mixture.d2003.estimate.holdout2 <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
   cl = makeCluster(17)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
   res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
 
   stopCluster(cl)
@@ -761,7 +761,7 @@ server.static.mixture.estimate.robust.nf <- function() {
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
 
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
   for (nf_size in c(3:15,17,20)) {
@@ -797,7 +797,7 @@ server.static.mixture.estimate.robust.nk <- function() {
                          est_rep=45,est_nbest=5,sdata_subsample=0.1)
 
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
   for (nk_size in c(3:5,7:9)) {
@@ -843,7 +843,7 @@ server.static.mixture.estimate.robust.fsize <- function() {
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
 
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
   ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y1")
   grps  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200)
   sim   = grouping.append(sim,grps$best_cluster)
@@ -876,7 +876,7 @@ server.static.mixture.estimate.boostrap <- function(){
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
 
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   # now we bootstrap with clustering
   rrr=data.frame()
@@ -1118,7 +1118,7 @@ server.static.estimate.clustersplits <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
   res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
   stopCluster(cl)
 
@@ -1154,7 +1154,7 @@ server.static.mixt.estimate.reclassify <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
   for (iter in 1:5) {
@@ -1459,7 +1459,7 @@ server.static.mixt.estimate.robustess.residuals <- function() {
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
 
   cl = makeCluster(17)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
   stopCluster(cl)
 
@@ -1602,7 +1602,7 @@ server.static.proba.feclass <- function() {
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
 
   cl = makeCluster(17)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   res_mixt_akm = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
   rs    = rkiv0.start("m2-akmgrp-y2003-fixb",info="static 2003 mixture model on group from akm")
@@ -1655,7 +1655,7 @@ server.static.proba.feclass <- function() {
   # use last classification of AKM, compare to BLM classification
   # or use the BLM clusters
   cl = makeCluster(17)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   #sim    = grouping.append(sim,rr.gibbs.akm$last_grp)
   #res_mixt_blm_at_akm_last_gibbs = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
@@ -1678,7 +1678,7 @@ server.static.proba.feclass <- function() {
     # estimate BLM
 
     cl = makeCluster(10)
-    clusterEvalQ(cl,require(blm))
+    clusterEvalQ(cl,require(blmrep))
     iter_res = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
     stopCluster(cl)
 

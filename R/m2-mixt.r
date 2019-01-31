@@ -228,9 +228,10 @@ m2.mixt.impute.stayers <- function(sdatae,model,rho21s=0,stationary=FALSE) {
     ni = .N
     Ki  = sample.int(nk,.N,prob = pk0[x,j1,],replace=T)
     # draw Y2, Y3
-    Y1  = A1[j1,Ki] + S1[j1,Ki] * eps1 
+    eps1 = rnorm(ni)
+    Y1   = A1[j1,Ki] + S1[j1,Ki] * eps1 
     #Y2  = A2[j1,Ki] + S2[j1,Ki] * rnorm(ni) # false for movers
-    Y2  = A2[j1,Ki] + rho21s*(Y1 - A1[j1,Ki])  + S2[j1,Ki] * rnorm(ni) * sqrt(1-rho21s^2)
+    Y2   = A2[j1,Ki] + rho21s*(Y1 - A1[j1,Ki])  + S2[j1,Ki] * rnorm(ni) * sqrt(1-rho21s^2)
     
     list(Ki,Y1,Y2)
   },list(j1,x)]
@@ -635,7 +636,7 @@ m2.mixt.estimate.all <- function(sim,nk=6,ctrl,cl=NA) {
       # ------ compute connectedness ----- #
       res_mixt$connectedness = model.connectiveness(res_mixt$model)
       res_mixt$rep_id = i
-    }, error = function(e) {catf("error in rep %i!\n",i);print(e);})
+    }, error = function(e) {futile.logger::flog.warn("error in rep %i!\n",i);print(e);})
     flog.info("done with reptitions %i/%i",i,ctrl$est_rep)
     res_mixt
   })
@@ -719,7 +720,7 @@ m2.mixt.estimate.reclassify <- function(sim,maxiter=20,split_movers=FALSE) {
                          est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
   
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
   
   # run the first estimation 
   res_mixt_akm = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata[split_estimation==TRUE]),nk=6,ctrl,cl)
@@ -937,7 +938,7 @@ m2.mixt.check <- function(Y1,Y2,J1,J2,JJ,nk,Nm,model1,...) {
     warn_str = "!!!!!!!!!";
     test=FALSE
   }
-  catf("[emcheck] %s Qd=%4.4e Hd=%4.4e %s\n",paste(names(change),collapse = ","),  Q2-Q1,H2-H1,warn_str)
+  flog.info("[emcheck] %s Qd=%4.4e Hd=%4.4e %s\n",paste(names(change),collapse = ","),  Q2-Q1,H2-H1,warn_str)
   return(test)
 }
 
