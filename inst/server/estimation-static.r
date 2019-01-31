@@ -575,7 +575,7 @@ server.static.mixture.d2003.estimate <- function() {
   set.seed(87954352)
 
   # --- use cluster ---#
-  cl = makeCluster(15)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blmrep))
 
   # --- MAIN ESTIMATION -  STATIONARY INTERACTIONS ---- #
@@ -881,7 +881,7 @@ server.static.mixture.estimate.boostrap <- function(){
   # now we bootstrap with clustering
   rrr=data.frame()
   rr_mixt = list()
-  for (i in 1:200) {
+  for (i in 1:local_opts$bootstrap_nreps) {
     tryCatch({
     sdata.sim = m2.mixt.impute.stayers(sim$sdata,model_true)
     jdata.sim = m2.mixt.impute.movers(sim$jdata,model_true)
@@ -1377,8 +1377,6 @@ server.static.mixt.estimate.dirty_iteration <- function() {
   rs    = rkiv0.start("m2-mixt-d2003-main-reclassify-allresults",
                       info="combined results for classification")
   rkiv0.put(rs,rr_all)
-
-
 }
 
 server.static.mixt.estimate.fit.bs <- function() {

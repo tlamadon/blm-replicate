@@ -366,3 +366,29 @@ analysis.dynamic.dec.bis <- function(model,nsim=1e7) {
   return(data.frame(res))
 }
 
+generate_simualted_data = function() {
+  load("inst/m2-mixt-y2003-main-fixb.rkiv")
+  res_main = value
+  model = res_main$model
+  sim = m2.mixt.simulate.sim(model,fsize = 15)
+  sdata = sim$sdata
+  jdata = sim$jdata
+  sdata$move=0
+  jdata$move=1
+  sdata[, birthyear := sample(1960:1980,.N,replace=T)]
+  jdata[, birthyear := sample(1960:1980,.N,replace=T)]
+  sdata[,wid:=sprintf("W%i",1:.N)]
+  ns =sdata[,.N]
+  jdata[,wid:=sprintf("W%i", ns+ (1:.N))]
+  sdata[, ind1:= sample(c("Manufacturing","Services","Retail trade","Construction etc."),.N,replace=T)]
+  jdata[, ind1:= sample(c("Manufacturing","Services","Retail trade","Construction etc."),.N,replace=T)]
+  sdata[, educ:= sample(1:3,.N,replace=T)]
+  jdata[, educ:= sample(1:3,.N,replace=T)]
+  sdata[,size1 := .N,f1]
+  jdata[,size1 := .N,f1]
+  sdata[,va1 := exp(rnorm(.N)),f1]
+  jdata[,va1 :=exp(rnorm(.N)),f1]
+  save(sdata,jdata,file=sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
+
+  flog.info("!!! Using simulated data")
+}

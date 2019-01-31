@@ -1,8 +1,6 @@
-
 # ==== make sure the environment has all dependencies
 packrat::status()
-
-# ==== make sure the blmrep package is available ====
+packrat::restore()
 
 # load the main library OR compile and install it
 if ("blmrep" %in% rownames(installed.packages())) {
@@ -13,17 +11,32 @@ if ("blmrep" %in% rownames(installed.packages())) {
   devtools::install(".")  # compile and install
 }
 
-# ==== prepapre options for running all results =====
+# ===== setup the parameters ===== #
 
-local_opts = list(wdir="P:/2015/65/2018-blm-replication/")
+local_opts = list()
+local_opts$use_simulated_data = TRUE
+dir.create("./tmp",showWarnings = FALSE)
+dir.create("./tmp/data-tmp",showWarnings = FALSE)
+local_opts$wdir="./tmp"
+
+local_opts$number_of_clusters = 4    # number of cores that are available
+local_opts$bootstrap_nreps    = 200  # number of replications to use for bootstrap
+
+# ==== prepapre options for running all results =====
 source("inst/server/server-utils.R")
+
+# ===== simualte data if dry-run ===== #
+if (local_opts$use_simulated_data) {
+  generate_simualted_data()
+}
 
 # ==== construct intermediate data files ====
 
-# prepare data fiel for dynamic and static estimations
+# prepare data file for dynamic and static estimations
 if (!file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
   source("inst/server/data-selection-static.r")
 }
+
 #if (!file.exists(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))) {
 #  source("inst/server/data-selection-dynamic.r")
 #}
@@ -32,12 +45,12 @@ if (!file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
 source("inst/server/estimation-static.r")
 
 # estimate groups for static model & save descritptive statistics
-server.static.d2003.clustering()
-server.static.d2003.clustering.stats()
+server.static.d2003.clustering()         #  ~ 0.5 cpu.h
+server.static.d2003.clustering.stats()   # short
 
 # Main mixture results & bootstrap
-server.static.mixture.d2003.estimate()
-server.static.mixture.estimate.boostrap()
+server.static.mixture.d2003.estimate()    # ~ 12        cpu.h
+server.static.mixture.estimate.boostrap() # ~ 12*nreps  cpu.h  -- this is very long!
 
 # Generate main figure
 fig.static.mixt.means()
@@ -49,4 +62,10 @@ table.movers.wages()
 # Compute counterfactuals
 
 # Main regression results
-server.static.mini.estimate.main()
+server.static.mini.estimate.main() # short
+
+# Model iteration - reclassifying
+server.static.mixt.estimate.dirty_iteration() # ~ 100 cpu.h
+
+# Mixture of mixture model
+server.static.mixture.mixtofmixt() # ~ 12 cpu.h
