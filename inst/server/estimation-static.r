@@ -582,6 +582,13 @@ server.static.mixture.d2003.estimate <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
+  
+  if (local_opts$dry_run) {
+    ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
+                           sd_floor=1e-7,posterior_reg=1e-8,
+                           est_rep=5,est_nbest=2,sdata_subsample=0.1,maxiter=100)
+  }
+  
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
   res.save("m2-mixt-d2003-main-fixb",res_mixt)
 
@@ -874,8 +881,13 @@ server.static.mixture.estimate.boostrap <- function(){
   ctrl      = em.control(nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
-
-  cl = makeCluster(15)
+  if (local_opts$dry_run) {
+    ctrl      = em.control(nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
+                           sd_floor=1e-7,posterior_reg=1e-8,
+                           est_rep=5,est_nbest=2,sdata_subsample=0.1,maxiter=100)
+  }
+  
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blmrep))
 
   # now we bootstrap with clustering
@@ -924,7 +936,6 @@ server.static.mixture.estimate.boostrap <- function(){
   stopCluster(cl)
 
   rr_mixt2 = lapply(rr_mixt,function(r) { r$second_stage_reps_all=NULL;r})
-  rs      = rkiv0.start("m2-mixt-d2003-bootstrap-leg2")
   res.save("m2-mixt-d2003-bootstrap",list(vdecs=rrr,mixt_all=rr_mixt2))
 }
 

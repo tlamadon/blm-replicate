@@ -16,13 +16,14 @@ if ("blmrep" %in% rownames(installed.packages())) {
 # ===== setup the parameters ===== #
 
 local_opts = list()
+local_opts$dry_run = TRUE # runs all the step, but small maxiter and small number of starting values
 local_opts$use_simulated_data = TRUE
 dir.create("./tmp",showWarnings = FALSE)
 dir.create("./tmp/data-tmp",showWarnings = FALSE)
 local_opts$wdir="./tmp"
 
 local_opts$number_of_clusters = 15    # number of cores that are available
-local_opts$bootstrap_nreps    = 50  # number of replications to use for bootstrap
+local_opts$bootstrap_nreps    = 10  # number of replications to use for bootstrap
 
 # ==== prepapre options for running all results =====
 source("inst/server/server-utils.R")
@@ -45,6 +46,7 @@ if (!file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
 
 # ===== static estimation ========
 source("inst/server/estimation-static.r")
+source("inst/server/fig-blm.R")
 
 # estimate groups for static model & save descritptive statistics
 server.static.d2003.clustering()         #  ~ 0.5 cpu.h
