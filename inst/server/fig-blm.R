@@ -223,7 +223,7 @@ fig.static.mixt.means <- function() {
   cstats      = res.load("m2-stats-d2003")$cstats
   cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-  res_mixt_bs = data.table(ldply(model_mixt_bs,function(x) {
+  res_mixt_bs = data.table(ldply(res_bs,function(x) {
     I  = order(colSums(-x$model$A1))
     If = order(rowSums(x$model$A1*x$model$pk0[1,,]))
     melt(x$model$A1[,I][If,],c('l','k')) }
@@ -242,7 +242,7 @@ fig.static.mixt.means <- function() {
     geom_errorbar(aes(ymin=q0,ymax=q1),data=res_sd,width=0.2) +
     scale_color_brewer(palette="Spectral")
 
-  ggsave("../figures/fig-mixt2-d2003-wage-uc.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-mixt2-d2003-wage-uc.pdf"),gp,width = 6.5,height = 5)
 
   # proportions
   dpk1 = m2.get.pk1(res_main$model)
@@ -260,7 +260,7 @@ fig.static.mixt.means <- function() {
     xlab("firm class k") + ylab("type proportions") +
     scale_fill_brewer(palette="Spectral")
 
-  ggsave("../figures/fig-mixt2-d2003-pk.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-mixt2-d2003-pk.pdf"),gp,width = 6.5,height = 5)
 }
 
 table.static.mixt.vdec <- function() {
