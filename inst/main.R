@@ -62,7 +62,8 @@ table.movers.wages()
 # Compute counterfactuals
 
 # Main regression results
-server.static.mini.estimate.main() # short
+server.static.mini.estimate.main()      # short
+server.static.mini.estimate.bootstrap() # ~ 2 cpu.h
 
 # Model iteration - reclassifying
 server.static.mixt.estimate.dirty_iteration() # ~ 100 cpu.h

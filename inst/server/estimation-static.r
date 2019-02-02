@@ -59,7 +59,7 @@ server.static.mini.d2003.estimate <- function() {
 
   sim = server.static.data()
   # get clsuters
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # --- MINI ESTIMATION ---- #
@@ -87,14 +87,14 @@ server.static.mini.estimate.main <- function(){
 #' and re-estimate. repeat theis many times
 server.static.mini.estimate.bootstrap <-function() {
 
-  sim = server.static.data()
+  sim   = server.static.data()
   grps  = res.load("m2-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get the main mini-model estimate
-  model0 = res.load("m2-mini-prof")
-  sdata.sim   = m2.mini.impute.stayers(model0,sim$sdata)
-  vdec2 = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
+  model0     = res.load("m2-mini-prof")
+  sdata.sim  = m2.mini.impute.stayers(model0,sim$sdata)
+  vdec2      = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
 
   # save original clusters
   dclus0 = unique(sim$sdata[,list(f1,j1)])
@@ -107,7 +107,7 @@ server.static.mini.estimate.bootstrap <-function() {
   rrr=data.frame()
   rr_mix = list()
   rr_mini = list()
-  for (i in 1:100) {
+  for (i in 1:local_opts$bootstrap_nreps) {
     sim   = grouping.append(sim,clus0,sort = F)
     sim$sdata = m2.mini.impute.stayers(model0,sim$sdata)
     sim$jdata = m2.mini.impute.movers(model0,sim$jdata)
@@ -151,18 +151,11 @@ server.static.mini.estimate.bootstrap <-function() {
   gg = data.table(ldply(rr_mini,function(x) cov.wt(cbind(x$B1[I],x$Em[I]),x$Ns[I])$cov[2,1]))
   gg[,list(m=mean(V1),q0=quantile(V1,0.025),q1=quantile(V1,0.975))]
 
-  archive.put(mini_model_bs=rr_mini,m="main mini boostrapped, 2003 data",file = arch_static)
-  archive.put(mini_model_bs_vdec=rrr,m="variance decomposition for main mini boostrapped, 2003",file = arch_static)
-
   # compute decompositions
   data.table(melt(rrr,id.vars = c("model","i")))[,list(m=mean(value),q0=quantile(value,0.025),q1=quantile(value,0.975)),variable]
-
-
 }
 
 server.static.mini.estimate.mainx <- function(){
-  arch_static = "res-2003-static.dat"
-
   load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,ageg:= (age<=30) + 2*((age >= 31)&(age<=50)) + 3*(age>50)]
   sdata[,x := educ + 3*(ageg-1)]
@@ -170,13 +163,10 @@ server.static.mini.estimate.mainx <- function(){
 
   cstats = sdata[,list(m1=mean(y1),sd1=sd(y1),
                        m2=mean(y2),sd2=sd(y2),.N),list(j1,x)]
-  archive.put(cstatsx=cstats,m="mean and sd by cluster for stayers by x",file = arch_static)
 
   mini_model = model.mini2.estimate(jdata,sdata,norm = 4,fixb=T,withx=T)
   sdata.sim  = model.mini2.impute.stayers(sdata,mini_model)
   mini_model$vdec = lin.projax(sdata.sim,"y1_imp","k_imp","j1")
-
-  archive.put(mini_model_x=mini_model,m="main mini model estimation with X",file = arch_static)
 }
 
 
@@ -607,11 +597,11 @@ server.static.mixture.d2003.estimate.withx <- function() {
   rm(sdata,jdata)
 
   # get clsuters
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main = rkiv0.load("m2-mixt-y2003-main-fixb")
+  res_main = res.load("m2-mixt-y2003-main-fixb")
 
   # estimate using observables
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
@@ -653,7 +643,7 @@ server.static.mixture.d2003.estimate.holdout <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=34,est_nbest=10,sdata_subsample=1,sdata_subredraw=FALSE)
-  cl = makeCluster(17)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
 
   sim$sdata[,sample:=HO]
@@ -688,7 +678,7 @@ server.static.mixture.d2003.estimate.holdout2 <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-  cl = makeCluster(17)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
   res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
 
@@ -704,11 +694,11 @@ server.static.mixture.d2003.fit <- function() {
   rm(sdata,jdata)
 
   # get clsuters
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main = rkiv0.load("m2-mixt-y2003-main-fixb")
+  res_main = res.load("m2-mixt-y2003-main-fixb")
 
   # impute data on movers
   jdata.sim = m2.mixt.impute.movers(sim$jdata,res_main$model)[,list(y1,y1_imp,j1,j2,y2,y2_imp)]
@@ -760,7 +750,7 @@ server.static.mixture.estimate.robust.nf <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(15)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
 
   rr_mixt = list()
@@ -787,7 +777,7 @@ server.static.mixture.estimate.robust.nk <- function() {
   rm(sdata,jdata)
 
   # get clsuters
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   rs    = rkiv0.start("m2-mixt-d2003-change-nk",
@@ -796,7 +786,7 @@ server.static.mixture.estimate.robust.nk <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=5,sdata_subsample=0.1)
 
-  cl = makeCluster(15)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
 
   rr_mixt = list()
@@ -842,7 +832,7 @@ server.static.mixture.estimate.robust.fsize <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(15)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
   ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y1")
   grps  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200)
@@ -875,7 +865,7 @@ server.static.mixture.estimate.boostrap <- function(){
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(15)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
 
   # now we bootstrap with clustering
@@ -940,11 +930,11 @@ server.static.mixture.estimate.boostrap.akm <- function(){
   sim = list(sdata=sdata,jdata=jdata)
 
   # get groups
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main  = rkiv0.load("m2-mixt-y2003-main-fixb")
+  res_main  = res.load("m2-mixt-y2003-main-fixb")
   model_true = res_main$model
 
   # now we bootstrap with clustering
@@ -1095,7 +1085,7 @@ server.static.estimate.clustersplits <- function() {
   }
 
   # attach this to the data with cluster
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   clus  = data.table(f = names(grps$best_cluster), j = grps$best_cluster)
   setkey(rr,f)
   setkey(clus,f)
@@ -1117,7 +1107,7 @@ server.static.estimate.clustersplits <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-  cl = makeCluster(15)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
   res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
   stopCluster(cl)
@@ -1136,7 +1126,7 @@ server.static.mixt.estimate.reclassify <- function() {
   rm(sdata,jdata)
 
   # get groups
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   sim$sdata[,jm1:=j1]
@@ -1144,7 +1134,7 @@ server.static.mixt.estimate.reclassify <- function() {
   sim$jdata[,jm2:=j2]
 
   # get main estimate
-  res_main  = rkiv0.load("m2-mixt-y2003-main-fixb")
+  res_main  = res.load("m2-mixt-y2003-main-fixb")
   model = res_main$model
 
   sim$jdata[,splitdata := rank(runif(.N)) - 0.5 +0.1*(runif(1)-0.5) <= .N/2,f1]
@@ -1153,7 +1143,7 @@ server.static.mixt.estimate.reclassify <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-  cl = makeCluster(15)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
 
   rr_mixt = list()
@@ -1290,7 +1280,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
   sim=list(sdata=sdata,jdata=jdata)
   rm(sdata,jdata)
 
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   res =  m2.mixt.estimate.reclassify(sim,10)
@@ -1369,7 +1359,7 @@ server.static.mixt.estimate.dirty_iteration <- function() {
             resid = "m2-mixt-d2003-main-reclassify-residuals",
             dynanmic = "m4-mixt-d2003-dirty-reclassification")
   for (nn in names(ll)) {
-    res = rkiv0.load(ll[[nn]])
+    res = res.load(ll[[nn]])
     rr = ldply(res,function(v) data.frame(v$vdec$stats))
     rr$start= nn
     rr_all = rbind(rr_all,rr)
@@ -1387,11 +1377,11 @@ server.static.mixt.estimate.fit.bs <- function() {
   rm(sdata,jdata)
 
   # get clsuters
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main = rkiv0.load("m2-mixt-y2003-main-fixb")
+  res_main = res.load("m2-mixt-y2003-main-fixb")
 
   # limit to firms with 5 workers
   fids = sim$sdata[,.N,f1][N>=5,f1]
@@ -1451,14 +1441,14 @@ server.static.mixt.estimate.robustess.residuals <- function() {
 
   rs    = rkiv0.start("m2-mixt-d2003-residuals-groups",info="static 2003 data cluster outcome for mixture on residuals",location = "serverdata")
   rkiv0.put(rs,grps)
-  grps = rkiv0.load("m2-mixt-d2003-residuals-groups")
+  grps = res.load("m2-mixt-d2003-residuals-groups")
 
   # estimation
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(17)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
   stopCluster(cl)
@@ -1471,11 +1461,47 @@ server.static.mixt.estimate.robustess.residuals <- function() {
   rs  = rkiv0.start("m2-mixt-d2003-main-reclassify-residuals",
                     info="static 2003 dirty iteration, no split")
   rkiv0.put(rs,res)
-
-
-
 }
 
+#' This is for the second part of the main results for static
+analysis.static.meaneffects <- function() {
+  res_main     = res.load("m2-mixt-y2003-main-fixb") # we do it across bootstraps
+  res_main_hl  = res.load("m2-mixt-d2003-main-highestlik") # we do it across bootstraps
+  res_bs       = m2.getboostrap()
+
+  NNs          = res_main$model$NNs
+  NNs          = round(NNs*1e6/sum(NNs))
+
+  rr = data.frame()
+  for (nn in names(res_bs$mixt_all)) {
+    res = res_bs$mixt_all[[nn]]
+    rt = m2.mixt.meaneffect(res$model)
+    rr = rbind(rr,rt)
+    flog.info("done with %s",nn)
+  }
+
+  rr  = data.table(rr)
+  rrm = melt(rr,id.vars = "type")
+  rrs = rrm[, list(m1=mean(value), q0 = quantile(value,0.025), q1 = quantile(value,0.975),sd = sd(value)) , list(variable,type)]
+
+  #  --------- attach the main result --------- #
+  # finally attach the main results
+  rt = m2.mixt.meaneffect(res_main$model)
+  rrs[type=="pk0",main := as.numeric(rt[type=="pk0",1:7])]
+  rrs[type=="pku",main := as.numeric(rt[type=="pku",1:7])]
+
+  #rt = m2.mixt.meaneffect(res_main_hl$model)
+  rrs = rrs[,list(variable, type, main, m1,q0,q1,sd)]
+
+  # ---- do in differences ----- #
+  rrd  = rrm[,value:= value[type=="pku"] - value[type=="pk0"] , list(variable)]
+  rrds = rrd[, list(m1=mean(value), q0 = quantile(value,0.025), q1 = quantile(value,0.975),sd = sd(value)) , list(variable)]
+  rrds[,main := as.numeric(rt[type=="pku",1:7]) - as.numeric(rt[type=="pk0",1:7]) ]
+  rrds = rrds[,list(variable, main, m1,q0,q1,sd)]
+
+  rs    = rkiv0.start("m2-mixt-d2003-meffects-leg2")
+  rkiv0.put(rs,list(level=rrs,diff=rrds))
+}
 
 
 # ========== MIXTURE OF MIXTURE MODEL =====
@@ -1491,11 +1517,11 @@ server.static.mixture.mixtofmixt <- function() {
   rm(sdata,jdata)
 
   # get clsuters
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main = rkiv0.load("m2-mixt-y2003-main-fixb")
+  res_main = res.load("m2-mixt-y2003-main-fixb")
   model_mixt = res_main$model
   model_mixt$S1 = 0.9*model_mixt$S1 + 0.1*mean(model_mixt$S1)
   model_mixt$S2 = 0.9*model_mixt$S2 + 0.1*mean(model_mixt$S2)
@@ -1537,11 +1563,11 @@ server.static.proba.evallik <- function() {
   rm(sdata,jdata)
 
   # get clsuters
-  grps  = rkiv0.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-y2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main = rkiv0.load("m2-mixt-y2003-main-fixb")
+  res_main = res.load("m2-mixt-y2003-main-fixb")
 
 
   rr = m2.proba.importancelik(sim,res_main$model,eps_mix = 0.1,class_draws = 200)
@@ -1601,7 +1627,7 @@ server.static.proba.feclass <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(17)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
 
   res_mixt_akm = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
@@ -1654,7 +1680,7 @@ server.static.proba.feclass <- function() {
 
   # use last classification of AKM, compare to BLM classification
   # or use the BLM clusters
-  cl = makeCluster(17)
+  cl = makeCluster(local_opts$number_of_clusters)
   clusterEvalQ(cl,require(blm))
 
   #sim    = grouping.append(sim,rr.gibbs.akm$last_grp)
@@ -1677,7 +1703,7 @@ server.static.proba.feclass <- function() {
     iter_pl    = m2.proba.getlcasspr(sim,10)$class_pr
     # estimate BLM
 
-    cl = makeCluster(10)
+    cl = makeCluster(local_opts$number_of_clusters)
     clusterEvalQ(cl,require(blm))
     iter_res = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
     stopCluster(cl)
