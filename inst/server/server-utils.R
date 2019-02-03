@@ -13,6 +13,11 @@ res.load <- function(name) {
   return(value)
 }
 
+res.exists <- function(name) {
+  destfile = sprintf("%s/%s.dat",local_opts$wdir,name)
+  file.exists(destfile)
+}
+
 res.save <- function(name,value) {
   destfile = sprintf("%s/%s.dat",local_opts$wdir,name)
   flog.info("saving to %s",destfile)
@@ -199,7 +204,7 @@ analysis.dynamic.dec <- function(model) {
   jdata.sim[,v3 := var(y4), list(j2,k)]
   res$pe_y4_tot = jdata.sim[,mean(v3,na.rm=T)]
 
-  # ---------  firm effect -------------
+  # ---------  firm effect ------------- #
   jdata.sim[,m3 := mean(y2),list(j1,k)]
   jdata.sim[,v3 := var(m3),list(k)]
   res$fe_y2 = jdata.sim[,mean(v3)]
@@ -213,7 +218,7 @@ analysis.dynamic.dec <- function(model) {
   jdata.sim[,v3 := var(m3),list(k)]
   res$fe_y4 = jdata.sim[,mean(v3)]
 
-  # ---------  network effect -------------
+  # ---------  network effect ------------- #
 
   # we need to compute the following 2 terms
   # sum_{k'}p(k'|k)E(Y3|k') + sum_{k'}p(k'|k)(E(Y3|k',k)-E(Y3|k'))
@@ -366,7 +371,10 @@ analysis.dynamic.dec.bis <- function(model,nsim=1e7) {
   return(data.frame(res))
 }
 
-generate_simualted_data = function() {
+generate_simualted_data = function(force=FALSE) {
+
+  if (force==FALSE & file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) return();
+
   load("inst/m2-mixt-y2003-main-fixb.rkiv")
   res_main = value
   model = res_main$model
@@ -377,6 +385,7 @@ generate_simualted_data = function() {
   jdata$move=1
   sdata[, birthyear := sample(1960:1980,.N,replace=T)]
   jdata[, birthyear := sample(1960:1980,.N,replace=T)]
+  jdata[,x:=1][,j2true:=NULL]
   sdata[,wid:=sprintf("W%i",1:.N)]
   ns =sdata[,.N]
   jdata[,wid:=sprintf("W%i", ns+ (1:.N))]
@@ -388,7 +397,10 @@ generate_simualted_data = function() {
   jdata[,size1 := .N,f1]
   sdata[,va1 := exp(rnorm(.N)),f1]
   jdata[,va1 :=exp(rnorm(.N)),f1]
+  sdata = rbind(jdata,sdata)
   save(sdata,jdata,file=sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
 
   flog.info("!!! Using simulated data")
 }
+
+

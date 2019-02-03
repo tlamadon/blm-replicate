@@ -182,12 +182,13 @@ table.movers.count <- function() {
   m2stats = res.load("m2-stats-d2003")
   cstats = m2stats$cstats
   mstats = m2stats$mstats
-  brew('inst/templates/tab-summary-mobility.br','inst/figures/tab-summary-mobility.tex')
+  brew('inst/templates/tab-summary-mobility.br',paste0(local_opts$wdir,"/tab-summary-mobility.tex"))
+  flog.info("creating %s",paste0(local_opts$wdir,"/tab-summary-mobility.tex"))
 
-  m2stats = res.load("m4-stats-d2003")
-  cstats = m2stats$cstats
-  mstats = m2stats$mstats
-  brew('inst/templates/tab-summary-mobility.br','inst/figures/tab-summary-mobility-m4.tex')
+  # m2stats = res.load("m4-stats-d2003")
+  # cstats = m2stats$cstats
+  # mstats = m2stats$mstats
+  # brew('inst/templates/tab-summary-mobility.br',paste0(local_opts$wdir,"/tab-summary-mobility-m4.tex"))
 }
 
 table.movers.wages <- function() {
@@ -201,8 +202,8 @@ table.movers.wages <- function() {
   ggplot(rr1,aes(x=factor(j2),y=V1,group=j1b,color=factor(j1b))) +
     geom_line() + theme_bw() + xlab("firm class k in period 2") + ylab("mean log earnings") +
     theme(legend.position = "none") +  coord_cartesian(ylim=c(9.6,10.75))
-  ggsave("inst/figuresfig-static-k2_on_y1.pdf",dpi=100,width = 6,height = 5)
-
+  ggsave(paste0(local_opts$wdir,"/fig-static-k2_on_y1.pdf"),dpi=100,width = 6,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-static-k2_on_y1.pdf"))
 
   mstats[,j2b := ceiling(j2/2)]
   rr2 = mstats[,wt.mean(m2,N),list(j1,j2b)]
@@ -210,7 +211,8 @@ table.movers.wages <- function() {
   ggplot(rr2,aes(x=factor(j1),y=V1,group=j2b,color=factor(j2b))) +
     geom_line() + theme_bw() + xlab("firm class k in period 1") + ylab("mean log earnings") +
     theme(legend.position = "none") +  coord_cartesian(ylim=c(9.6,10.75))
-  ggsave("inst/figuresfig-static-k1_on_y2.pdf",dpi=100,width = 6,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-static-k1_on_y2.pdf"),dpi=100,width = 6,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-static-k1_on_y2.pdf"))
 }
 
 # =========================  STATIC -- MIXTURE =====================
@@ -218,7 +220,7 @@ table.movers.wages <- function() {
 #' plotting the means and proportions for the main estimate
 #' of the mixture model.
 fig.static.mixt.means <- function() {
-  res_main    = res.load("m2-mixt-y2003-main-fixb")
+  res_main    = res.load("m2-mixt-d2003-main-fixb")
   res_bs      = res.load("m2-mixt-d2003-bootstrap")$mixt_all
   cstats      = res.load("m2-stats-d2003")$cstats
   cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -243,6 +245,7 @@ fig.static.mixt.means <- function() {
     scale_color_brewer(palette="Spectral")
 
   ggsave(paste0(local_opts$wdir,"/fig-mixt2-d2003-wage-uc.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-mixt2-d2003-wage-uc.pdf"))
 
   # proportions
   dpk1 = m2.get.pk1(res_main$model)
@@ -261,12 +264,13 @@ fig.static.mixt.means <- function() {
     scale_fill_brewer(palette="Spectral")
 
   ggsave(paste0(local_opts$wdir,"/fig-mixt2-d2003-pk.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-mixt2-d2003-pk.pdf"))
 }
 
 table.static.mixt.vdec <- function() {
 
-  res_main       = res.load("m2-mixt-y2003-main-fixb")
-  model_mixt_bs  = m2.getboostrap()$mixt_all
+  res_main       = res.load("m2-mixt-d2003-main-fixb")
+  model_mixt_bs  = res.load("m2-mixt-d2003-bootstrap")$mixt_all
   # add additional boostraps
 
   vdec.extract <- function(vdec) {
@@ -298,7 +302,7 @@ table.static.mixt.vdec <- function() {
   main = vdec.extract(res_main$vdec)
 
   # ===== EXTRACT REALLOCATION RESULTS ====== #
-  rr_mean_effects = res.load("m2-mixt-d2003-meffects-leg2")
+  rr_mean_effects   = res.load("m2-mixt-d2003-meffects")
   res_means         = df2list(rr_mean_effects$diff,"main")
   res_means_sd      = df2list(rr_mean_effects$diff,"sd")
   res_means_m1      = df2list(rr_mean_effects$diff,"m1")
@@ -340,8 +344,8 @@ table.static.mixt.vdec <- function() {
     tt_rule_bottom()
 
 	tab = tt_tabularize(tt,header = "ccccc", pretty_rules=F)
-	tt_save(tab,filename="inst/figures/tab-static-main.tex",stand_alone=F)
-	tt_save(tab,filename="~/tmp/tmp.tex",stand_alone=T)
+	tt_save(tab,filename=paste0(local_opts$wdir,"/tab-static-main.tex"),stand_alone=F)
+	flog.info("creating %s",paste0(local_opts$wdir,"/tab-static-main.tex"))
 
 	vnames = c("var_k_tshare","var_l_tshare","cov_kl_tshare","var_e_tshare","cor_kl")
 
@@ -372,8 +376,8 @@ table.static.mixt.vdec <- function() {
 	tt_rule_bottom()
 
 	tab = tt_tabularize(tt,header = "lccccc", pretty_rules=F)
-	tt_save(tab,filename="inst/figures/tab-static-main-bootstrap-details.tex",stand_alone=F)
-
+	tt_save(tab,filename=paste0(local_opts$wdir,"/tab-static-main-bootstrap-details.tex"),stand_alone=F)
+	flog.info("creating %s",paste0(local_opts$wdir,"/tab-static-main-bootstrap-details.tex"))
 }
 
 table.dynamic.mixt.vdec <- function() {
@@ -578,7 +582,7 @@ fig.static.mixt.splits <- function() {
 #' starting values in the main estimatation.
 fig.static.mixt.connectedness <- function() {
 
-  res_main      = res.load("m2-mixt-y2003-main-fixb")
+  res_main      = res.load("m2-mixt-d2003-main-fixb")
   res_reps = res_main$second_stage_reps
 
   gp = ggplot(res_reps,aes(x=lik_mixt,y=connectedness,shape=factor(sel),color=factor(sel))) +
@@ -633,7 +637,7 @@ fig.static.mixture.fit <- function() {
   ggplot(dd[variable %in% c("stayers-m1","stayers-v1","movers-cov12")],aes(x=data,y=imp)) + geom_point() +
     facet_wrap(~variable,scale="free") + geom_abline() + theme_bw()
 
-  res_main = res.load("m2-mixt-y2003-main-fixb")
+  res_main = res.load("m2-mixt-d2003-main-fixb")
   NNm = res_main$model$NNm
 
   dd = data.table(m2.fit$rr_m)
@@ -647,7 +651,7 @@ fig.static.mixture.fit <- function() {
 }
 
 fig.static.mixture.mobility <- function() {
-  #res_main      = res.load("m2-mixt-y2003-main-fixb")
+  #res_main      = res.load("m2-mixt-d2003-main-fixb")
   res_main   = res.load("m4-mixt-d2003-main")
   I = rank(colSums(res_main$model$A1))
 

@@ -270,7 +270,7 @@ Package: ggplot2
 Source: CRAN
 Version: 3.1.0
 Hash: ef541b05dda10b209d509b5bbaf46ea3
-Requires: MASS, digest, gtable, lazyeval, plyr, reshape2, rlang,
+Requires: MASS, digest, gtable, lazyeval, mgcv, plyr, reshape2, rlang,
     scales, tibble, viridisLite, withr
 
 Package: ggrepel
@@ -417,6 +417,12 @@ Source: CRAN
 Version: 1.1.0
 Hash: 410fcd334bc626db100237cc1370f2e9
 Requires: digest
+
+Package: mgcv
+Source: CRAN
+Version: 1.8-26
+Hash: e02928c5c84951987f5c0d55079e6576
+Requires: Matrix, nlme
 
 Package: mime
 Source: CRAN

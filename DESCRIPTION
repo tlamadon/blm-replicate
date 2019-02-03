@@ -42,5 +42,6 @@ Depends:
     plyr,
     rmutil,
     assertthat,
-    moments
+    moments,
+    Ckmeans.1d.dp
 RoxygenNote: 6.1.1

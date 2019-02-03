@@ -115,7 +115,7 @@ server.static.mini.estimate.bootstrap <-function() {
     sim$jdata[,c('y1','y2'):=list(y1_imp,y2_imp)]
 
     ms    = grouping.getMeasures(sim,"ecdf",Nw=10,y_var = "y1")
-    grps  = grouping.classify(ms,ksupp = 10,stop = TRUE,nstart = 300,verbose =10,iter.max = 200)
+    grps  = grouping.classify.once(ms,k=10,nstart = 300,iter.max = 200)
     sim   = grouping.append(sim,grps$best_cluster)
 
     model1   = m2.mini.estimate(sim$jdata,sim$sdata,method="prof",norm=4)
@@ -565,27 +565,22 @@ server.static.mixture.d2003.estimate <- function() {
   set.seed(87954352)
 
   # --- use cluster ---#
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   # --- MAIN ESTIMATION -  STATIONARY INTERACTIONS ---- #
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
-  
-  if (local_opts$dry_run) {
-    ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                           sd_floor=1e-7,posterior_reg=1e-8,
-                           est_rep=5,est_nbest=2,sdata_subsample=0.1,maxiter=100)
-  }
-  
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
+
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
   res.save("m2-mixt-d2003-main-fixb",res_mixt)
 
   # --- MAIN ESTIMATION - NON STATIONARY ---- #
-  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=FALSE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
+  ctrl$fixb=FALSE
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
   res.save("m2-mixt-d2003-main-ns",res_mixt)
 
@@ -650,7 +645,7 @@ server.static.mixture.d2003.estimate.holdout <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=34,est_nbest=10,sdata_subsample=1,sdata_subredraw=FALSE)
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   sim$sdata[,sample:=HO]
@@ -685,7 +680,7 @@ server.static.mixture.d2003.estimate.holdout2 <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
   res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
 
@@ -757,7 +752,7 @@ server.static.mixture.estimate.robust.nf <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
@@ -793,7 +788,7 @@ server.static.mixture.estimate.robust.nk <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=5,sdata_subsample=0.1)
 
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
@@ -839,7 +834,7 @@ server.static.mixture.estimate.robust.fsize <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
   ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y1")
   grps  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200)
@@ -865,19 +860,17 @@ server.static.mixture.estimate.boostrap <- function(){
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main  = res.load("m2-mixt-y2003-main-fixb")
+  res_main  = res.load("m2-mixt-d2003-main-fixb")
   model_true = res_main$model
 
   ctrl      = em.control(nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1)
-  if (local_opts$dry_run) {
-    ctrl      = em.control(nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
-                           sd_floor=1e-7,posterior_reg=1e-8,
-                           est_rep=5,est_nbest=2,sdata_subsample=0.1,maxiter=100)
-  }
-  
-  cl = makeCluster(local_opts$number_of_clusters)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
+
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   # now we bootstrap with clustering
@@ -1118,7 +1111,7 @@ server.static.estimate.clustersplits <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
   res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
   stopCluster(cl)
@@ -1154,7 +1147,7 @@ server.static.mixt.estimate.reclassify <- function() {
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
 
@@ -1241,144 +1234,104 @@ server.static.mixt.estimate.reclassify <- function() {
 #' We are going to reclassify using indepenent updating in
 #' with the conditional model. Here we will start from the
 #' FE classification
-server.static.mixt.estimate.dirty_iteration <- function() {
-  require(Ckmeans.1d.dp)
+server.static.mixt.estimate.modeliteration <- function() {
+
+  # --- use cluster ---#
+  cl = makeCluster(local_opts$cpu_count)
+  clusterEvalQ(cl,require(blmrep))
+
+  # --- MAIN ESTIMATION -  STATIONARY INTERACTIONS ---- #
+  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
+                         sd_floor=1e-7,posterior_reg=1e-8,
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
   # ===== POACHING RANK ========= #
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata= sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  load("L:\\Tibo\\qtrdata\\tmp-2003-prank.dat")
-  fmean = data_prank[from_j2j>0][from_u>0][,list(from_u/(from_j2j + from_u),N=(from_j2j + from_u)),list(f1 = fid)]
-  clusters   = Ckmeans.1d.dp(fmean$V1, 10,fmean$N)
-  grp_akm    = clusters$cluster;names(grp_akm) = fmean$f1
-  sim        = grouping.append(sim,grp_akm,drop=T)
-
-  res =  m2.mixt.estimate.reclassify(sim,10)
-  rs  = rkiv0.start("m2-mixt-d2003-main-reclassify-startwithprank",
-                      info="static 2003 dirty iteration, no split")
-  rkiv0.put(rs,res)
+  # sim = server.static.data()
+  # load("L:\\Tibo\\qtrdata\\tmp-2003-prank.dat")
+  # fmean = data_prank[from_j2j>0][from_u>0][,list(from_u/(from_j2j + from_u),N=(from_j2j + from_u)),list(f1 = fid)]
+  # clusters   = Ckmeans.1d.dp(fmean$V1, 10,fmean$N)
+  # grp_akm    = clusters$cluster;names(grp_akm) = fmean$f1
+  # sim        = grouping.append(sim,grp_akm,drop=T)
+  #
+  # res =  m2.mixt.estimate.reclassify(sim,10,ctrl,cl)
+  # res.save("m2-mixt-d2003-main-reclassify-startwithprank",res)
 
   # ===== RATIO OF MOVERS ========= #
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-
-  fmean = sdata[,list(V1=sum(move==TRUE)/.N,.N),f1]
-
-  sdata= sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
+  sim = server.static.data(remove_movers_from_sdata = F)
+  fmean = sim$sdata[,list(V1=sum(move==TRUE)/.N,.N),f1]
+  sim$sdata = sim$sdata[move==FALSE]
   clusters   = Ckmeans.1d.dp(fmean$V1, 10,fmean$N)
   grp_akm    = clusters$cluster;names(grp_akm) = fmean$f1
   sim        = grouping.append(sim,grp_akm,drop=T)
 
-  res =  m2.mixt.estimate.reclassify(sim,10)
-  rs  = rkiv0.start("m2-mixt-d2003-main-reclassify-startwithratiomover",
-                    info="static 2003 dirty iteration, no split")
-  rkiv0.put(rs,res)
-
-
+  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+  res.save("m2-mixt-d2003-main-reclassify-startwithratiomover",res)
 
   # ===== Using residuals ========= #
   # see section on residuals
 
   # ===== START WITH MAIN RESULTS ========= #
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata= sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  grps  = res.load("m2-mixt-y2003-groups")
+  sim = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
-
-  res =  m2.mixt.estimate.reclassify(sim,10)
-  rs    = rkiv0.start("m2-mixt-d2003-main-reclassify-mainresults",
-                      info="static 2003 dirty iteration, no split")
-  rkiv0.put(rs,res)
+  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+  res.save("m2-mixt-d2003-main-reclassify-mainresults",res)
 
   # ===== START WITH VALUE ADDED ========= #
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata= sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
+  sim = server.static.data()
   fmean = sim$sdata[,log(va1[1]/size1[1]),f1][is.finite(V1)]
   clusters   = Ckmeans.1d.dp(fmean$V1, 10)
   grp_akm        = clusters$cluster
   names(grp_akm) = fmean$f1
   sim        = grouping.append(sim,grp_akm,drop=T)
 
-  res =  m2.mixt.estimate.reclassify(sim,10)
-  rs    = rkiv0.start("m2-mixt-d2003-main-reclassify-startwithva",
-                      info="static 2003 dirty iteration, no split")
-  rkiv0.put(rs,res)
+  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+  res.save("m2-mixt-d2003-main-reclassify-startwithva",res)
 
   # ===== START WITH MEANS ========= #
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata= sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
+  sim   = server.static.data()
   fmean = sim$sdata[,list(mean(y1),.N),f1]
   clusters   = Ckmeans.1d.dp(fmean$V1, 10,fmean$N)
   grp_akm    = clusters$cluster; names(grp_akm) = fmean$f1
   sim        = grouping.append(sim,grp_akm,drop=T)
 
-  res =  m2.mixt.estimate.reclassify(sim,20)
-  rs    = rkiv0.start("m2-mixt-d2003-main-reclassify-startwithmean",
-                      info="static 2003 dirty iteration, no split")
-  rkiv0.put(rs,res)
+  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+  res.save("m2-mixt-d2003-main-reclassify-startwithmean",res)
 
   # ===== START WITH AKM ========= #
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata= sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  # use AKM grouping
-  firm.fe = m2.fe.firms(sim$jdata)
-
-  # classify according to AKM
-  require(Ckmeans.1d.dp)
-  clusters   = Ckmeans.1d.dp(firm.fe$fe$psi, 10)
+  sim   = server.static.data()
+  firm.fe = m2.fe.firms(sim$jdata)                 # use AKM grouping
+  clusters   = Ckmeans.1d.dp(firm.fe$fe$psi, 10)   # classify using AKM FE
   grp_akm        = clusters$cluster
   names(grp_akm) = firm.fe$fe$f1
   sim        = grouping.append(sim,grp_akm,drop=T)
 
-  res = m2.mixt.estimate.reclassify(sim,20)
-  rs    = rkiv0.start("m2-mixt-d2003-main-reclassify-startwithakm",
-                      info="static 2003 AKM estimate, no split sample")
-  rkiv0.put(rs,res)
+  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+  res.save("m2-mixt-d2003-main-reclassify-startwithakm",res)
 
-  ldply(res,function(v) data.frame(v$vdec$stats))
+  stopCluster(cl)
 
-
-  # combining results
+  # =======  combining results ======= #
   rr_all = data.frame()
   ll = list(static="m2-mixt-d2003-main-reclassify-mainresults",
-            akm="m2-mixt-d2003-main-reclassify-startwithakm",
-            mean="m2-mixt-d2003-main-reclassify-startwithmean",
-            va = "m2-mixt-d2003-main-reclassify-startwithva",
+            akm   ="m2-mixt-d2003-main-reclassify-startwithakm",
+            mean  ="m2-mixt-d2003-main-reclassify-startwithmean",
+            va    ="m2-mixt-d2003-main-reclassify-startwithva",
             prank = "m2-mixt-d2003-main-reclassify-startwithprank",
-            mratio = "m2-mixt-d2003-main-reclassify-startwithratiomover",
+            mratio= "m2-mixt-d2003-main-reclassify-startwithratiomover",
             resid = "m2-mixt-d2003-main-reclassify-residuals",
             dynanmic = "m4-mixt-d2003-dirty-reclassification")
   for (nn in names(ll)) {
+    if (!res.exists(ll[[nn]])) next;
     res = res.load(ll[[nn]])
     rr = ldply(res,function(v) data.frame(v$vdec$stats))
     rr$start= nn
     rr_all = rbind(rr_all,rr)
   }
-  rs    = rkiv0.start("m2-mixt-d2003-main-reclassify-allresults",
-                      info="combined results for classification")
-  rkiv0.put(rs,rr_all)
+  res.save("m2-mixt-d2003-main-reclassify-allresults",rr_all)
 }
 
 server.static.mixt.estimate.fit.bs <- function() {
@@ -1460,7 +1413,7 @@ server.static.mixt.estimate.robustess.residuals <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
@@ -1477,10 +1430,9 @@ server.static.mixt.estimate.robustess.residuals <- function() {
 }
 
 #' This is for the second part of the main results for static
-analysis.static.meaneffects <- function() {
-  res_main     = res.load("m2-mixt-y2003-main-fixb") # we do it across bootstraps
-  res_main_hl  = res.load("m2-mixt-d2003-main-highestlik") # we do it across bootstraps
-  res_bs       = m2.getboostrap()
+server.static.analysis.meaneffects <- function() {
+  res_main     = res.load("m2-mixt-d2003-main-fixb") # we do it across bootstraps
+  res_bs       = res.load("m2-mixt-d2003-bootstrap")
 
   NNs          = res_main$model$NNs
   NNs          = round(NNs*1e6/sum(NNs))
@@ -1512,8 +1464,7 @@ analysis.static.meaneffects <- function() {
   rrds[,main := as.numeric(rt[type=="pku",1:7]) - as.numeric(rt[type=="pk0",1:7]) ]
   rrds = rrds[,list(variable, main, m1,q0,q1,sd)]
 
-  rs    = rkiv0.start("m2-mixt-d2003-meffects-leg2")
-  rkiv0.put(rs,list(level=rrs,diff=rrds))
+  res.save("m2-mixt-d2003-meffects",list(level=rrs,diff=rrds))
 }
 
 
@@ -1557,9 +1508,6 @@ server.static.mixture.mixtofmixt <- function() {
   rs    = rkiv0.start("m2-mixt-d2003-main-mixtofmixt",
                       info="static 2003 mixture of mixture estimates")
   rkiv0.put(rs,res_np)
-
-
-
 }
 
 
@@ -1640,7 +1588,7 @@ server.static.proba.feclass <- function() {
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
 
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
 
@@ -1694,7 +1642,7 @@ server.static.proba.feclass <- function() {
 
   # use last classification of AKM, compare to BLM classification
   # or use the BLM clusters
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
 
@@ -1718,7 +1666,7 @@ server.static.proba.feclass <- function() {
     iter_pl    = m2.proba.getlcasspr(sim,10)$class_pr
     # estimate BLM
 
-  cl = makeCluster(local_opts$number_of_clusters)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
     iter_res = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
