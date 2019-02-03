@@ -178,7 +178,7 @@ table.cluster.extra.moments <- function() {
 
 
 #' creates the table with mover counts
-table.movers.count <- function() {
+tab.static.movers.count <- function() {
   m2stats = res.load("m2-stats-d2003")
   cstats = m2stats$cstats
   mstats = m2stats$mstats
@@ -191,7 +191,7 @@ table.movers.count <- function() {
   # brew('inst/templates/tab-summary-mobility.br',paste0(local_opts$wdir,"/tab-summary-mobility-m4.tex"))
 }
 
-table.movers.wages <- function() {
+fig.static.movers.wages <- function() {
   mstats = res.load("m2-stats-d2003")$mstats
   #colnames(mstats) = c("j1","j2","m1","sd1","m2","sd2","m3","sd3","m4","sd4","N")
 
@@ -267,7 +267,7 @@ fig.static.mixt.means <- function() {
   flog.info("creating %s",paste0(local_opts$wdir,"/fig-mixt2-d2003-pk.pdf"))
 }
 
-table.static.mixt.vdec <- function() {
+tab.static.mixt.vdec <- function() {
 
   res_main       = res.load("m2-mixt-d2003-main-fixb")
   model_mixt_bs  = res.load("m2-mixt-d2003-bootstrap")$mixt_all
@@ -720,7 +720,8 @@ fig.dynamic.mixt.connectedness <- function() {
     scale_shape_manual(values=c(20,17,8)) +
     theme(legend.position = "none")
 
-  ggsave("inst/figuresfig-mixt4-d2003-startings.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-mixt4-d2003-startings.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-mixt4-d2003-startings.pdf"))
 }
 
 #' plotting the means and proportions for the main estimate

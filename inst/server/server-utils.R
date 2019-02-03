@@ -24,32 +24,6 @@ res.save <- function(name,value) {
   save(value,file=destfile)
 }
 
-
-
-#' combines the different legs of the bootstraps
-m4.getboostrap <- function() {
-  res_bs         = rkiv0.load("m4-mixt-d2003-bootstrap") # we do it across bootstraps
-  res_bs2        = rkiv0.load("m4-mixt-d2003-bootstrap-leg2") # we do it across bootstraps
-  names(res_bs2$mixt_all) = paste(101:(100+length(res_bs2$mixt_all)))
-  res_bs2$vdecs$rep = res_bs2$vdecs$rep+100
-  res_bs$mixt_all = c(res_bs$mixt_all,res_bs2$mixt_all)
-  res_bs$vdecs = data.table(rbind(res_bs$vdecs,res_bs2$vdecs))
-  return(res_bs)
-}
-
-#' combines the different legs of the bootstraps
-m2.getboostrap <- function(lim=200) {
-  res_bs       = rkiv0.load("m2-mixt-d2003-bootstrap") # we do it across bootstraps
-  res_bs2      = rkiv0.load("m2-mixt-d2003-bootstrap-leg2") # we do it across bootstraps
-  names(res_bs2$mixt_all) = paste(101:(100+length(res_bs2$mixt_all)))
-  res_bs$mixt_all = c(res_bs$mixt_all,res_bs2$mixt_all)
-  res_bs2$vdecs$rep = res_bs2$vdecs$rep + 100
-  res_bs$vdecs = data.table(rbind(res_bs$vdecs,res_bs2$vdecs))
-  res_bs$vdecs = res_bs$vdecs[rep<lim]
-  res_bs$mixt_all = res_bs$mixt_all[paste(1:lim)]
-  return(res_bs)
-}
-
 get.stats.clusters <- function(data,movers=FALSE,ydep="y1") {
   rr = list()
   rr$nwid       = data[,length(unique(wid))]   # unique worker
@@ -373,12 +347,14 @@ analysis.dynamic.dec.bis <- function(model,nsim=1e7) {
 
 generate_simualted_data = function(force=FALSE) {
 
-  if (force==FALSE & file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) return();
+  if ( (force==FALSE) & file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
+    return()
+  }
 
   load("inst/m2-mixt-y2003-main-fixb.rkiv")
   res_main = value
   model = res_main$model
-  sim = m2.mixt.simulate.sim(model,fsize = 15)
+  sim = m2.mixt.simulate.sim(model,fsize = 50)
   sdata = sim$sdata
   jdata = sim$jdata
   sdata$move=0

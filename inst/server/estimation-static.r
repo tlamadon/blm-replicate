@@ -622,72 +622,6 @@ server.static.mixture.d2003.estimate.withx <- function() {
 
 }
 
-
-# here we retain 10% of the stayers in classification
-server.static.mixture.d2003.estimate.holdout <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata = sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  rs    = rkiv0.start("m2-mixt-d2003-main-holdout",
-                      info="static 2003 main estimate, holding stayers in clustering")
-
-  # create holdout
-  sim$sdata[,HO := rank(runif(.N))/.N <= 0.1 ,f1]
-
-  ms    = grouping.getMeasures(list(sdata=sim$sdata[HO==FALSE],jdata=sim$jdata),"ecdf",Nw=20,y_var = "y1")
-  grps  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200,step=100)
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=34,est_nbest=10,sdata_subsample=1,sdata_subredraw=FALSE)
-  cl = makeCluster(local_opts$cpu_count)
-  clusterEvalQ(cl,require(blmrep))
-
-  sim$sdata[,sample:=HO]
-  res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
-
-  stopCluster(cl)
-  rkiv0.put(rs,res_mixt)
-
-}
-
-server.static.mixture.d2003.estimate.holdout2 <- function() {
-
-  # try to include half the stayers in clustering
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-
-  # split movers in 2
-  jdata[,splitdata := rank(runif(.N)) - 0.5 +0.1*(runif(1)-0.5) <= .N/2,f1]
-  mwids = jdata[splitdata==TRUE,unique(wid)]
-  sdata = sdata[!(wid %in% mwids)]
-  jdata = jdata[wid %in% mwids]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  rs    = rkiv0.start("m2-mixt-d2003-main-holdout2",
-                      info="static 2003 main estimate, holding stayers in clustering")
-
-  ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y1")
-  grps  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200,step=100)
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-  cl = makeCluster(local_opts$cpu_count)
-  clusterEvalQ(cl,require(blmrep))
-  res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
-
-  stopCluster(cl)
-  rkiv0.put(rs,res_mixt)
-}
-
 server.static.mixture.d2003.fit <- function() {
 
   load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
@@ -739,24 +673,23 @@ server.static.mixture.d2003.fit <- function() {
 #' robustness. We recluster every time
 server.static.mixture.estimate.robust.nf <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1]
-  sdata=sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
+  sim = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster)
 
   set.seed(87954352)
-  rs    = rkiv0.start("m2-mixt-y2003-changeK",
-                      info="static 2003 estimation with different number of clusters")
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
   cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
-  for (nf_size in c(3:15,17,20)) {
+  for (nf_size in c(3,5,20)) {
     tryCatch({
       ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y1")
       grps  = grouping.classify.once(ms,k = nf_size,nstart = 500,iter.max = 200)
@@ -765,74 +698,67 @@ server.static.mixture.estimate.robust.nf <- function() {
       rr_mixt[[paste("nf",nf_size,sep="-")]] = res_mixt
     })}
   stopCluster(cl)
-  rkiv0.put(rs,rr_mixt)
+
+  res.save("m2-mixt-y2003-changeK")
 }
 
 #' this estimates the model with different values of K to check
 #' robustness. We recluster every time
 server.static.mixture.estimate.robust.nk <- function() {
 
-  # load data
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  # get clsuters
-  grps  = res.load("m2-mixt-y2003-groups")
+  sim = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
-  rs    = rkiv0.start("m2-mixt-d2003-change-nk",
-                      info="static 2003 estimation with different number of worker types")
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=5,sdata_subsample=0.1)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
   cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
-  for (nk_size in c(3:5,7:9)) {
+  for (nk_size in c(3,5,9)) {
     tryCatch({
       res_mixt = m2.mixt.estimate.all(sim,nk=nk_size,ctrl=ctrl,cl=cl)
       res_mixt$second_stage_reps_all=NA
       rr_mixt[[paste("nk",nk_size,sep="-")]] = res_mixt
     })}
   stopClsuter(cl)
-  rkiv0.put(rs,rr_mixt)
 
-  rr = data.table(ldply(rr_mixt,function(r) {
-    dd = data.frame(r$vdec$stats)
-    dd$nk = r$model$nk
-    dd$con = r$connectedness
-    dd
-  }))
-
-  rr[order(nk)]
+  res.save("m2-mixt-d2003-change-nk",rr_mixt)
 }
 
 
-#' we estimate for small firms and for large firms
-server.static.mixture.estimate.robust.fsize <- function() {
+server.static.mixture.estimate.robust.fsize <-function() {
+  res_mixt_lt_50 = server.static.mixture.estimate.robust.fsize.int(0,50)
+  res_mixt_gt_50 = server.static.mixture.estimate.robust.fsize.int(50,Inf)
+  res.save("m2-mixt-d2003-firmsize",list(mixt_leq_50=res_mixt_lt_50,mixt_gt_50=res_mixt_gt_50))
+}
 
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1]
-  sdata=sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
+#' we estimate for small firms and for large firms
+server.static.mixture.estimate.robust.fsize.int <- function(min_size,max_size) {
+
+  sim = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster)
 
   # select firms larger or smaller than 50
-  fids = unique(sim$sdata[,.N,f1][N>50, f1])
+  fids = unique(sim$sdata[,.N,f1][ (N>min_size) & (N<max_size) , f1])
 
   sim$sdata = sim$sdata[f1 %in% fids]
   sim$jdata = sim$jdata[f1 %in% fids][f2 %in% fids]
 
   set.seed(87954352)
-  rs    = rkiv0.start("m2-mixt-d2003-firmsize",
-                      info="estimating conditioning on different firm sizes")
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
   cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
@@ -842,11 +768,7 @@ server.static.mixture.estimate.robust.fsize <- function() {
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl=cl)
   stopCluster(cl)
 
-  save(res_mixt,file="tmp-size50.dat")
-  res_mixt_bt_50 = res_mixt
-  load("tmp-size50.dat")
-
-  rkiv0.put(rs,list(mixt_leq_50=res_mixt,mixt_g_50=res_mixt_bt_50))
+  return(res_mixt)
 }
 
 
@@ -989,120 +911,8 @@ server.static.estimate.clustersplits <- function() {
   rkiv0.put(rs,res_mixt)
 }
 
-server.static.mixt.estimate.reclassify <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata= sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  # get groups
-  grps  = res.load("m2-mixt-y2003-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  sim$sdata[,jm1:=j1]
-  sim$jdata[,jm1:=j1]
-  sim$jdata[,jm2:=j2]
-
-  # get main estimate
-  res_main  = res.load("m2-mixt-y2003-main-fixb")
-  model = res_main$model
-
-  sim$jdata[,splitdata := rank(runif(.N)) - 0.5 +0.1*(runif(1)-0.5) <= .N/2,f1]
-
-  # we then estimate the model
-  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-  cl = makeCluster(local_opts$cpu_count)
-  clusterEvalQ(cl,require(blmrep))
-
-
-  rr_mixt = list()
-  for (iter in 1:5) {
-
-    # compute the posterior probability on stayers
-    sdata.pos = sim$sdata[,{
-      likm = rep(0,model$nf)
-      # iterate on firm types
-      for (ii in 1:.N) {
-        ltau     = log(model$pk0[1,,])
-        lnorm1   = lognormpdf(y1[ii], model$A1, model$S1)
-        lall     = ltau + lnorm1
-        likm     = likm + blm:::logRowSumExp(lall)
-      }
-      # draw the type of the firm
-      list(jp=1:model$nf,lik=likm,N=rep(.N,model$nf),jo=0)
-    },list(fid=f1,jt=j1,jm=jm1)]
-
-    # compute the posterior probability on movers
-    jdata.pos.p1 = sim$jdata[splitdata==TRUE,{
-      likm = rep(0,model$nf)
-      # iterate on firm types
-      for (ii in 1:.N) {
-        ltau     = log(rdim(model$pk1,model$nf,model$nf,model$nk)[,jo,])
-        lnorm1   = lognormpdf(y1[ii], model$A1, model$S1)
-        lnorm2   = lognormpdf(y2[ii], model$A2[jo,], model$S2[jo,])
-        lall     = ltau + lnorm1  + spread(lnorm2,1,model$nf)
-        likm     = likm + blm:::logRowSumExp(lall)
-      }
-      # draw the type of the firm
-      list(jp=1:model$nf,lik=likm,N=rep(.N,model$nf))
-    },list(fid=f1,jt=j1,jo=j2,jm=jm1)]
-
-    jdata.pos.p2 = sim$jdata[splitdata==TRUE,{
-      likm = rep(0,model$nf)
-      # iterate on firm types
-      for (ii in 1:.N) {
-        ltau     = log(rdim(model$pk1,model$nf,model$nf,model$nk)[jo,,])
-        lnorm2   = lognormpdf(y2[ii], model$A2, model$S2)
-        lnorm1   = lognormpdf(y1[ii], model$A1[jo,], model$S1[jo,])
-        lall     = ltau + lnorm2 + spread(lnorm1,1,model$nf)
-        likm     = likm + blm:::logRowSumExp(lall)
-      }
-      # draw the type of the firm
-      list(jp=1:model$nf,lik=likm,N=rep(.N,model$nf))
-    },list(fid=f2,jt=j2,jo=j1,jm=jm2)]
-
-    # combine all likelihoods
-    jdata.pos.p2[,lambda := 1]
-    jdata.pos.p1[,lambda := 1]
-    sdata.pos[,lambda := 1]
-    data.pos  = rbind(sdata.pos,jdata.pos.p1,jdata.pos.p2)
-    data.pos  = data.pos[,list(lik=sum(lambda*lik),N=sum(N),Ns=sum(N[jo==0])),list(fid,jp,jt,jm)]
-    data.pos  = data.pos[,{i = which.max(lik);list(jp=jp[i],N=N[i],Ns=Ns[i])},list(fid,jt,jm)]
-
-    # correlation
-    flog.info("cor=%f cor2=%f ", data.pos[,wt.cor(jt,jp,N)],data.pos[,wt.cor(jp,jm,N)])
-
-    # create clusters out of it
-    clus        = data.pos[,jp]
-    names(clus) = data.pos[,fid]
-
-    # attach groups
-    sim   = grouping.append(sim,clus)
-
-    # we then estimate the model
-    ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                           sd_floor=1e-7,posterior_reg=1e-8,
-                           est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
-    res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata[splitdata==FALSE]),nk=6,ctrl,cl)
-    model    = res_mixt$model
-    rr_mixt[[paste(iter)]] = res_mixt
-  }
-
-  stopCluster(cl)
-
-  rs    = rkiv0.start("m2-mixt-d2003-main-reclassify-holdout",
-                      info="static 2003 estimate, use half of the movers to reclassify firms")
-  rkiv0.put(rs,rr_mixt)
-}
-
-#' We are going to reclassify using indepenent updating in
-#' with the conditional model. Here we will start from the
-#' FE classification
-server.static.mixt.estimate.modeliteration <- function() {
+#' Using the model to reclassify
+server.static.mixt.estimate.model_iteration <- function() {
 
   # --- use cluster ---#
   cl = makeCluster(local_opts$cpu_count)
