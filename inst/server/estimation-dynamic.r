@@ -109,7 +109,7 @@ server.static.rho.analysis <- function(){
 }
 
 
-server.static.mini.estimate.main <- function(){
+server.dynamic.cf <- function(){
 
   load(sprintf("%s/data-tmp/tmp-2003-static",local_opts$wdir))
   clus = unique(sdata[,list(fid=f1,clus=j1)])

@@ -922,138 +922,6 @@ server.static.mixture.estimate.boostrap <- function(){
   res.save("m2-mixt-d2003-bootstrap",list(vdecs=rrr,mixt_all=rr_mixt2))
 }
 
-
-#' Boostrapping the fixed-effect estimator
-server.static.mixture.estimate.boostrap.akm <- function(){
-
-  # get data
-  arch_static = "res-2003-static.dat"
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1]
-  sdata = sdata[move==FALSE]
-  sim = list(sdata=sdata,jdata=jdata)
-
-  # get groups
-  grps  = res.load("m2-mixt-y2003-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  # get main estimate
-  res_main  = res.load("m2-mixt-y2003-main-fixb")
-  model_true = res_main$model
-
-  # now we bootstrap with clustering
-  rrr=data.frame()
-  rr_mixt = list()
-  for (i in reps) {
-    tryCatch({
-      # we use the regression coef estimated in the dynamic
-      sdata.sim = m2.mixt.impute.stayers(sim$sdata,model_true,rho21s=0.681,stationary=TRUE)
-      jdata.sim = m2.mixt.impute.movers(sim$jdata,model_true)
-      sdata.sim[,y1:=y1_imp][,y2:=y2_imp][,jt:=j1][,y1_bu:=y1]
-      jdata.sim[,y1:=y1_imp][,y2:=y2_imp]
-      sim.sp = list(jdata=jdata.sim,sdata=sdata.sim)
-
-      # --- estimate AKM --- #
-      akm_cov = m2.fe.all(sim.sp)
-
-      rr2 = data.frame(minib$vdec$stats)
-
-      rr2$rep=i
-      rrr = rbind(rrr,rr2)
-      flog.info("done with rep %i",i)
-
-      print(rrr)
-    }, error = function(e) {catf("error in boot strap rep %i!\n",i);print(e)})
-  }
-
-  stopCluster(cl)
-
-  load("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-mixt-45s-100to200.dat")
-  rr_mixt2 = lapply(rr_mixt,function(r) { r$second_stage_reps_all=NULL;r})
-  rs      = rkiv0.start("m2-mixt-d2003-bootstrap-leg2")
-  rs$info = "parametric bootstrap of static mixture on 2003 data reps 100 to 200"
-  rkiv0.put(rs,list(vdecs=rrr,mixt_all=rr_mixt2))
-
-
-
-  load("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-mixt.dat")
-  archive.put(mixt_bs = rr_mixt ,m="all realisation of the mixture model in each bootstrap result",file = arch_static)
-}
-
-server.static.estimate.poachingrank <- function() {
-
-  arch_static = "res-2003-static.dat"
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-  #sim$jdata$fids=NULL
-
-  frank <- sim$sdata[,mean(y1),f1][,list(fq=ceiling(3*rank(V1)/.N),f1)]
-  setkey(frank,f1)
-  setkey(sim$jdata,f1)
-  sim$jdata[,fq1 := frank[sim$jdata,fq]]
-  setkey(sim$jdata,f2)
-  sim$jdata[,fq2 := frank[sim$jdata,fq]]
-
-  # create the measure
-  # for each firm we count number of movers coming/going going to each firm-quartile
-  rr1=sim$jdata[,list(.N,dir="out"),list(f=f1,fq=fq2)]
-  rr2=sim$jdata[,list(.N,dir="in"),list(f=f2,fq=fq1)]
-  rr=rbind(rr1,rr2)
-  rr[,S:=sum(N),f]
-  rr[,r:=N/S]
-  rr2 = rr[,list(f1=f,measure=paste(dir,fq,sep="-"),value=r)]
-
-  # select firms with at least nm movers
-  # fids = rr[S>=10,unique(f)]
-  # rr = rr[f %in% fids]
-  #setkey(rr,f)
-
-  # append additional measure
-  rr_more = sim$sdata[f1 %in% unique(rr2$f1),list(wm=mean(y1),wsd=sd(y1)),f1]
-  rr_more[is.na(wsd),wsd:=0]
-  rr_more = data.table(melt(rr_more,id.vars = "f1") )
-  setnames(rr_more,"variable","measure")
-  rr = rbind(rr_more,rr2)
-
-  # get size from cross-section
-  ddf = sim$sdata[,list(nw=.N),f1]
-  setkey(ddf,f1)
-  setkey(rr,f1)
-  rr = ddf[rr]
-
-  # standardize weighted
-  rr[,m0  := sum(nw*value)/sum(nw), list(measure)]
-  rr[,sd0 := sqrt(sum(nw*(value-m0)^2/sum(nw))), list(measure)]
-  rr[,rf  := (value-m0)/sd0, list(measure)]
-
-  setkey(rr,f1)
-  M = acast(rr[str_detect(measure,"wm|wsd")],f1 ~ measure,fill=0,value.var = "rf")
-  W = rr[,nw[1],f1][,V1] # use total size
-
-  # compute the groups
-  grps  = grouping.classify.once(list(M=M,W=W,Nw=ncol(M),measure="move",N=nrow(M),tsize=0,discrepency=0),k = 10,nstart = 1000,iter.max = 200)
-  sim   = grouping.append(sim,grps$best_cluster,drop=T)
-
-  # moving patterns
-  acast(sim$jdata[,.N,list(j1,j2)],j1~j2,fill=0)
-  sim$sdata[,mean(y1),j1][order(j1)]
-
-  # between firm variance
-  my = sim$sdata[,list(m=mean(y1),.N),f1][,sum(N*m)/sum(N)]
-  v1 = sim$sdata[,list(m=mean(y1),.N),f1][,sum(N*(m-my)^2)/sum(N)]
-  my = sim$sdata[,list(m=mean(y1),.N),j1][,sum(N*m)/sum(N)]
-  v2 = sim$sdata[,list(m=mean(y1),.N),j1][,sum(N*(m-my)^2)/sum(N)]
-  v2/v1
-
-  my = sim$jdata[,list(m=mean(y1),.N),f1][,sum(N*m)/sum(N)]
-  v1 = sim$jdata[,list(m=mean(y1),.N),f1][,sum(N*(m-my)^2)/sum(N)]
-  my = sim$jdata[,list(m=mean(y1),.N),j1][,sum(N*m)/sum(N)]
-  v2 = sim$jdata[,list(m=mean(y1),.N),j1][,sum(N*(m-my)^2)/sum(N)]
-  v2/v1
-}
-
-
 server.static.estimate.clustersplits <- function() {
   # === EXERCICE 2 ===
   # we take our clusters, we then split each cluster into
@@ -1473,41 +1341,33 @@ server.static.analysis.meaneffects <- function() {
 # estimates the mixture of mixture model
 server.static.mixture.mixtofmixt <- function() {
 
-  # load data
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1]
-  sdata <- sdata[move==0]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  # get clsuters
-  grps  = res.load("m2-mixt-y2003-groups")
+  sim   = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   # get main estimate
-  res_main = res.load("m2-mixt-y2003-main-fixb")
+  res_main = res.load("m2-mixt-d2003-main-fixb")
   model_mixt = res_main$model
   model_mixt$S1 = 0.9*model_mixt$S1 + 0.1*mean(model_mixt$S1)
   model_mixt$S2 = 0.9*model_mixt$S2 + 0.1*mean(model_mixt$S2)
   model_np   = m2.mixt.np.new.from.ns(model_mixt,3)
 
-  ctrl   = em.control(tol=1e-6,fixb=F,dprior=1.001,maxiter=1000,ncat=1,posterior_reg=1e-7,sd_floor=1e-6)
+  ctrl   = em.control(tol=1e-6,fixb=F,dprior=1.001,ncat=1,posterior_reg=1e-7,sd_floor=1e-6,
+                      maxiter = local_opts$estimation.mixture$maxiter)
 
   # estimate movers
   res_np = m2.mixt.np.movers.estimate(sim$jdata,model_np,ctrl)
+  res_np$model$pk0 = res_np$model$pk0[1,,] # not using covariates.
+
   # estimate stayers
   sim$sdata[,sample := rank(runif(.N))/.N<=ctrl$sdata_subsample,j1]
   res_np = m2.mixt.np.stayers.estimate(sim$sdata[sample==1],res_np$model,ctrl)
-
-  rr = blm:::m2.mixt.np.movers.residuals(res_np$model,TRUE,100)
+  # rr = m2.mixt.np.movers.residuals(res_np$model,TRUE,100)
 
   stayer_share = sim$sdata[,.N]/(sim$sdata[,.N]+sim$jdata[,.N])
   vdec = m2.mixt.np.vdec(res_np$model,nsim = 1e6,stayer_share = stayer_share)
   res_np$vdec = vdec
-
-  rs    = rkiv0.start("m2-mixt-d2003-main-mixtofmixt",
-                      info="static 2003 mixture of mixture estimates")
-  rkiv0.put(rs,res_np)
+  res.save("m2-mixt-d2003-main-mixtofmixt",res_np)
 }
 
 
