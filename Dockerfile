@@ -8,7 +8,7 @@ FROM rocker/tidyverse:3.4.1
 ## devtools::install("SymbolixAU/googleway")
 
 # install packrat
-# RUN R -e 'install.packages("packrat", repos="http://cran.rstudio.com", dependencies=TRUE, lib="/usr/local/lib/R/site-library");'
+RUN R -e 'install.packages("packrat", repos="http://cran.rstudio.com", dependencies=TRUE, lib="/usr/local/lib/R/site-library");'
 # RUN R -e 'install.packages("data.table", repos="http://cran.rstudio.com", dependencies=TRUE, lib="/usr/local/lib/R/site-library");'
 
 # COPY ./DockerConfig/requirements.R /tmp/requirements.R 
@@ -27,9 +27,11 @@ ENV USER rstudio
 # run packrat - get all dependencies
 WORKDIR /home/$USER
 RUN git clone https://github.com/tlamadon/blm-replicate.git 
-#RUN R -e 'packrat::restore("blm-replicate");'
+WORKDIR /home/$USER/blm-replicate
+RUN R -e 'packrat::restore();'
 RUN R -e 'devtools::install_deps("blm-replicate");'
-RUN R -e 'devtools::install_github("setzler/textables");'
+#RUN R -e 'devtools::install_github("setzler/textables");'
+#RUN R -e 'devtools::install_github("tlamadon/RcppSimpleTensor");'
 
 # build the blm-replicate library
 RUN R CMD INSTALL --no-multiarch --with-keep.source blm-replicate

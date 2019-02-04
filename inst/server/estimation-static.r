@@ -1,3 +1,6 @@
+# ========= UTILS =========
+
+#' loads static data
 server.static.data <- function(remove_movers_from_sdata=T) {
   load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
@@ -74,429 +77,15 @@ server.static.mini.d2003.estimate <- function() {
 
 
 server.static.mini.estimate.main <- function(){
-
   sim = server.static.data()
   grps  = res.load("m2-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   mini_model = m2.mini.estimate(sim$jdata,sim$sdata,norm = 1,method="prof")
   res.save("m2-mini-prof",mini_model)
-}
 
-#' estimate the mini-model once, then resimulate from it, then re-cluster
-#' and re-estimate. repeat theis many times
-server.static.mini.estimate.bootstrap <-function() {
-
-  sim   = server.static.data()
-  grps  = res.load("m2-mixt-d2003-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  # get the main mini-model estimate
-  model0     = res.load("m2-mini-prof")
-  sdata.sim  = m2.mini.impute.stayers(model0,sim$sdata)
-  vdec2      = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
-
-  # save original clusters
-  dclus0 = unique(sim$sdata[,list(f1,j1)])
-  clus0  = dclus0$j1
-  names(clus0) = dclus0$f1
-
-  # set the seed
-  set.seed(12345) # archive should save that too
-
-  rrr=data.frame()
-  rr_mix = list()
-  rr_mini = list()
-  for (i in 1:local_opts$bootstrap_nreps) {
-    sim   = grouping.append(sim,clus0,sort = F)
-    sim$sdata = m2.mini.impute.stayers(model0,sim$sdata)
-    sim$jdata = m2.mini.impute.movers(model0,sim$jdata)
-    sim$sdata[,c('y1','y2'):=list(y1_imp,y2_imp)]
-    sim$jdata[,c('y1','y2'):=list(y1_imp,y2_imp)]
-
-    ms    = grouping.getMeasures(sim,"ecdf",Nw=10,y_var = "y1")
-    grps  = grouping.classify.once(ms,k=10,nstart = 300,iter.max = 200)
-    sim   = grouping.append(sim,grps$best_cluster)
-
-    model1   = m2.mini.estimate(sim$jdata,sim$sdata,method="prof",norm=4)
-    # m2.mini.plotw(model1)
-
-    sdata.sim   = m2.mini.impute.stayers(model1,sim$sdata)
-    vdec2 = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
-    rr_mini[[paste(i)]] = model1
-    rr2 = data.frame(vdec2$stats)
-    rr2$model="mini"
-    rr2$i= i
-
-    catf("don with rep %i\n",i)
-    rrr = rbind(rrr,rr2)
-  }
-
-  gg = data.table(ldply(rr_mini,function(x) x$B1/x$B1[2]))
-  mg = melt(gg,id.vars = ".id")[,list(m=mean(value),sd=sd(value)),variable]
-
-  # need to boostrap they actual figure :-/
-  gg = data.table(ldply(rr_mini,function(x) m2.mini.plotw(x,getvals=T)))
-  gg = gg[,list(value=mean(value),ql=quantile(value,0.025),qh=quantile(value,0.975)),list(l,k,variable)]
-  ggplot(gg,aes(x=l,y=value,color=factor(k))) + geom_line() +
-    geom_point() + geom_errorbar(aes(ymin=ql,ymax=qh),width=0.2)+
-    theme_bw() + facet_wrap(~variable,nrow = 2,scales="free")
-
-  # compute the covariance
-  gg = data.table(ldply(rr_mini,function(x) cov.wt(cbind(x$B1,x$Em),x$Ns)$cov[2,1]))
-  gg[,list(m=mean(V1),q0=quantile(V1,0.025),q1=quantile(V1,0.975))]
-  cov.wt(cbind(model0$B1,model0$Em),model0$Ns)$cov[2,1]
-
-  I = 2:10
-  gg = data.table(ldply(rr_mini,function(x) cov.wt(cbind(x$B1[I],x$Em[I]),x$Ns[I])$cov[2,1]))
-  gg[,list(m=mean(V1),q0=quantile(V1,0.025),q1=quantile(V1,0.975))]
-
-  # compute decompositions
-  data.table(melt(rrr,id.vars = c("model","i")))[,list(m=mean(value),q0=quantile(value,0.025),q1=quantile(value,0.975)),variable]
-}
-
-server.static.mini.estimate.mainx <- function(){
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,ageg:= (age<=30) + 2*((age >= 31)&(age<=50)) + 3*(age>50)]
-  sdata[,x := educ + 3*(ageg-1)]
-  sdata[, x := as.integer(x)]
-
-  cstats = sdata[,list(m1=mean(y1),sd1=sd(y1),
-                       m2=mean(y2),sd2=sd(y2),.N),list(j1,x)]
-
-  mini_model = model.mini2.estimate(jdata,sdata,norm = 4,fixb=T,withx=T)
-  sdata.sim  = model.mini2.impute.stayers(sdata,mini_model)
-  mini_model$vdec = lin.projax(sdata.sim,"y1_imp","k_imp","j1")
-}
-
-
-server.static.mini.estimate.main.randomclusters <- function(){
-  arch_static = "res-2003-static.dat"
-
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  clus = unique(sdata[,list(fid=f1,clus=j1)])
-  clus[,clus:=sample.int(10,.N,replace=T)]
-  jdata =  cluster.append.data(jdata,clus)
-  sdata =  cluster.append.data(sdata,clus)
-
-  mstats = jdata[,list(m1=mean(y1),sd1=sd(y1),
-                       m2=mean(y2),sd2=sd(y2),.N),list(j1,j2)]
-  cstats = sdata[,list(m1=mean(y1),sd1=sd(y1),
-                       m2=mean(y2),sd2=sd(y2),.N),list(j1)]
-
-  mini_model = model.mini2.estimate(jdata,sdata,norm = 4,fixb=T)
-  sdata.sim  = model.mini2.impute.stayers(sdata,mini_model)
-  vdec_minimodel = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
-}
-
-
-
-#' estimate the mini-model once, then resimulate from it, then re-cluster
-#' and re-estimate. repeat theis many times
-server.static.mini.estimate.bootstrap.leave10out <- function() {
-
-  arch = "res-2003-static.dat"
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-
-  fids = sdata[,.N,f1][N>=25,f1]
-  sdata = sdata[f1 %in% fids][f2 %in% fids]
-  jdata = jdata[f1 %in% fids][f2 %in% fids]
-
-  # reclusterleaving 10% out
-  wids.mo = jdata[,wid]
-  wids.s1 = sdata[!(wid%in%wids.mo),list(wid=sample(wid,ceiling(.N*0.9))),f1][,wid]
-  #wids.s1 = union(
-  #  sdata[!(wid%in%wids.mo),list(wid=sample(wid,1)),f1][,wid],
-  #  sdata[!(wid%in%wids.mo),list(wid=sample(wid,ceiling(0.9*.N)))][,wid])
-
-  cdata = sdata[(wid%in%wids.s1),list(fid=f1,lw=y1)]
-  #cdata = sdata[,list(fid=f1,lw=y1)]
-  clus  = cluster.firms.data(cdata,ncluster=10,nw=40,nstart=300,step=50)
-  sdata = cluster.append.data(sdata,clus$clus)
-  jdata = cluster.append.data(jdata,clus$clus)
-
-  # estimate using 10% left out
-  wids.s2 = sdata[(wid %in% wids.s1),sample(wid,ceiling(0.1/0.9*.N))]
-  mini_model_true = model.mini2.estimate(jdata,sdata[(wid %in% wids.s2)],norm = 4,fixb=T)
-  mini_model_true = model.mini2.estimate(jdata,sdata[!(wid %in% wids.s1)],norm = 4,fixb=T)
-  # mini_model_true = model.mini2.estimate(jdata,sdata,norm = 4,fixb=T)
-
-  sdata.sim       = model.mini2.impute.stayers(ssample(sdata,0.1),mini_model_true)
-  vdec_minimodel  = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
-
-  rrr=data.frame()
-  rr_mix = list()
-  rr_mini = list()
-  for (i in 1:100) {
-    sdata.sim = model.mini2.impute.stayers(sdata,mini_model_true)
-    jdata.sim = model.mini2.impute.movers(jdata,mini_model_true)
-    sdata.sim[,y1:=y1_imp]
-    sdata.sim[,y2:=y2_imp]
-    jdata.sim[,y1:=y1_imp]
-    jdata.sim[,y2:=y2_imp]
-    vdec_dir_100_bc  = lin.proja(ssample(sdata.sim,0.1),"y1","k_imp","j1")
-
-    # take some stayers (not movers) out from clustering
-    wids.mo = jdata.sim[,wid]
-
-    # sample overall, to avoid treating small firms differently
-    wids.s1 = union(
-                sdata.sim[!(wid%in%wids.mo),list(wid=sample(wid,1)),f1][,wid],
-                sdata.sim[!(wid%in%wids.mo),list(wid=sample(wid,ceiling(0.9*.N)))][,wid])
-    vdec_dir_90_bc  = lin.proja(ssample(sdata.sim[wid%in%wids.s1],0.1),"y1","k_imp","j1")
-    vdec_dir_10_bc  = lin.proja(sdata.sim[!(wid%in%wids.s1)],"y1","k_imp","j1")
-
-    # estimate LIML using true clusters
-    mini_model_bis   = model.mini2.estimate(jdata.sim,sdata.sim,norm = 4,fixb=T)
-    sdata.sim.bis    = model.mini2.impute.stayers(ssample(sdata.sim,0.1),mini_model_bis)
-    vdec_liml_100_bc = lin.proja(sdata.sim.bis,"y1_imp","k_imp","j1")
-
-    mini_model_bis  = model.mini2.estimate(jdata.sim,sdata.sim[(wid %in% wids.s1)],norm = 4,fixb=T)
-    sdata.sim.bis   = model.mini2.impute.stayers(ssample(sdata.sim,0.1),mini_model_bis)
-    vdec_liml_90_bc = lin.proja(sdata.sim.bis,"y1_imp","k_imp","j1")
-
-    mini_model_bis  = model.mini2.estimate(jdata.sim,sdata.sim[!(wid %in% wids.s1)],norm = 4,fixb=T)
-    sdata.sim.bis   = model.mini2.impute.stayers(ssample(sdata.sim,0.1),mini_model_bis)
-    vdec_liml_10_bc = lin.proja(sdata.sim.bis,"y1_imp","k_imp","j1")
-
-    # --- recluster ---- #
-    cdata = sdata.sim[(wid%in%wids.s1),list(fid=f1,lw=y1)]
-    clus  = cluster.firms.data(cdata,ncluster=10,nw=40,nstart=300,step=50)
-    sdata.sim = cluster.append.data(sdata.sim,clus$clus)
-    jdata.sim = cluster.append.data(jdata.sim,clus$clus)
-    vdec_dir_90_ac  = lin.proja(ssample(sdata.sim[wid%in%wids.s1],0.1),"y1","k_imp","j1")
-    vdec_dir_10_ac  = lin.proja(sdata.sim[!(wid%in%wids.s1)],"y1","k_imp","j1")
-    vdec_dir_100_ac  = lin.proja(ssample(sdata.sim,0.1),"y1","k_imp","j1")
-
-    # estimate mini-model
-    mini_model_bis = model.mini2.estimate(jdata.sim,sdata.sim[!(wid %in% wids.s1)],norm = 4,fixb=T)
-    sdata.sim.bis  = model.mini2.impute.stayers(ssample(sdata.sim,0.1),mini_model_bis)
-    vdec_liml_10_ac = lin.proja(sdata.sim.bis,"y1_imp","k_imp","j1")
-    rr_mini[[paste(i)]] = mini_model_bis
-
-    mini_model_bis = model.mini2.estimate(jdata.sim,sdata.sim[(wid %in% wids.s1)],norm = 4,fixb=T)
-    sdata.sim.bis  = model.mini2.impute.stayers(ssample(sdata.sim,0.1),mini_model_bis)
-    vdec_liml_90_ac = lin.proja(sdata.sim.bis,"y1_imp","k_imp","j1")
-
-    mini_model_bis = model.mini2.estimate(jdata.sim,sdata.sim,norm = 4,fixb=T)
-    sdata.sim.bis  = model.mini2.impute.stayers(ssample(sdata.sim,0.1),mini_model_bis)
-    vdec_liml_100_ac = lin.proja(sdata.sim.bis,"y1_imp","k_imp","j1")
-
-
-    rr2 = rbind(
-      data.frame(vdec_liml_90_ac$stats ,where="vdec_liml_90_ac"),
-      data.frame(vdec_liml_10_ac$stats ,where="vdec_liml_10_ac"),
-      data.frame(vdec_dir_10_ac$stats  ,where="vdec_dir_10_ac"),
-      data.frame(vdec_dir_90_ac$stats  ,where="vdec_dir_90_ac"),
-      data.frame(vdec_dir_100_ac$stats ,where="vdec_dir_100_ac"),
-      data.frame(vdec_liml_10_bc$stats ,where="vdec_liml_10_bc"),
-      data.frame(vdec_liml_90_bc$stats ,where="vdec_liml_90_bc"),
-      data.frame(vdec_liml_100_bc$stats,where="vdec_liml_100_bc"),
-      data.frame(vdec_dir_10_bc$stats  ,where="vdec_dir_10_bc"),
-      data.frame(vdec_dir_90_bc$stats  ,where="vdec_dir_90_bc"),
-      data.frame(vdec_dir_100_bc$stats ,where="vdec_dir_100_bc"))
-    rr2$model="mini"
-    rr2$i= i
-
-    rrr = rbind(rrr,rr2)
-    save(rrr,rr_mix,rr_mini,file="L:\\Tibo\\qtrdata\\tmp-static-bootstrap-lo2.dat")
-    catf("don with rep %i\n",i)
-    print(data.table(rrr)[,lapply(.SD,mean),where,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
-  }
-
-  rrr = data.table(rrr)
-  rbind(
-    rrr[,lapply(.SD,mean), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")],
-    rrr[,lapply(.SD,quantile,0.025), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")],
-    rrr[,lapply(.SD,quantile,0.975), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
-
-
-  archive.put(mini_bs_lo = rr_mini ,m="all realisation of the mini model in each bootstrap result",file = arch)
-  archive.put(mini_bs_lo_vardec=rrr,m="all variaance decomposition for each boostrap repetition",file = arch)
-}
-
-
-#' estimate the mini-model once, then resimulate from it, then re-cluster
-#' and re-estimate. repeat theis many times
-server.static.mini.estimate.bootstrap.firmsize <- function() {
-
-  fsize=1
-
-  arch = "res-2003-static.dat"
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-
-  fids = sdata[,.N,f1][N>=fsize,f1]
-  sdata = sdata[f1 %in% fids][f2 %in% fids]
-  jdata = jdata[f1 %in% fids][f2 %in% fids]
-
-  cdata = sdata[(wid%in%wids.s1),list(fid=f1,lw=y1)]
-  clus  = cluster.firms.data(cdata,ncluster=10,nw=40,nstart=300,step=50)
-  sdata = cluster.append.data(sdata,clus$clus)
-  jdata = cluster.append.data(jdata,clus$clus)
-
-  # estimate using 10% left out
-  mini_model_true = model.mini2.estimate(jdata,sdata,norm = 4,fixb=T)
-  sdata.sim       = model.mini2.impute.stayers(ssample(sdata,0.1),mini_model_true)
-  vdec_minimodel  = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
-
-  rrr=data.frame()
-  rr_mix = list()
-  rr_mini = list()
-  for (i in 1:100) {
-    sdata.sim = model.mini2.impute.stayers(sdata,mini_model_true)
-    jdata.sim = model.mini2.impute.movers(jdata,mini_model_true)
-    sdata.sim[,y1:=y1_imp]
-    sdata.sim[,y2:=y2_imp]
-    jdata.sim[,y1:=y1_imp]
-    jdata.sim[,y2:=y2_imp]
-    vdec_dir_100_bc  = lin.proja(ssample(sdata.sim,0.1),"y1","k_imp","j1")
-
-    # estimate LIML using true clusters
-    mini_model_bis   = model.mini2.estimate(jdata.sim,sdata.sim,norm = 4,fixb=T)
-    sdata.sim.bis    = model.mini2.impute.stayers(ssample(sdata.sim,0.1),mini_model_bis)
-    vdec_liml_100_bc = lin.proja(sdata.sim.bis,"y1_imp","k_imp","j1")
-
-    # --- recluster ---- #
-    cdata = sdata.sim[,list(fid=f1,lw=y1)]
-    clus  = cluster.firms.data(cdata,ncluster=10,nw=40,nstart=300,step=50)
-    sdata.sim = cluster.append.data(sdata.sim,clus$clus)
-    jdata.sim = cluster.append.data(jdata.sim,clus$clus)
-    vdec_dir_100_ac  = lin.proja(ssample(sdata.sim,0.1),"y1","k_imp","j1")
-
-    # estimate mini-model
-    mini_model_bis = model.mini2.estimate(jdata.sim,sdata.sim,norm = 4,fixb=T)
-    sdata.sim.bis  = model.mini2.impute.stayers(ssample(sdata.sim,0.1),mini_model_bis)
-    vdec_liml_100_ac = lin.proja(sdata.sim.bis,"y1_imp","k_imp","j1")
-    rr_mini[[paste(i)]] = mini_model_bis
-
-    rr2 = rbind(
-      data.frame(vdec_liml_100_ac$stats ,where="vdec_liml_100_ac"),
-      data.frame(vdec_dir_100_ac$stats ,where="vdec_dir_100_ac"),
-      data.frame(vdec_liml_100_bc$stats,where="vdec_liml_100_bc"),
-      data.frame(vdec_dir_100_bc$stats ,where="vdec_dir_100_bc"))
-    rr2$model="mini"
-    rr2$i= i
-
-    rrr = rbind(rrr,rr2)
-    save(rrr,rr_mix,rr_mini,file=sprintf("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-fsize%i.dat",fsize))
-    catf("don with rep %i\n",i)
-    print(data.table(rrr)[,lapply(.SD,mean),where,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
-  }
-
-  load(sprintf("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-fsize%i.dat",5))
-  archive.put(mini_bs_sf_5 = rr_mini ,m="minimodel bootstrap fsize 5",file = arch_static)
-  archive.put(mini_bs_sf_5_vardec=rrr,m="minimodel bootstrap fsize 5 variance decomposition",file = arch_static)
-  load(sprintf("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-fsize%i.dat",10))
-  archive.put(mini_bs_sf_10 = rr_mini ,m="minimodel bootstrap fsize 10",file = arch_static)
-  archive.put(mini_bs_sf_10_vardec=rrr,m="minimodel bootstrap fsize 10 variance decomposition",file = arch_static)
-  load(sprintf("L:\\Tibo\\qtrdata\\tmp-static-bootstrap-fsize%i.dat",50))
-  archive.put(mini_bs_sf_50 = rr_mini ,m="minimodel bootstrap fsize 50",file = arch_static)
-  archive.put(mini_bs_sf_50_vardec=rrr,m="minimodel bootstrap fsize 50 variance decomposition",file = arch_static)
-
-  rrr = data.table(rrr)
-  rbind(
-    rrr[,lapply(.SD,mean), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")],
-    rrr[,lapply(.SD,quantile,0.025), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")],
-    rrr[,lapply(.SD,quantile,0.975), ,.SDcols = c("cor_kl","cov_kl","var_k","var_l","rsq")])
-}
-
-
-
-#' estimate the mini-model with different cluster sizes
-server.static.mini.estimate.ksize <- function() {
-
-  arch = "res-2003-static.dat"
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-
-  load(file="L:\\Tibo\\qtrdata\\tmp-2003-clusters.dat")
-  rr_models = list()
-  rr_vardecs =list()
-  for (k in 3:20) {
-    jdata =  cluster.append.data(jdata,res[[paste(k)]])
-    sdata =  cluster.append.data(sdata,res[[paste(k)]])
-    mini_model = model.mini2.estimate(jdata,sdata,norm = 4,fixb=T)
-    sdata.sim  = model.mini2.impute.stayers(sdata,mini_model)
-    vdec_minimodel = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
-    vdec_minimodel$between_var_explained = sdata[, list(mean(y1),.N),j1][,wtd.var(V1,N)]/sdata[, list(mean(y1),.N),f1][,wtd.var(V1,N)]*100
-    rr_models[[paste(k)]] = mini_model
-    rr_vardecs[[paste(k)]] = vdec_minimodel
-  }
-
-  archive.put(mini_ksize = rr_models ,m="mini model for different k sizes",file = arch)
-  archive.put(mini_ksize_vardec=rr_vardecs,m="all variance decomposition for each cluster size",file = arch)
-}
-
-
-# running on full data
-server.static.mini.estimate.fulldata <- function() {
-  arch_static = "res-2003-static.dat"
-
-  load("L:\\Tibo\\qtrdata\\tmp-2003-allc.dat")
-  cdata = sdata[,list(fid=f1,lw=y1)]
-  clus  = cluster.firms.data(cdata,ncluster=10,nw=40,nstart=500,step=100)
-  sdata = cluster.append.data(sdata,clus)
-  jdata = cluster.append.data(jdata,clus)
-  jdata = jdata[!is.na(j2)]
-  sdata = sdata[!is.na(j2)]
-
-  mini_model = model.mini2.estimate(jdata,sdata,norm = 4,fixb=T)
-  sdata.sim  = model.mini2.impute.stayers(sdata,mini_model)
-  vdec_minimodel = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
-
-  archive.put(mini_model_full=mini_model,m="mini model estimated on every one",file = arch_static)
-  archive.put(mini_model_full_vardec=vdec_minimodel,m="mini model estimated on every one, variance decomposition",file = arch_static)
-}
-
-server.static.mini.estimate.splits <- function() {
-  arch_static = "res-2003-static.dat"
-
-  nc = 8 # nuber of clusters
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,ageg:= (age<=30) + 2*((age >= 31)&(age<=50)) + 3*(age>50)]
-  sdata[,x := educ + 3*(ageg-1)]
-  sdata[, x := as.integer(x)]
-
-  clusAndEst = function(jdata,sdata,nc=10) {
-      cdata = sdata[,list(fid=f1,lw=y1)]
-      clus  = cluster.firms.data(cdata,ncluster=nc,nw=40,nstart=300,step=50)
-      sdata = cluster.append.data(sdata,clus$clus)
-      jdata = cluster.append.data(jdata,clus$clus)
-
-      jdata = jdata[!is.na(j1*j2)]
-      sdata = sdata[!is.na(j1*j2)]
-
-      mini_model = model.mini2.estimate(jdata,sdata,norm = 4,fixb=T)
-      sdata.sim  = model.mini2.impute.stayers(sdata,mini_model)
-      mini_model$vdec = lin.proja(sdata.sim,"y1_imp","k_imp","j1")
-      return(mini_model)
-  }
-
-  # select one industry
-  inds = sdata[,unique(ind1)]
-  for (ind in inds) {
-    fids = sdata[ind1==ind,unique(f1)]
-    mini1 = clusAndEst(jdata[(f1 %in% fids)&(f2 %in% fids)],sdata[(f1 %in% fids)&(f2 %in% fids)],nc=nc)
-    res[[sprintf("ind-%s-c%i",ind,nc)]] = mini1
-  }
-
-  # split by educ
-  educs = sdata[,unique(educ)]
-  for (e in educs) {
-    wids = sdata[educ==e,unique(wid)]
-    mini1 = clusAndEst(jdata[wid %in% wids],sdata[wid %in% wids],nc=nc)
-    res[[sprintf("educ-%i-c%i",e,nc)]] = mini1
-  }
-
-  # split by age
-  sdata[,acat := cut(age,breaks = c(0,30,50,150))]
-  acats = sdata[,unique(acat)]
-  for (ag in acats) {
-      wids = sdata[acat==ag,unique(wid)]
-      mini1 = clusAndEst(jdata[wid %in% wids],sdata[wid %in% wids],nc=nc)
-      res[[sprintf("age-%s-c%i",ag,nc)]] = mini1
-  }
-
-  archive.put(mini_splits=res,m="mini model for different splits based on observables",file = arch_static)
+  mini_model = m2.mini.estimate(sim$jdata,sim$sdata,norm = 1,method="linear")
+  res.save("m2-mini-linear",mini_model)
 }
 
 server.static.mini.d2003.estimate.within_re <- function() {
@@ -699,7 +288,7 @@ server.static.mixture.estimate.robust.nf <- function() {
     })}
   stopCluster(cl)
 
-  res.save("m2-mixt-y2003-changeK")
+  res.save("m2-mixt-d2003-change-nf",rr_mixt)
 }
 
 #' this estimates the model with different values of K to check
@@ -727,7 +316,7 @@ server.static.mixture.estimate.robust.nk <- function() {
       res_mixt$second_stage_reps_all=NA
       rr_mixt[[paste("nk",nk_size,sep="-")]] = res_mixt
     })}
-  stopClsuter(cl)
+  stopCluster(cl)
 
   res.save("m2-mixt-d2003-change-nk",rr_mixt)
 }
@@ -1145,9 +734,6 @@ server.static.analysis.meaneffects <- function() {
   res.save("m2-mixt-d2003-meffects",list(level=rrs,diff=rrds))
 }
 
-
-# ========== MIXTURE OF MIXTURE MODEL =====
-
 # estimates the mixture of mixture model
 server.static.mixture.mixtofmixt <- function() {
 
@@ -1200,10 +786,8 @@ server.static.proba.evallik <- function() {
   # get main estimate
   res_main = res.load("m2-mixt-y2003-main-fixb")
 
-
   rr = m2.proba.importancelik(sim,res_main$model,eps_mix = 0.1,class_draws = 200)
   rr2 = m2.proba.importancelik(sim,res_main$model,eps_mix = 0.5,class_draws = 200)
-
 
   rrd = data.table(rr$all[is.finite(rr$lik),])
   rrd[, V := lik - prop_pr + class_prior]
@@ -1459,6 +1043,24 @@ sever.fe.trace <- function() {
 }
 
 
+# ========== SHIMER-SMITH with OTJ  ===========
 
+server.shimersmith.results <- function() {
+  p <- blmrep:::initp( b=0.3, c=0, sz=1, nx=6, ny = 10)
+  p$pf = function(x,y,z=0,p)  ( 0.5*x^p$rho +  0.5*y^p$rho )^(1/p$rho) + p$ay # haggerdorn law manovski
+  p$ay  = 0.7 #0.5
+  p$rho = -3 # 2.5 #-1.5 # 2.5 # -1.5
+
+  r = list()
+  p$rho = -3 # 2.5 #-1.5 # 2.5 # -1.5
+  r$pam_6x10 = shimersmith.simulateAndEstimate(p,est_rep = local_opts$estimation.mixture$est_rep,
+                                               est_nbest = local_opts$estimation.mixture$est_nbest,
+                                               maxiter = local_opts$estimation.mixture$maxiter)
+  p$rho = 3  # 2.5 #-1.5 # 2.5 # -1.5
+  r$nam_6x10 = shimersmith.simulateAndEstimate(p,est_rep = local_opts$estimation.mixture$est_rep,
+                                               est_nbest = local_opts$estimation.mixture$est_nbest,
+                                               maxiter = local_opts$estimation.mixture$maxiter)
+  res.save("m2-shimersmith-mc",r)
+}
 
 

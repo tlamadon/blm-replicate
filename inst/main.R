@@ -14,7 +14,7 @@ local_opts$estimation.mixture = list(maxiter = 50,est_rep=4,est_nbest=2)
 source("inst/server/server-utils.R")
 source("inst/server/estimation-static.r")
 source("inst/server/fig-blm.R")
-generate_simualted_data(force=TRUE);
+generate_simualted_data();
 
 # ==== construct intermediate data files ====
 
@@ -63,18 +63,23 @@ server.static.mixture.mixtofmixt()            #  Mixture of mixture model ~ 12 c
 server.static.mixture.estimate.robust.fsize() # less than 50, larger than 50
 server.static.mixture.estimate.robust.nf()    # varying number of firm types
 server.static.mixture.estimate.robust.nk()    # varying number of worker types
+# missing splits, starting from means
+
+tab.satic.robust()
+
+
 
 # ===== dynamic estimation ========
 
-table.statedependence()
-table.endogeneousMobility()
+#table.statedependence()
+#table.endogeneousMobility()
 
 
 # ====== probabilistic estimation ========
 
 
 # ====== shimer-smith simulation and estimation =======
-
+server.shimersmith.results()
 
 
 

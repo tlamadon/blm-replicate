@@ -1,7 +1,13 @@
 PackratFormat: 1.4
 PackratVersion: 0.4.9.2
-RVersion: 3.4.3
+RVersion: 3.5.2
 Repos: CRAN=https://ftp.ussg.iu.edu/CRAN/
+
+Package: Ckmeans.1d.dp
+Source: CRAN
+Version: 4.2.2
+Hash: 08a3160cf254a0157eaf473e1719ad6b
+Requires: Rcpp
 
 Package: FactoClass
 Source: CRAN
@@ -81,6 +87,16 @@ Source: CRAN
 Version: 0.8.600.0.0
 Hash: 34d3afd99478b52061cdcb10aaa4781c
 Requires: Rcpp
+
+Package: RcppSimpleTensor
+Source: github
+Version: 0.2
+Hash: 63b175ab3ee0392ae73a6eccbef543eb
+Requires: Rcpp, digest, inline
+GithubRepo: RcppSimpleTensor
+GithubUsername: tlamadon
+GithubRef: master
+GithubSha1: f06bfa649ca5ea71625f93c9fdf5c35a622928e8
 
 Package: SDMTools
 Source: CRAN
@@ -207,10 +223,9 @@ Requires: R6, assertthat, crayon, rprojroot
 
 Package: devtools
 Source: CRAN
-Version: 2.0.1
-Hash: 4da83470ae57bd2db0ac06e91b1d3a08
-Requires: callr, cli, digest, git2r, httr, jsonlite, memoise, pkgbuild,
-    pkgload, rcmdcheck, remotes, rstudioapi, sessioninfo, usethis,
+Version: 1.13.6
+Hash: 9a137acbaeb61f440b1c1dedc1fbcaec
+Requires: digest, git2r, httr, jsonlite, memoise, rstudioapi, whisker,
     withr
 
 Package: dichromat
@@ -287,8 +302,8 @@ Requires: httr, ini, jsonlite
 
 Package: git2r
 Source: CRAN
-Version: 0.23.0
-Hash: f7190a7a4b5c5f0983b4b6ee29ed7bc3
+Version: 0.24.0
+Hash: 39f31b2fa33028b8c4f16d527ab01b19
 
 Package: glue
 Source: CRAN
@@ -351,6 +366,11 @@ Package: ini
 Source: CRAN
 Version: 0.3.1
 Hash: 9d6de5178c1cedabfb24e7d2acc9a092
+
+Package: inline
+Source: CRAN
+Version: 0.3.15
+Hash: 8033115a3e00ec516e3fc97240b1649f
 
 Package: jsonlite
 Source: CRAN
@@ -517,6 +537,12 @@ Source: CRAN
 Version: 1.2.1
 Hash: b097c81e3297cd69b82aed831e3d6976
 
+Package: purrr
+Source: CRAN
+Version: 0.3.0
+Hash: 39be04d964bc2b860f09147ce4b8e2ef
+Requires: magrittr, rlang
+
 Package: quadprog
 Source: CRAN
 Version: 1.5-5
@@ -568,6 +594,13 @@ Package: rmutil
 Source: CRAN
 Version: 1.1.1
 Hash: 0e0ee6ab135b5d77552fe1dbe869a95f
+
+Package: roxygen2
+Source: CRAN
+Version: 6.1.1
+Hash: 8d50e18cdfe6805761db35b027b254eb
+Requires: R6, Rcpp, brew, commonmark, desc, digest, pkgload, purrr,
+    stringi, stringr, xml2
 
 Package: rpart
 Source: CRAN
@@ -624,6 +657,16 @@ Source: CRAN
 Version: 2.0.1
 Hash: 777eb6e94f5a62bf6320fecf0175bbbb
 Requires: R6, cli, crayon, digest, magrittr, praise, rlang, withr
+
+Package: textables
+Source: github
+Version: 1.0
+Hash: b470eae592c82a36bc0847d561e96398
+Requires: checkmate, data.table, magrittr, stringr
+GithubRepo: textables
+GithubUsername: setzler
+GithubRef: master
+GithubSha1: 84fa9c2e0c4d8e2ff65174111684014abff75521
 
 Package: tibble
 Source: CRAN

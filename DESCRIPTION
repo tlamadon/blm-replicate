@@ -43,5 +43,7 @@ Depends:
     rmutil,
     assertthat,
     moments,
-    Ckmeans.1d.dp
+    Ckmeans.1d.dp,
+    brew,
+    RcppSimpleTensor
 RoxygenNote: 6.1.1
