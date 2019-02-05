@@ -32,6 +32,7 @@ if (!file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
 # estimate groups for static model & save descritptive statistics
 server.static.d2003.clustering()         #  ~ 0.5 cpu.h
 server.static.d2003.clustering.stats()   # short
+table.static.clusters()
 
 # Main mixture results & bootstrap
 server.static.mixture.d2003.estimate()    # ~ 12        cpu.h
@@ -43,7 +44,7 @@ fig.static.mixt.means()
 # Generate appendix tables & figures
 tab.static.movers.count()
 fig.static.movers.wages()
-fig.dynamic.mixt.connectedness() # connectedness picture
+fig.static.mixt.connectedness() # connectedness picture
 
 # Compute counterfactuals
 server.static.analysis.meaneffects()
@@ -67,7 +68,7 @@ server.static.mixture.estimate.robust.nk()    # varying number of worker types
 
 tab.satic.robust()
 
-
+sever.fe.trace()
 
 # ===== dynamic estimation ========
 
@@ -80,25 +81,7 @@ tab.satic.robust()
 
 # ====== shimer-smith simulation and estimation =======
 server.shimersmith.results()
+fig.shimersmith.model()
+fig.shimersmith.CK_event_study()
+fig.shimersmith.wages()
 
-
-
-
-# ======= preparation =======
-# if (!"packrat" %in% rownames(installed.packages())) {
-#   install.packages("packrat")
-# }
-#
-# # ==== make sure the environment has all dependencies
-# packrat::set_opts(ignored.packages = c("blmrep"))
-# packrat::status()
-# packrat::restore()
-#
-# # load the main library OR compile and install it
-# if ("blmrep" %in% rownames(installed.packages())) {
-#   library(blmrep)
-# } else {
-#   options(devtools.install.args = "--no-multiarch")
-#   #devtools::document(".") # generate documentation
-#   devtools::install(".",upgrade = "never")  # compile and install
-# }

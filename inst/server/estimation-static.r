@@ -968,83 +968,15 @@ server.static.proba.feclass <- function() {
 
 
 # ========== FIXED EFFECT MODEL ===========
-
-#' This checks the effect of discretizing heterogeneity
-#' on the AKM decomposition
-server.fe.effect_of_discrete <- function() {
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata=sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  # ru AKM on jdata to extract firm FE
-  # firm.fe = m2.fe.firms(sim$jdata)
-  res0 = m2.trace.estimate(sim)
-
-  # classify according to AKM
-  require(Ckmeans.1d.dp)
-  adata = rbind(sim$sdata[,list(wid,y1,f1,y2,f2)],sim$jdata[,list(wid,y1,f1,y2,f2)])
-
-  setkey(res0$fids,f1)
-  setkey(adata,f1)
-  adata[, psi1 := res0$fids[adata,psi]]
-  setkey(adata,f2)
-  adata[, psi2 := res0$fids[adata,psi]]
-  adata[, alpha := 0.5*(y1-psi1 + y2-psi2)]
-
-  adata = adata[!is.na(psi1*alpha)]
-  dd = adata[, list(nf=Inf,nk=Inf,vpsi = var(psi1) , valpha= var(alpha), cov = cov(alpha,psi1))]
-
-  rr = data.frame()
-  rr = rbind(rr,dd)
-
-  for (nf in c(3,10,50)) {
-
-    setkey(adata,wid)
-
-    # discretize psi1
-    clusters       = Ckmeans.1d.dp(adata$psi1, nf)
-    adata$psi_d    = clusters$centers[clusters$cluster]
-
-    for (nk in c(3,6,10)) {
-      # discretize alpha
-      clusters       = Ckmeans.1d.dp(adata$alpha, nk)
-      adata$alpha_d  = clusters$centers[clusters$cluster]
-
-      dd = adata[, data.frame(nf=nf,nk=nk,vpsi = var(psi_d) , valpha= var(alpha_d), cov = cov(alpha_d,psi_d))]
-      rr = rbind(rr,dd)
-    }
-  }
-
-  rr = data.table(rr)
-  rs = rkiv0.start("m2-akm-effect-of-discretization",info="checking how different terms change when discretizing")
-  rkiv0.put(rs,rr)
-
-  setkey(rr,nk,nf)
-  # secondly, we can estimate
-}
-
-
 sever.fe.trace <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata=sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
+  sim = server.static.data()
   nmseq = c(100,150,Inf)
   res = m2.trace.blmhyb(sim,use_con = TRUE)
-
-  rs = rkiv0.start("m2-blmhybrid",info="running BLM/AKM while giving large firms their won cluster")
-  rkiv0.put(rs,res$rr)
-
+  res.save("m2-blmhybrid",res)
 }
 
 
 # ========== SHIMER-SMITH with OTJ  ===========
-
 server.shimersmith.results <- function() {
   p <- blmrep:::initp( b=0.3, c=0, sz=1, nx=6, ny = 10)
   p$pf = function(x,y,z=0,p)  ( 0.5*x^p$rho +  0.5*y^p$rho )^(1/p$rho) + p$ay # haggerdorn law manovski

@@ -93,18 +93,8 @@ table.static.clusters <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,"l rrrrrrrrrr|r")
-  tt_save(tab,filename="inst/figures/tab-summary-clusters-m2-tmp.tex",stand_alone=F)
-
-  brew("inst/templates/tab-summary-clusters.br","inst/figures/tab-summary-clusters-m2.tex")
-
-
-
-
-  # create table for dynamic
-  m4stats = res.load("m4-stats-d2003")
-  gstats  = m4stats$gstats
-  brew("inst/templates/tab-summary-clusters.br","inst/figures/tab-summary-clusters-m4.tex")
-
+  tt_save(tab,filename=paste0(local_opts$wdir,"/tab-summary-clusters-m2.tex"),stand_alone=F)
+  flog.info("creating %s",paste0(local_opts$wdir,"/tab-summary-clusters-m2.tex"))
 }
 
 table.dynamic.clusters <- function() {
@@ -140,42 +130,9 @@ table.dynamic.clusters <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,"l rrrrrrrrrr|r")
-  tt_save(tab,filename="inst/figures/tab-summary-clusters-m4.tex",stand_alone=F)
-
-  brew("inst/templates/tab-summary-clusters.br","inst/figures/tab-summary-clusters-m2.tex")
-
-
-
-
-  # create table for dynamic
-  m4stats = res.load("m4-stats-d2003")
-  gstats  = m4stats$gstats
-  brew("inst/templates/tab-summary-clusters.br","inst/figures/tab-summary-clusters-m4.tex")
-
+  tt_save(tab,filename=paste0(local_opts$wdir,"/tab-summary-clusters-m4.tex"),stand_alone=F)
+  flog.info("creating %s",paste0(local_opts$wdir,"/tab-summary-clusters-m4.tex"))
 }
-
-
-
-
-table.cluster.extra.moments <- function() {
-  # create table with extra moments
-  m2stats = res.load("m2-stats-d2003")
-  gstats = m2stats$gstats[1:10,]
-
-  tt = tt_text_row(c("cluster","N","mean","var.","skew.","kurt.")) +
-  tt_rule_mid_partial(list(c(2,6))) +
-  tt_numeric_column(gstats$j1,dec=0) %&%
-      tt_numeric_column(gstats$nwid,dec=0)  %&%
-      tt_numeric_column(gstats$worker_mean_log_wage,dec=2)  %&%
-      tt_numeric_column(gstats$worker_var_log_wage,dec=2) %&%
-      tt_numeric_column(gstats$worker_skewness_log_wage,dec=2) %&%
-      tt_numeric_column(gstats$worker_kurtosis_log_wage,dec=1)
-
-  tab = tt_tabularize(tt,header = "rrrrrr", pretty_rules=T)
-  tt_save(tab,filename="inst/figures/tab-cluster-extra-moments.tex",stand_alone=F)
-
-}
-
 
 #' creates the table with mover counts
 tab.static.movers.count <- function() {
@@ -717,8 +674,8 @@ fig.static.mixture.fit <- function() {
 }
 
 fig.static.mixture.mobility <- function() {
-  #res_main      = res.load("m2-mixt-d2003-main-fixb")
-  res_main   = res.load("m4-mixt-d2003-main")
+  res_main      = res.load("m2-mixt-d2003-main-fixb")
+  #res_main   = res.load("m4-mixt-d2003-main")
   I = rank(colSums(res_main$model$A1))
 
   dpk1 = m2.get.pk1(res_main$model)
@@ -1133,14 +1090,15 @@ fig.shimersmith.model <- function() {
   plotM2  <- levelplot(value ~ x* y, melt(ifelse(model.nam$S<=0,-Inf,model.nam$S),c('x','y')),zlab="",main="Surplus"  )
   #grid.arrange(plotF1,plotF2,plotS1,plotS2,plotH1,plotH2, ncol=2)
 
-  pdf("inst/figuresplot-shimer-model.pdf",width=12,height = 9)
+  pdf(paste0(local_opts$wdir,"/figuresplot-shimer-model.pdf"),width=12,height = 9)
   grid.arrange(plotF1,plotS1,plotH1,plotF2,plotS2,plotH2, ncol=3)
   dev.off()
+  flog.info("creating %s",paste0(local_opts$wdir,"/figuresplot-shimer-model.pdf"))
 }
 
-fig.shimersmith.cardkline <- function() {
+fig.shimersmith.CK_event_study <- function() {
 
-  p <- blm:::initp( b=0.3, c=0, sz=1, nx=6, ny = 10)
+  p <- blmrep:::initp( b=0.3, c=0, sz=1, nx=6, ny = 10)
   p$pf = function(x,y,z=0,p)  ( 0.5*x^p$rho +  0.5*y^p$rho )^(1/p$rho) + p$ay # haggerdorn law manovski
   p$ay  = 0.7 #0.5
   p$rho = -3 # 2.5 #-1.5 # 2.5 # -1.5
@@ -1162,6 +1120,7 @@ fig.shimersmith.cardkline <- function() {
     geom_line() + geom_point() +theme_bw() +  theme(legend.position = "none") +
     xlab("firm class") + ylab("log earnings")
   ggsave("inst/figuresfig-shimersmith-wages.pdf",gp,width = 4.5,height = 3)
+  flog.info("creating %s",paste0(local_opts$wdir,"/figuresplot-shimer-model.pdf"))
 
   # construct the plot for movers between 2 periods
   jdata = cdata[mover>0]
@@ -1182,8 +1141,8 @@ fig.shimersmith.cardkline <- function() {
   gp <- ggplot(rrm[t1%in%c(4,10)][t2%in%c(4,10)],aes(x=factor(period),y=value,color=interaction(t1,t2),group=interaction(t1,t2),linetype=factor(ltype) )) +
     geom_line(size=1.5) + theme_bw() + xlab("period") + ylab("log earnings") + theme(legend.position = "none")
 
-  ggsave("inst/figuresfig-shimersmith-CK.pdf",gp,width = 4.5,height = 3)
-
+  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-CK.pdf"),gp,width = 4.5,height = 3)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-CK.pdf"))
 }
 
 fig.shimersmith.wages <- function() {
@@ -1194,36 +1153,42 @@ fig.shimersmith.wages <- function() {
   model = res_ss$pam_6x10$model
   gp = wplot(t(log(model$wage))) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")
-  ggsave("inst/figuresfig-shimersmith-pam_6x10_model.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-pam_6x10_model.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-pam_6x10_model.pdf"))
 
   model = res_ss$pam_6x10$res_mixt$model
   gp = wplot(model$A2) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")
-  ggsave("inst/figuresfig-shimersmith-pam_6x10_estimate.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-pam_6x10_estimate.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-pam_6x10_estimate.pdf"))
 
   # NAM model
   model = res_ss$nam_6x10$model
   gp = wplot(t(log(model$wage))) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")
-  ggsave("inst/figuresfig-shimersmith-nam_6x10_model.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-nam_6x10_model.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-nam_6x10_model.pdf"))
 
   model = res_ss$nam_6x10$res_mixt$model
   I = order(-model$pk0[1,,6])
   gp = wplot(model$A2[I,]) + xlab("firm class k") +theme_bw() + geom_point() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none")
-  ggsave("inst/figuresfig-shimersmith-nam_6x10_estimate.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-nam_6x10_estimate.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-nam_6x10_estimate.pdf"))
 
   cstats = res_ss$pam_6x10$cstats
   gp = ggplot(melt(cstats,id.vars = c('j1','m','sd')), aes(x=factor(j1),y=value,group=variable)) +
     geom_point() + geom_line() + theme_bw() + xlab("firm class k") + scale_y_continuous("log-earnings") +
     geom_line(data=cstats,aes(y=m,group=NA),size=1.5)
-  ggsave("inst/figuresfig-shimersmith-pam_6x10_distr.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-pam_6x10_distr.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-pam_6x10_distr.pdf"))
 
   cstats = res_ss$nam_6x10$cstats
   gp = ggplot(melt(cstats,id.vars = c('j1','m','sd')), aes(x=factor(j1),y=value,group=variable)) +
     geom_point() + geom_line() + theme_bw() + xlab("firm class k") + scale_y_continuous("log-earnings") +
     geom_line(data=cstats,aes(y=m,group=NA),size=1.5)
-  ggsave("inst/figuresfig-shimersmith-nam_6x10_distr.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-nam_6x10_distr.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-nam_6x10_distr.pdf"))
 
   # re-simulate from the model to compute mstats
   model = res_ss$pam_6x10$model
@@ -1258,7 +1223,8 @@ fig.shimersmith.wages <- function() {
   # computes share of movers moving up
   rr1[j1<j2][m12b>m12,sum(N)]/rr1[j1<j2][,sum(N)]
 
-  ggsave("inst/figures/fig-shimersmith-pam_6x10_moverplot.pdf",gp,width = 5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-pam_6x10_moverplot.pdf"),gp,width = 5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-pam_6x10_moverplot.pdf"))
 }
 
 fig.shimersmith.narrow <- function() {
@@ -1311,161 +1277,6 @@ fig.shimersmith.narrow <- function() {
 
 }
 
-
-
-# =========================  EXTRA ANALYSIS =====================
-
-test.liml.interactions <- function() {
-  model_mini_bs         = archive.get("mini_bs",arch_static)
-  M = laply(model_mini_bs,function(l) l$B1)
-  M = M/M[,1]
-  dd = data.table(melt(M[,2:10]))
-  dd[, zval := ((value-1)/sd(value))^2,Var2]
-  dd[, sum(zval) , Var1][,mean(V1)]
-
-  qchisq(0.95,9)
-
-  hist(dd$zval)
-  dchisq
-}
-
-# =========================  DYNAMIC -- MINI =====================
-
-# plot wages from the dynamic model
-fig.dyn.unc <- function() {
-  load("../figures/res/est-dynamic.dat")
-
-  gp = wplot(res_unc$mode$A2s) + xlab("firm classes") + ylab("mean wage for each firm worker combination")
-  ggsave("../figures/build/fig-dyn-mixt-unc-wage.pdf",gp,dpi=100,width = 8,height = 7)
-
-  gp = pplot(res_unc$mode$pk0)+ xlab("firm classes") + ylab("worker type proportions")
-  ggsave("../figures/build/fig-dyn-mixt-unc-qk.pdf",gp,dpi=100,width = 8,height = 7)
-}
-
-#' generates wages and sorting plots for the dynamic mini model
-fig.dynamic.mini <- function() {
-  model_mini         = archive.get("mini_model",arch_dyn)
-  cstats             = archive.get("cstats",arch_dyn)
-
-  model = model_mini; vs = c(-2,-1,0,1,2)
-  rr = data.table(l=1:length(model$A1),Em = model$Em,Esd = c(model$Esd),
-                  N = model$Ns,A1=model$A1,B1=model$B1,A2s=model$A2s,B2=model$B2)
-  alpha_m  = rr[, wtd.mean(Em,N)]
-  alpha_sd = sqrt(rr[, wtd.mean(Esd^2,N) + wtd.var(Em,N) ])
-
-  rr2 = rr[, list( y1= (vs*alpha_sd + alpha_m)* B1+ A1 ,y2= (vs*alpha_sd + alpha_m)* B2+ A2s, k=1:length(vs)),l ]
-
-  lmin = min(cstats[,m2-3*sd2])
-  lmax = max(cstats[,m2+3*sd2])
-
-  gp1 = ggplot(rr2,aes(x=l,y=y2)) + geom_line(aes(color=factor(k))) +
-           theme_bw()   +theme(legend.position = "none") + scale_x_continuous("firm class k",breaks=1:10,labels=1:10,limits=c(1,10)) +scale_y_continuous("log-earnings") +
-           coord_cartesian(ylim = c(lmin,lmax)) + geom_ribbon(aes(ymin=m2-2*sd2,ymax=m2+2*sd2,x=j1,y=m2),data=cstats,alpha=0.2)
-  ggsave("../figures/build/fig-dynamic-mini-wages.pdf",plot = gp1,width = 6,height = 4)
-
-  # this plots the proportions
-  vs2 = c(-Inf,-1.5,-0.5,0.5,1.5,Inf)
-  rr = data.table(expand.grid(k=1:10,s=1:length(vs)))
-  rr[, pr := with(model,
-                  pnorm(  ( vs2[s+1] - (Em[k]-alpha_m)/alpha_sd )/(Esd[k]/alpha_sd)  ) -
-                    pnorm(  ( vs2[s]   - (Em[k]-alpha_m)/alpha_sd )/(Esd[k]/alpha_sd)  )) ,
-     list(k,s)]
-  gp2 = ggplot(rr,aes(x=k,y=pr,fill=factor(s))) + geom_bar(stat="identity") +
-    theme_bw() +theme(legend.position = "none") + scale_x_continuous("firm class k",breaks=1:10,labels=1:10) +ylab("worker types")
-  ggsave("../figures/build/fig-dynamic-mini-sorting.pdf",plot = gp2,width = 6,height = 4)
-
-  pdf("../figures/build/fig-dynamic-mini.pdf",width = 8,height = 4)
-  blm:::multiplot(gp1,gp2,cols = 2)
-  dev.off()
-}
-
-fig.network <- function() {
-
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
-  jdata2 =jdata[,.N,list(f1,f2)]
-  #fids = jdata2[,intersect(f1,f2)]
-  #jdata2 = jdata2[f1 %in% fids][f2 %in% fids]
-
-  jcount = jdata[,.N,list(f1,f2)]
-  # make symetric
-  jcount = rbind(jcount,jcount[,list(f1=f2,f2=f1,N=N)])
-  jcount = jcount[,list(N=sum(N)),list(f1,f2)]
-
-  # select larger firms
-  fids = jcount[,sum(N),f1][V1>20,f1]
-
-  jcount = jdata[f1 %in% fids][f2 %in% fids][,.N,list(f1,f2)]
-  # make symetric
-  jcount = rbind(jcount,jcount[,list(f1=f2,f2=f1,N=N)])
-  jcount = jcount[,list(N=sum(N)),list(f1,f2)]
-
-  jcount[,N:=N>=1]
-  AA = acast(jcount,f1~f2,fill=0,drop=FALSE)
-  net=graph.adjacency(AA,mode="undirected",weighted=NULL)
-
-  plot(net,  vertex.size=3, vertex.label=NA,
-       edge.arrow.size=0.3,
-       rescale=TRUE)
-
-  layout.by.attr <- function(graph, wc, cluster.strength=1,layout=layout.auto) {
-    g <- graph.edgelist(get.edgelist(graph)) # create a lightweight copy of graph w/o the attributes.
-    E(g)$weight <- 1
-
-    attr <- cbind(id=1:vcount(g), val=wc)
-    g <- g + vertices(unique(attr[,2])) + igraph::edges(unlist(t(attr)), weight=cluster.strength)
-
-    l <- layout(g, weights=E(g)$weight)[1:vcount(graph),]
-    return(l)
-  }
-
-  plot(net,  vertex.size=3, vertex.label=NA,
-       edge.arrow.size=0.3,
-       rescale=TRUE,layout=layout.by.attr(net, wc=1))
-
-  ## voronoi plot
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
-  dd = sdata[,list(m1=mean(y1),m2=sd(y1),.N),f1][N>=10]
-  dd[,plot(m1,m2)]
-
-  ks = kmeansW(dd[,cbind(m1,m2)],centers = 10,weight = dd$N,iter.max = 1000,nstart = 500,scale())
-  dd$centers = ks$cluster
-
-  library(tripack)
-  library(RColorBrewer)
-  CL5 <- brewer.pal(10, "Set3")
-  V <- voronoi.mosaic(ks$centers[,1],ks$centers[,2])
-  P <- voronoi.polygons(V)
-  plot(dd[N>50,cbind(m1,m2)],pch=19,xlim=c(9.6,11),ylim=c(0.15,0.5),
-           xlab="wage mean",ylab="wage standard deviation",col=CL5[dd[N>50,centers]])
-  #points(ks$centers[,1],ks$centers[,2],pch=3,cex=1.5,lwd=2)
-  plot(V,add=TRUE)
-
-  plot(dd[N>50,cbind(m1,m2)],pch=19,xlim=c(9.6,11),ylim=c(0.15,0.5),
-       xlab="wage mean",ylab="wage standard deviation")
-
-
-  dd = dd[]
-
-  dd
-  sdata[,x:=1][,y1_bu:=y1]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  # get clsuters
-  grps  = res.load("m2-mixt-y2003-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-}
-
-test.network.plot <- function() {
-  m2stats = res.load("m2-stats-d2003")
-  mstats = m2stats$mstats
-
-  AA = acast(mstats,j1~j2,value=N)
-  AA[AA<100]=0
-  ig <- graph.adjacency(AA, mode="undirected", weighted=TRUE,diag = FALSE)
-  plot(ig,edge.width=E(ig)$weight/100)
-
-}
 # =========================  STATIC -- PROBA =====================
 
 
