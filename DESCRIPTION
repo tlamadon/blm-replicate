@@ -45,5 +45,6 @@ Depends:
     moments,
     Ckmeans.1d.dp,
     brew,
-    RcppSimpleTensor
+    RcppSimpleTensor,
+    textables
 RoxygenNote: 6.1.1
