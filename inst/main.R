@@ -1,3 +1,5 @@
+require(blmrep)
+
 # ===== setup the parameters ===== #
 local_opts = list()
 dir.create("./tmp",showWarnings = FALSE)
@@ -6,9 +8,11 @@ local_opts$wdir="./tmp"
 
 # ---------   dry run configuration ---------
 local_opts$use_simulated_data = TRUE
-local_opts$cpu_count                 = 2    # number of cores that are available
-local_opts$bootstrap_nreps           = 10  # number of replications to use for bootstrap
-local_opts$estimation.mixture = list(maxiter = 50,est_rep=4,est_nbest=2)
+local_opts$cpu_count                = 2    # number of cores that are available
+local_opts$bootstrap_nreps          = 10  # number of replications to use for bootstrap
+local_opts$estimation.mixture       = list(maxiter = 50,est_rep=4,est_nbest=2)
+local_opts$estimation.probabilistic = list(maxiter = 10,gibbs_nfirm=10)
+local_opts$trace$nm_list            = c(1)
 
 # ==== prepapre options for running all results =====
 source("inst/server/server-utils.R")
@@ -65,19 +69,19 @@ server.static.mixture.estimate.robust.fsize() # less than 50, larger than 50
 server.static.mixture.estimate.robust.nf()    # varying number of firm types
 server.static.mixture.estimate.robust.nk()    # varying number of worker types
 # missing splits, starting from means
-
 tab.satic.robust()
 
-sever.fe.trace()
+# ===== Andrews, Kline, BLM comparaison ========
+# server.fe.trace()
+# figure.hybrid()
 
 # ===== dynamic estimation ========
-
 #table.statedependence()
 #table.endogeneousMobility()
 
-
 # ====== probabilistic estimation ========
-
+server.static.proba.results()
+fig.static.proba.gibbs()
 
 # ====== shimer-smith simulation and estimation =======
 server.shimersmith.results()

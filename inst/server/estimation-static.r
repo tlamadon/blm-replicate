@@ -769,59 +769,13 @@ server.static.mixture.mixtofmixt <- function() {
 
 # ========== PROBABILISTIC APPROACH =====
 
-# this containss function associated with the probabilistic
-# evaluation of different models.
+server.static.proba.results <- function() {
 
-server.static.proba.evallik <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  # get clsuters
-  grps  = res.load("m2-mixt-y2003-groups")
+  sim   = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
-  # get main estimate
-  res_main = res.load("m2-mixt-y2003-main-fixb")
-
-  rr = m2.proba.importancelik(sim,res_main$model,eps_mix = 0.1,class_draws = 200)
-  rr2 = m2.proba.importancelik(sim,res_main$model,eps_mix = 0.5,class_draws = 200)
-
-  rrd = data.table(rr$all[is.finite(rr$lik),])
-  rrd[, V := lik - prop_pr + class_prior]
-  V = rrd[,V]
-
-  res = data.frame()
-  for (l in 1:length(V)) {
-    R = rep(0,100)
-    for (i in 1:200) {
-      vs = sample(V,l,replace = T)
-      R[i] = logsumexp(vs) - log(l)
-    }
-    res = rbind(res,data.frame(m=mean(R),sd=sd(R),l=l))
-  }
-
-  res1$eps=0.1
-  res2$eps=0.5
-  res = rbind(res1,res2)
-
-  ggplot(res,aes(x=l,y=m)) + geom_line() + theme_bw() +
-    geom_line(aes(y=m+sd),linetype=2) +
-    geom_line(aes(y=m-sd),linetype=2) + scale_x_log10()
-
-  plot(res$m)
-}
-
-server.static.proba.feclass <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata=sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
+  # ----------- Prepare starting classification --------
   # ru AKM on jdata to extract firm FE
   firm.fe = m2.fe.firms(sim$jdata)
 
@@ -830,99 +784,56 @@ server.static.proba.feclass <- function() {
   clusters   = Ckmeans.1d.dp(firm.fe$fe$psi, 10)
   grp_akm        = clusters$cluster
   names(grp_akm) = firm.fe$fe$f1
-  sim        = grouping.append(sim,grp_akm,drop=T)
-  acast(sim$jdata[,.N,list(j1,j2)],j1~j2,fill=0)
 
-  dd = data.table(f1=names(grp_akm),j=grp_akm)
-  dd = merge(firm.fe$fe,dd,by="f1")
-  ggplot(dd,aes(x=j,y=psi)) + geom_point() + theme_bw()
+  sim   = server.static.data()
+  sim   = grouping.append(sim,grp_akm,drop=T)
 
-  # Estimate BLM model using this classification
+  # Setting up the options for BLM
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
   cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
-
-
   res_mixt_akm = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  rs    = rkiv0.start("m2-akmgrp-y2003-fixb",info="static 2003 mixture model on group from akm")
-  rkiv0.put(rs,res_mixt_akm)
+  res.save("m2-akmgrp-d2003-fixb",res_mixt_akm)
 
-  rr_akm = m2.proba.importancelik(sim,res_mixt_akm$model,eps_mix = 0.1,class_draws = 200)
-
-  # using the same smaple, cluster and estimate
-  ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y1")
-  grps_kmean  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200,step=100)
-  sim   = grouping.append(sim,grps_kmean$best_cluster)
-  acast(sim$jdata[,.N,list(j1,j2)],j1~j2,fill=0)
-
+  # using the same sample, cluster and estimate
+  ms           = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y1")
+  grps_kmean   = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200,step=100)
+  sim          = grouping.append(sim,grps_kmean$best_cluster)
   res_mixt_blm = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  rr_blm = m2.proba.importancelik(sim,res_mixt_blm$model,eps_mix = 0.1,class_draws = 200)
+  stopCluster(cl)
 
-  res_akm = prepare(rr_akm)
-  res_blm = prepare(rr_blm)
-  res_akm$model="akm"
-  res_blm$model="blm"
-  res = rbind(res_akm,res_blm)
+  res.save("m2-akmgrp-d2003-fixb",list(res_mixt_akm=res_mixt_akm,res_mixt_blm=res_mixt_blm,grps_kmean=grps_kmean$best_cluster,grp_akm=grp_akm))
 
-  ggplot(res,aes(x=l,y=m,color=factor(model))) + geom_line() + theme_bw() + scale_x_log10()
+  # ----------- Gibbs iteration statrting with AKM --------
+  res_all = res.load("m2-akmgrp-d2003-fixb")
+  sim      = server.static.data()
+  iter_res = res_all$res_mixt_akm
+  sim      = grouping.append(sim,res_all$grp_akm,drop=T)
 
-  rs    = rkiv0.start("m2-akmgrp-y2003-fixb",info="static 2003 mixture model on group from akm")
-  rkiv0.put(rs,list(res_mixt_akm=res_mixt_akm,res_mixt_blm=res_mixt_blm,grps_kmean=grps_kmean,grp_akm=grp_akm))
-
-  # trying the GIBBS sampling
-  sim    = grouping.append(sim,grps_kmean$best_cluster)
-  pl_blm = m2.proba.getlcasspr(sim,10)$class_pr
-  sim    = grouping.append(sim,grp_akm)
-  pl_akm = m2.proba.getlcasspr(sim,10)$class_pr
-
-  rr.gibbs.akm = m2.proba.gibbs(sim,res_mixt_akm$model,pl_akm,nfirms_to_update = 1,grp_start = grp_akm,maxiter = 1000)
-  rr.gibbs.blm = m2.proba.gibbs(sim,res_mixt_blm$model,pl_blm,nfirms_to_update = 1,grp_start = grps_kmean$best_cluster,maxiter = 1000)
-
-  rr.akm = data.table(rr.gibbs.akm$rr)
-  rr.akm$model="akm"
-  rr.blm = data.table(rr.gibbs.blm$rr)
-  rr.blm$model="blm"
-  rr.gibbs = rbind(rr.akm,rr.blm)
-
-  rr.gibbs[,lik:= likm + liks][,step:=NULL]
-  rrm = data.table(melt(rr.gibbs,c("i","model")) )
-
-  ggplot(rrm,aes(x=i,y=value,color=factor(model))) +
-    geom_line() + facet_wrap(~variable, scales = "free") + theme_bw()
-
-
-  # use last classification of AKM, compare to BLM classification
-  # or use the BLM clusters
-  cl = makeCluster(local_opts$cpu_count)
-  clusterEvalQ(cl,require(blmrep))
-
-
-  #sim    = grouping.append(sim,rr.gibbs.akm$last_grp)
-  #res_mixt_blm_at_akm_last_gibbs = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  sim    = grouping.append(sim,grps_kmean$best_cluster)
-  sim$sdata[,y1:=y1_bu]
-  iter_res = res_mixt_blm
   iter_pl  = m2.proba.getlcasspr(sim,10)$class_pr
-  iter_grp = grps_kmean$best_cluster
-
-  # look re-calssifcation/estimation
+  iter_grp = res_all$grp_akm
+  # loop re-calssifcation/estimation
   rr.all  = data.frame()
   rr.all2 = data.frame()
-  for (i in 177:200) {
+  for (i in 1:local_opts$estimation.probabilistic$maxiter) {
+
     # run gibbs 200 firms
-    iter_gibbs = m2.proba.gibbs(sim,iter_res$model,iter_pl,nfirms_to_update = 1,grp_start = iter_grp,maxiter = 200)
+    iter_gibbs = m2.proba.gibbs(sim,iter_res$model,iter_pl,nfirms_to_update = 1,grp_start = iter_grp,maxiter = local_opts$estimation.probabilistic$gibbs_nfirm)
     iter_grp   = iter_gibbs$last_grp
+
     # apply latest classification
     sim        = grouping.append(sim,iter_gibbs$last_grp)
     iter_pl    = m2.proba.getlcasspr(sim,10)$class_pr
-    # estimate BLM
 
-  cl = makeCluster(local_opts$cpu_count)
-  clusterEvalQ(cl,require(blmrep))
-
+    # estimate BLM using nodes
+    cl = makeCluster(local_opts$cpu_count)
+    clusterEvalQ(cl,require(blmrep))
     iter_res = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
     stopCluster(cl)
 
@@ -931,47 +842,53 @@ server.static.proba.feclass <- function() {
     rr.all2 = rbind(rr.all2,iter_gibbs$rr)
   }
 
-
-  grp2 = rr.gibbs.akm$last_grp
-  grp1 = grps_kmean$best_cluster
-
-  save.image(file="../../../data/workspace_proba_approach_akm.Rdata")
-  save.image(file="../../../data/workspace_proba_approach_start_blm.Rdata")
-
-  rr.gibbs.blm2 = m2.proba.gibbs(sim,res_mixt_blm$model,pl_blm,nfirms_to_update = 1,grp_start = grps_kmean$best_cluster,maxiter = 1000,mobility_smooth = 0.1)
-
-
-  rr.gibbs.akm = m2.proba.gibbs(sim,res_mixt_akm$model,pl_akm,nfirms_to_update = 1,grp_start = grp_akm,maxiter = 1000,mobility_smooth = )
-
-  load("../../../data/workspace_proba_approach_akm.Rdata")
   gibbs.all = list()
   gibbs.all$akm$vdec = rr.all
   gibbs.all$akm$liks = rr.all2
-  load("../../../data/workspace_proba_approach_start_blm.Rdata")
+
+  # ----------- Gibbs iteration statrting with BLM --------
+  res_all = res.load("m2-akmgrp-d2003-fixb")
+  sim      = server.static.data()
+  iter_res = res_all$res_mixt_blm
+  sim      = grouping.append(sim,res_all$grps_kmean,drop=T)
+
+  iter_pl  = m2.proba.getlcasspr(sim,10)$class_pr
+  iter_grp = res_all$grps_kmean
+  # loop re-calssifcation/estimation
+  rr.all  = data.frame()
+  rr.all2 = data.frame()
+  for (i in 1:local_opts$estimation.probabilistic$maxiter) {
+
+    # run gibbs 200 firms
+    iter_gibbs = m2.proba.gibbs(sim,iter_res$model,iter_pl,nfirms_to_update = 1,grp_start = iter_grp,maxiter = local_opts$estimation.probabilistic$gibbs_nfirm)
+    iter_grp   = iter_gibbs$last_grp
+
+    # apply latest classification
+    sim        = grouping.append(sim,iter_gibbs$last_grp)
+    iter_pl    = m2.proba.getlcasspr(sim,10)$class_pr
+
+    # estimate BLM using nodes
+    cl = makeCluster(local_opts$cpu_count)
+    clusterEvalQ(cl,require(blmrep))
+    iter_res = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
+    stopCluster(cl)
+
+    rr.all = rbind(rr.all,data.frame(iter_res$vdec$stats))
+    iter_gibbs$rr$outloop=i
+    rr.all2 = rbind(rr.all2,iter_gibbs$rr)
+  }
+
   gibbs.all$blm$vdec = rr.all
   gibbs.all$blm$liks = rr.all2
 
-  rs    = rkiv0.start("m2-proba-gibbs-d2003-res",info="gibbs estimation results starting from BLM and AKM")
-  rkiv0.put(rs,gibbs.all)
-
-  res.all$blm.lik$model="blm"
-  res.all$akm.lik$model="akm"
-  res.all$blm.lik[,t:=1:.N]
-  res.all$akm.lik[,t:=1:.N]
-
-  rr = rbind(res.all$blm.lik,res.all$akm.lik)
-  rrm = data.table(melt(rr,c("model","i","step","updates","t")))
-  ggplot(rrm,aes(x=t,y=value,color=model)) +
-    facet_wrap(~variable,scale="free") +geom_line() + theme_bw()
-
+  res.save("m2-proba-gibbs-d2003-res",gibbs.all)
 }
 
 
 # ========== FIXED EFFECT MODEL ===========
-sever.fe.trace <- function() {
+server.fe.trace <- function() {
   sim = server.static.data()
-  nmseq = c(100,150,Inf)
-  res = m2.trace.blmhyb(sim,use_con = TRUE)
+  res = m2.trace.blmhyb(sim,use_con = TRUE,nm_list = local_opts$trace$nm_list)
   res.save("m2-blmhybrid",res)
 }
 

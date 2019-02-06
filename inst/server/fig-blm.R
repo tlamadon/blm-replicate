@@ -1280,7 +1280,7 @@ fig.shimersmith.narrow <- function() {
 # =========================  STATIC -- PROBA =====================
 
 
-plot.static.proba.gibbs <- function() {
+fig.static.proba.gibbs <- function() {
   m2proba = res.load("m2-proba-gibbs-d2003-res")
 
   # we plot the variance of firm effect, and correlation
@@ -1289,7 +1289,6 @@ plot.static.proba.gibbs <- function() {
   m2proba$blm$vdec$model="blm"
   m2proba$blm$vdec$step=1:nrow(m2proba$blm$vdec)
   rr = data.table(rbind(m2proba$akm$vdec,m2proba$blm$vdec))
-  rr = rr[step<=165]
 
   rrm = data.table(melt(rr, id.vars = c("model","step","rsq") ))
   rrm[variable!="cor_kl",value := value * rsq]
@@ -1297,15 +1296,16 @@ plot.static.proba.gibbs <- function() {
   gp = ggplot(rrm,aes(x=step,y=value,color=factor(model),linetype=factor(model))) +
     geom_line() + theme_bw() + facet_wrap(~variable,scales = "free") +
     theme(legend.position = "none")
-  ggsave("inst/figures/fig-proba-vdec.pdf",plot = gp,width = 6,height = 4)
+  ggsave(file.path(local_opts$wdir,"fig-proba-vdec.pdf"),plot = gp,width = 6,height = 4)
+  flog.info("creating %s",file.path(local_opts$wdir,"fig-proba-vdec.pdf"))
 
   for (vv in c("var_l","var_k","cor_kl","cov_kl")) {
     gp = ggplot(rrm[variable==vv],aes(x=step,y=value,color=factor(model),linetype=factor(model))) +
       geom_line() + theme_bw() +
       theme(legend.position = "none") + ylab("") + xlab("")
-    ggsave(sprintf("inst/figures/fig-proba-vdec-%s.pdf",vv),plot = gp,width = 4,height = 3)
+    ggsave(sprintf("%s/fig-proba-vdec-%s.pdf",local_opts$wdir,vv),plot = gp,width = 4,height = 3)
+    flog.info("creating %s",sprintf("%s/fig-proba-vdec-%s.pdf",local_opts$wdir,vv))
   }
-
 
   # we plot the variance of firm effect, and correlation
   m2proba$akm$liks$model="akm"
@@ -1313,17 +1313,13 @@ plot.static.proba.gibbs <- function() {
   m2proba$blm$liks$model="blm"
   m2proba$blm$liks$step=1:nrow(m2proba$blm$liks)
   rr = data.table(rbind(m2proba$akm$liks,m2proba$blm$liks))
-  rr = rr[outloop<=165]
-  #rr[outloop==177 & model=="blm", lik := rr[outloop==178 & model=="blm"]$lik]
-  #rr[outloop==177 & model=="blm", liks := rr[outloop==178 & model=="blm"]$liks]
-  #rr[outloop==177 & model=="blm", likm := rr[outloop==178 & model=="blm"]$likm]
 
   rrm = melt(rr, id.vars = c("model","step"),measure.vars = c("lik","likm","liks","likg") )
   rrm[variable=="lik",variable:="total likelihood"][variable=="likm",variable:="movers likelihood"]
   rrm[variable=="liks",variable:="stayers likelihood"][variable=="likg",variable:="classification prior probabilities"]
   gp = ggplot(rrm,aes(x=step,y=value/1e6,color=factor(model),linetype=factor(model))) + geom_line() + theme_bw() + facet_wrap(~variable,scales = "free") + theme(legend.position = "none")
-  ggsave("inst/figures/fig-proba-liks.pdf",plot = gp,width = 6,height = 4)
-
+  ggsave(file.path(local_opts$wdir,"fig-proba-liks.pdf"),plot = gp,width = 6,height = 4)
+  flog.info("creating %s",file.path(local_opts$wdir,"fig-proba-liks.pdf"))
 }
 
 figure.hybrid <- function() {

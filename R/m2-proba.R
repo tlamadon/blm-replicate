@@ -335,8 +335,6 @@ m2.prob.lik <- function(dd,model,likden,dprior=1.01) {
 #' @export
 m2.proba.likden <- function(model,Jall_s,Jall_l) {
 
-  # @fixme strcitly speaking the constants in period 1 should also include the movers since it is unconditional on moving.
-
   ## prepapre denominator constants for cluster choices
   R0 = array(0,c(model$nk))
   for (k in 1:model$nk) {
@@ -356,6 +354,8 @@ m2.proba.likden <- function(model,Jall_s,Jall_l) {
   #for (l2 in 1:model$nf) {
   #  Rjm[l2] = logsumexp(log(Jall_s2[Jall_l2==l2]))
   #}
+
+  if (any(!is.finite(Rj))) browser();
 
   #return(list(R0=R0,R1=R1,Rj=Rj,Rjm=Rjm))
   return(list(R0=R0,R1=R1,Rj=Rj))
@@ -435,7 +435,7 @@ m2.proba.updateclasses <- function(sim,model0,pl,ctrl,debug=FALSE,mobility_smoot
   N1s = sdata$n1
   N1m = jdata$n1
   N2m = jdata$n2
-  
+
   # extract lieklihood of this classification in this model using pl
   lik_before_firm_update_gpr = sim$sdata[,length(unique(f1)),j1][,sum(V1*log(pl[j1]))]
 
@@ -593,72 +593,13 @@ m2.prob.get_firm_posteriors <- function(sim,model) {
 
 #' precompute the likelihood denominator constants
 #' @export
-m2.proba.importancelik <- function(sim,model,eps_mix=0.1,class_draws=200,mobility_smooth=0.0001) {
-
-  fids = sim$sdata[,unique(f1)]
-  ctrl      = em.control(tol=1e-7,check_lik=F,dprior=1.01,fixb=T)
-  
-  flog.info("computing posterior probabilities for all %i firms",length(fids))
-  model.proba   = m2.proba.new.from.mixt(model,mobility_smooth=mobility_smooth)
-  posterior_pr = m2.prob.get_firm_posteriors(sim,model.proba)
-  class_pr      = model$NNs + rowSums(model$NNm) # @fixme, this should be frequency at the firm level?
-  class_pr      = as.numeric(class_pr / sum(class_pr))
-  
-  # we draw classifications, evaluate the likelihood
-  rr = data.frame()
-  posterior_pr = posterior_pr - logRowSumExp(posterior_pr)
-  lpr          = log( eps_mix * spread(class_pr,1,length(fids)) + (1-eps_mix) *  exp(posterior_pr))
-
-  flog.info("drawing %i classifications (eps=%f)",class_draws,eps_mix)
-  for (i in 1:class_draws) {
-
-    grps_class = rep(0,length(fids))
-    names(grps_class) = rownames(posterior_pr)
-
-    # draw a classification from the posterior probabilities
-    # and compute classification prior probability
-    log_proposal_pr = 0
-    log_classificiation_prior = 0
-    for (j in 1:length(fids)) {
-      l1 = sample.int(model$nf,1,prob=exp(lpr[j,]))
-      grps_class[j] = l1
-      log_proposal_pr = log_proposal_pr + as.numeric(lpr[j,l1])
-      log_classificiation_prior = log_classificiation_prior + log(class_pr[l1])
-    }
-
-    # assign the classification to the data
-    sim            = grouping.append(sim,grps_class)
-
-    # compute the likelihood
-    res = m2.prob.lik.all(sim,model.proba,ctrl)
-
-    rr = rbind(rr,data.frame(lik=res$lik,prop_pr = log_proposal_pr,class_prior=log_classificiation_prior,eps=eps_mix))
-    if (i%%20==0) flog.info("drawing classifictions %i/%i",i,class_draws)
-  }
-
-  rr = data.table(rr[is.finite(rr$lik),])
-
-  res = list()
-  res$model        = model
-  res$model.proba  = model.proba
-  res$posterior_pr = posterior_pr
-  res$all          = rr
-  res$eps_mix      = eps_mix
-
-  res$lik = rr[is.finite(lik), logsumexp(lik - prop_pr + class_prior)]
-
-  res
-}
-
-#' precompute the likelihood denominator constants
-#' @export
 m2.proba.gibbs <- function(sim,model,pl,eps_mix=0.1,mobility_smooth=1e-10,nfirms_to_update=1,maxiter=100,grp_start=NA,appendto=NA,debug=F) {
-  
+
   fids = sim$sdata[,unique(f1)]
   ctrl      = em.control(tol=1e-7,check_lik=F,dprior=1.01,fixb=T)
   ctrl$proba_include =c(1,1,1,1) #use full likelihood to upate
   ctrl$nfirms_to_update = nfirms_to_update
-  
+
   # USING RANDOM CLASSIFICATION AS STARTING POINT
   if (any(is.na(grp_start))) {
     grps_random = sample(model$nf,length(fids),replace=T)
@@ -677,7 +618,7 @@ m2.proba.gibbs <- function(sim,model,pl,eps_mix=0.1,mobility_smooth=1e-10,nfirms
     istart  = max(appendto$i)+1
     maxiter = istart + maxiter
   }
-  
+
   # run the GIBBS SAMPLER
   for (i in istart:maxiter) {
     grps_r         = m2.proba.updateclasses(sim,model,pl,ctrl,debug=debug,mobility_smooth=mobility_smooth)
@@ -692,21 +633,21 @@ m2.proba.gibbs <- function(sim,model,pl,eps_mix=0.1,mobility_smooth=1e-10,nfirms
       flog.info("iter=%i lik_pre=%4.4e movers=%4.4e stayers=%4.4e grps=%4.4e",i * ctrl$nfirms_to_update,grps_r$lik_before_firm_update,grps_r$lik_before_firm_update_movers,grps_r$lik_before_firm_update_stayers,grps_r$lik_before_firm_update_gpr)
     }
   }
-  
+
   return(list(rr=rr,last_grp = grps_r$grps))
 }
 
 #' extract the proportions from a classification
 #' @export
 m2.proba.getlcasspr <- function(sim,nf) {
-  
+
   V = rep(0,nf)
-  # get the number of firms per class 
+  # get the number of firms per class
   for (i in 1:nf) {
     V[i] = sim$sdata[j1==i,length(unique(f1))]
   }
   class_pr = V/sum(V)
   lik = sum(log(class_pr)*V)
-  
+
   return(list(class_pr = class_pr,lik=lik,NNf=V))
 }
