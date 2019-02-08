@@ -40,3 +40,5 @@ RUN R CMD INSTALL --no-multiarch --with-keep.source .
 WORKDIR /home/$USER
 RUN chown -R rstudio:rstudio blm-replicate
 
+COPY --chown=rstudio:rstudio ./DockerConfig/.Rprofile /home/$USER
+

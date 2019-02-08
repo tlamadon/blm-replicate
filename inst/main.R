@@ -26,10 +26,9 @@ generate_simualted_data();
 if (!file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
   source("inst/server/data-selection-static.r")
 }
-
-#if (!file.exists(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))) {
-#  source("inst/server/data-selection-dynamic.r")
-#}
+if (!file.exists(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))) {
+  source("inst/server/data-selection-dynamic.r")
+}
 
 # ===== static estimation ========
 
@@ -76,6 +75,9 @@ tab.satic.robust()
 # figure.hybrid()
 
 # ===== dynamic estimation ========
+server.dynamic.d2003.computeclusters()
+server.dynamic.d2003.clustering.stats()
+
 #table.statedependence()
 #table.endogeneousMobility()
 

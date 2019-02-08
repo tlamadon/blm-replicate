@@ -1,35 +1,32 @@
-# Files estimating the endogenous mobility models
-require(blm)
-require(rkiv)
+
+server.dynamic.data <- function(remove_movers_from_sdata=T) {
+  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
+  sdata[,x:=1][,y1_bu:=y1]
+  if (remove_movers_from_sdata) {
+    sdata=sdata[move==FALSE]
+  }
+  sim = list(jdata=jdata,sdata=sdata)
+  rm(sdata,jdata)
+  return(sim)
+}
 
 # ==== DYNAMIC DATA =====
 
 server.dynamic.d2003.computeclusters <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata = sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
+  sim = server.dynamic.data()
 
   set.seed(954938257)
   ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y2")
   grps  = grouping.classify.once(ms,k = 10,nstart = 10000,iter.max = 200,step=100)
   sim   = grouping.append(sim,grps$best_cluster)
-  res.save("m4-mixt-2003data-groups",grps)
-
+  res.save("m4-mixt-d2003-groups",grps)
 }
 
 server.dynamic.d2003.clustering.stats <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  # get the groups
-  grps = res.load("m4-mixt-2003data-groups")
+  sim   = server.dynamic.data()
+  grps  = res.load("m4-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster)
 
   mstats = sim$jdata[,list(m1=mean(y1),sd1=sd(y1),
@@ -59,28 +56,7 @@ server.dynamic.d2003.clustering.stats <- function() {
 # used in try/catch
 err_fun <- function(e) {catf("error in boot strap rep %i!\n",i);print(e)}
 
-#' estimate the mini-model with different cluster sizes
-server.dynamic.mini.estimate.ksize <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-
-  rr_models = list()
-  rr_vardecs =list()
-  for (k in 3:20) {
-    jdata =  cluster.append.data(jdata,res[[paste(k)]])
-    sdata =  cluster.append.data(sdata,res[[paste(k)]])
-    res_rhos_bis        = model.mini4.getvar.stayers.unc2.opt(sdata)
-    model_mini_bis      = model.mini4.estimate(jdata,sdata,res_rhos_bis$r1,res_rhos_bis$r4,fixb=T)
-    sdata.sim.sim       = model.mini4.impute.stayers(model_mini_bis,sdata)
-    proj_unc_mini_bis1  = lin.proja(sdata.sim.sim,"y2_imp","k_imp","j1");
-    proj_unc_mini_bis1$between_var_explained = sdata[, list(mean(y2),.N),j1][,wtd.var(V1,N)]/sdata[, list(mean(y2),.N),f1][,wtd.var(V1,N)]*100
-    rr_models[[paste(k)]] = model_mini_bis
-    rr_vardecs[[paste(k)]] = proj_unc_mini_bis1
-  }
-
-  archive.put(mini_ksize = rr_models ,m="mini model for different k sizes",file = arch_dyn)
-  archive.put(mini_ksize_vardec=rr_vardecs,m="all variance decomposition for each cluster size",file = arch_dyn)
-}
 
 server.static.rho.analysis <- function(){
 
@@ -108,6 +84,28 @@ server.static.rho.analysis <- function(){
   res.save("rho-analysis",rr)
 }
 
+#' estimate the mini-model with different cluster sizes
+server.dynamic.mini.estimate.ksize <- function() {
+
+  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
+
+  rr_models = list()
+  rr_vardecs =list()
+  for (k in 3:20) {
+    jdata =  cluster.append.data(jdata,res[[paste(k)]])
+    sdata =  cluster.append.data(sdata,res[[paste(k)]])
+    res_rhos_bis        = model.mini4.getvar.stayers.unc2.opt(sdata)
+    model_mini_bis      = model.mini4.estimate(jdata,sdata,res_rhos_bis$r1,res_rhos_bis$r4,fixb=T)
+    sdata.sim.sim       = model.mini4.impute.stayers(model_mini_bis,sdata)
+    proj_unc_mini_bis1  = lin.proja(sdata.sim.sim,"y2_imp","k_imp","j1");
+    proj_unc_mini_bis1$between_var_explained = sdata[, list(mean(y2),.N),j1][,wtd.var(V1,N)]/sdata[, list(mean(y2),.N),f1][,wtd.var(V1,N)]*100
+    rr_models[[paste(k)]] = model_mini_bis
+    rr_vardecs[[paste(k)]] = proj_unc_mini_bis1
+  }
+
+  archive.put(mini_ksize = rr_models ,m="mini model for different k sizes",file = arch_dyn)
+  archive.put(mini_ksize_vardec=rr_vardecs,m="all variance decomposition for each cluster size",file = arch_dyn)
+}
 
 server.dynamic.cf <- function(){
 
@@ -258,7 +256,7 @@ server.dynamic.mini.estimate.explore_rho <- function(){
 
 
 
-server.dynamic.mixture.d2003.estimate <- function() {
+server.dynamic.mixture.d2003.estimate.old <- function() {
 
   load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
   sdata[,y1_bu := y1]
@@ -359,32 +357,21 @@ server.dynamic.mixture.d2003.estimate <- function() {
 }
 
 server.dynamic.mixture.d2003.estimate <- function() {
-
-  load("L:\\Tibo\\qtrdata\\tmp-1997to2008-dynamic-wu.dat")
-  sdata[,y1_bu := y1]
-  sdata = sdata[move==FALSE]
-  #jdata = jdata[u.f1>0]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  # get the groups
+  sim = server.dynamic.data()
   grps = res.load("m4-mixt-2003data-groups")
   sim   = grouping.append(sim,grps$best_cluster,drop = T)
-  sim$sdata[,list(y1,y2,y3,y4)]
 
   set.seed(54140598)
-  rs      = rkiv0.start("m4-mixt-dlong")
-  rs$info = "dynamic mixture on 2003 data"
-
   cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  clusterEvalQ(cl,require(blmrep))
 
   ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
                          nplot=10000,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
                          est_rep=50,est_nbest=10,sdata_subsample=0.1)
   res_mixt  = m4.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  res.save(rs,res_mixt)
+  stopCluster(cl)
+  res.save("m4-mixt-d2003-main",res_mixt)
 
 }
 
