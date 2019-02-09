@@ -12,20 +12,21 @@ Importantly, reproducing the results on Swedish data __requires access to the ad
 
 ## How do I run this?
 
-The simplest way to use this replication package is to rely on the docker container that we have created. 
+The simplest way to use this replication package is to rely on the docker container that we have created as described in solution 1. This will get it running almost instantly.
 
 ### Solution 1: get it running in less than 10 minutes, run our docker container
 
-If you want to see the code in action, you only need the following steps:
+Make sure you have [docker app](https://www.docker.com/get-started) installed on your computer. Then run the following command:
 
-1.  install the [docker app](https://www.docker.com/get-started) (if you don't have it already)
-2. download and start our replication container with only one command: `docker run -d --rm -e PASSWORD=blm -p 8787:8787 tlamadon/blm-replicate`
-3. open your browser at [http://localhost:8787](http://localhost:8787/) and use login `rstudio` and password `blm` 
-4. finally run `source("inst/main.R")`
+    docker run -d --rm -e PASSWORD=blm -p 8787:8787 tlamadon/blm-replicate
 
-This will give you access to a fully functioning RStudio with the installed libraries and the code necessary to run the replication code. By default, this will run all of the code using a __synthetic data set__. See later how to get access to Swedish data, and load it into the container.
+This will automatically download our docker container from dockerhub and start it. This will give you access to a fully functioning RStudio with the installed libraries and the code necessary to run the replication code. It should be available at [http://localhost:8787](http://localhost:8787), which points to your local computer. Use login `rstudio` and password `blm`. 
 
-Note: make sure the docker app does not limit memory access to less than 16Gb. See [here](https://stackoverflow.com/questions/44417159/docker-process-killed-with-cryptic-killed-message). 
+From there calling `source("inst/main.R")` will start the full replication, create all necessary intermediate results and generates all figures and tables, saving them in the `tmp` folder. We invite the researcher however to explore the `main.R`.
+
+By default, this will run all of the code using a __synthetic data set__. See belwo how to get access to Swedish data, and load it into the container.
+
+__Note:__ make sure the docker app does not limit memory access to less than 16Gb. See [here](https://stackoverflow.com/questions/44417159/docker-process-killed-with-cryptic-killed-message). 
 
 ### Solution 2: install the replication package into your R environment
 

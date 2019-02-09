@@ -563,8 +563,6 @@ server.dynamic.mixture.estimate.robust.nf <- function() {
 #' this estimates the model with different values of K to check
 #' robustness. We recluster every time
 server.dynamic.mixture.estimate.robust.nk <- function() {
-
-
   sim = server.dynamic.data()
   grps = res.load("m4-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster,drop = T)
@@ -595,22 +593,23 @@ server.dynamic.mixture.estimate.robust.nk <- function() {
 
 server.dynamic.mixture.estimate.robust.different.rho <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sdata = sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
+  sim = server.dynamic.data()
+  grps = res.load("m4-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster,drop = T)
 
-  # get the groups
-  grps = res.load("m4-mixt-2003data-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-
+  set.seed(87954352)
   ctrl      = em.control(nplot=2000,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1,rho_in_diff=TRUE)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
-  cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  cl = makeCluster(local_opts$cpu_count)
+  clusterEvalQ(cl,require(blmrep))
+
+  res_rhos   = m4.mini.getvar.stayers.unc2.opt(sim$sdata,diff=TRUE)
+
   res_mixt = m4.mixt.estimate.all(sim,nk=6,ctrl=ctrl,cl=cl)
   stopCluster(cl)
 
@@ -618,7 +617,6 @@ server.dynamic.mixture.estimate.robust.different.rho <- function() {
                       info="estimating rho in differences")
   res.save(rs,res_mixt_rho)
 
-  res_rhos   = m4.mini.getvar.stayers.unc2.opt(sim$sdata,diff=TRUE)
   sim$sdata[,y1:=y1_bu]
   model_mini = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
 
@@ -628,49 +626,34 @@ server.dynamic.mixture.estimate.robust.different.rho <- function() {
 
   # check the fit of the covariance matrix
   res_mixt_rho = res.load("m4-mixt-d2003-rho-check")
-
-  sdata2 = m4.mixt.impute.stayers(sim$sdata,res_mixt_rho$model)
-  sdata2[,var(cbind(y1,y2,y3,y4))]
-  sdata2[,var(cbind(y1_imp,y2_imp,y3_imp,y4_imp))]
-  sdata2[,var(cbind(y2-y1,y3-y2,y4-y3))]
-  sdata2[,var(cbind(y2_imp-y1_imp,y3_imp-y2_imp,y4_imp-y3_imp))]
 }
 
 server.dynamic.mixture.d2003.boostrap <- function(){
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sdata=sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
+  sim   = server.dynamic.data()
+  grps  = res.load("m4-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster,drop = T)
 
-  # get the groups
-  grps = res.load("m4-mixt-2003data-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-  sim$sdata[,list(y1,y2,y3,y4)]
+  set.seed(879543542)
+  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
+                         nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
+                         sd_floor=1e-5,posterior_reg=1e-8,
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
   # get main estimate
   res_main = res.load("m4-mixt-d2003-main")
 
-  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
-                         nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-5,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1)
+  cl = makeCluster(local_opts$cpu_count)
+  clusterEvalQ(cl,require(blmrep))
 
-  no_cores = 15
-  cl <- makeCluster(no_cores)
-  clusterEvalQ(cl,require(blm))
-
-  # --- SPLITTING SAMPLEs ----- #
   nfirms=0
-
   rr = data.frame()
   rr_mixt_all = list()
+  for (rep in 1:local_opts$bootstrap_nreps) {
 
-  load("tmpbootstrap-dyn-bis-lap3.dat")
-
-  reps = setdiff(1:100,as.integer(names(rr_mixt_all)))
-  for (rep in reps) {
     sdata.sim = m4.mixt.impute.stayers(sim$sdata,res_main$model)
     jdata.sim = m4.mixt.impute.movers(sim$jdata,res_main$model)
     sdata.sim = sdata.sim[,y1:=y1_imp][,y2:=y2_imp][,y3:=y3_imp][,y4:=y4_imp][,jt:=j1][,y1_bu:=y1]
@@ -678,43 +661,14 @@ server.dynamic.mixture.d2003.boostrap <- function(){
     sim.sp = list(jdata=jdata.sim,sdata=sdata.sim)
     rm(jdata.sim,sdata.sim)
 
-    sim.sp$sdata[,y1:=y1_bu]
-    res_rhos        = m4.mini.getvar.stayers.unc2.opt(sim.sp$sdata)
-    model_mini1     = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-    model_minilin1  = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_rhos$r1,res_rhos$r4,method="linear")
-
-    rt = data.frame(model_mini1$vdec$stats)
-    rt$name="mini-truecluster";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_rhos$r1
-    rt$r4=res_rhos$r4
-    rr = rbind(rr,rt)
-    rt = data.frame(model_minilin1$vdec$stats)
-    rt$name="linear-truecluster";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_rhos$r1
-    rt$r4=res_rhos$r4
-    rr = rbind(rr,rt)
-
     # re-cluster
     ms              = grouping.getMeasures(sim.sp,"ecdf",Nw=20,y_var = "y2")
     grps            = grouping.classify(ms,ksupp=10, stop=FALSE, nstart= 500, verbose=10, iter.max=200)
     sim.sp          = grouping.append(sim.sp,grps$best_cluster,drop = T)
 
+    # get the rhos
     sim.sp$sdata[,y1:=y1_bu]
     res_rhos        = m4.mini.getvar.stayers.unc2.opt(sim.sp$sdata)
-    model_mini1     = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-    model_minilin1  = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_rhos$r1,res_rhos$r4,method="linear")
-
-    rt = data.frame(model_mini1$vdec$stats)
-    rt$name="mini";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_rhos$r1
-    rt$r4=res_rhos$r4
-    rr = rbind(rr,rt)
-
-    rt = data.frame(model_minilin1$vdec$stats)
-    rt$name="linear";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_rhos$r1
-    rt$r4=res_rhos$r4
-    rr = rbind(rr,rt)
 
     # run mixture
     res_mixt = m4.mixt.estimate.all(sim.sp,nk=6,ctrl,cl=cl)
@@ -729,19 +683,11 @@ server.dynamic.mixture.d2003.boostrap <- function(){
     rr_mixt_all[[paste(rep)]] = res_mixt
     rm(sim.sp)
 
-    save(rr,rr_mixt_all,file = "tmpbootstrap-dyn-bis-lap3.dat")
-
     print(rr)
   }
 
   stopCluster(cl)
-
-  load("tmpbootstrap-dyn-bis-lap3.dat")
-  rs      = rkiv0.start("m4-mixt-d2003-bootstrap-leg2")
-  rs$info = "parametric bootstrap of dynamic mixture on 2003 data, reps 101 to 200"
-  res.save(rs,list(vdecs=rr,mixt_all=rr_mixt_all))
-
-
+  res.save(m4-mixt-d2003-bootstrap,list(vdecs=rr,mixt_all=rr_mixt_all))
 }
 
 server.dynamic.mixture.d2003.boostrap.resample <- function(){

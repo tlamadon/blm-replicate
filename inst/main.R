@@ -74,6 +74,8 @@ server.dynamic.d2003.computeclusters()
 server.dynamic.d2003.clustering.stats()
 
 server.dynamic.mixture.d2003.estimate()
+server.dynamic.mixture.d2003.boostrap()
+
 
 # robustness
 server.dynamic.mini.estimate()
