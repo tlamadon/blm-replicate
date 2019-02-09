@@ -58,18 +58,15 @@ err_fun <- function(e) {catf("error in boot strap rep %i!\n",i);print(e)}
 
 
 
-server.static.rho.analysis <- function(){
+server.dynamic.rho.analysis <- function(){
 
-  load(sprintf("%s/data-tmp/tmp-2003-static",local_opts$wdir))
-  clus = unique(sdata[,list(fid=f1,clus=j1)])
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata = cluster.append.data(sdata,clus)
-  jdata = cluster.append.data(jdata,clus)
+  sim   = server.dynamic.data()
+  grps  = res.load("m4-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster)
 
-  res_rhos = model.mini4.getvar.stayers.unc2.opt(sdata)
-
+  res_rhos =m4.mini.getvar.stayers.unc2.opt(sim$sdata)
   # get slices for each rho
-  ff <- function(rhos) model.mini4.getvar.stayers.unc2(sdata,rhos[1],rhos[2],rhos[3],as.numeric(weights))$fit1
+  ff <- function(rhos) m4.mini.getvar.stayers.unc2(sim$sdata,rhos[1],rhos[2],rhos[3])$fit1
 
   rr = data.frame()
   rsup = seq(0.01,0.99,l=100)
@@ -80,7 +77,6 @@ server.static.rho.analysis <- function(){
   vals = sapply(rsup,function(x) ff(c(res_rhos$r1,res_rhos$r4,x)))
   rr = rbind(rr,data.frame(x=rsup,y=vals,name="rho32",best=res_rhos$rt))
 
-  #ggplot(rr,aes(x=x,y=y)) + geom_line() + facet_grid(~name) + theme_bw() + geom_vline(aes(xintercept=best))
   res.save("rho-analysis",rr)
 }
 

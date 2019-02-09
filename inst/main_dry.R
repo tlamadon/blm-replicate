@@ -19,6 +19,7 @@ source("inst/server/server-utils.R")
 source("inst/server/estimation-static.r")
 source("inst/server/estimation-dynamic.r")
 source("inst/server/fig-blm.R")
+generate_simualted_data(TRUE)
 
 # ==== construct intermediate data files ====
 
@@ -74,6 +75,8 @@ tab.satic.robust()
 
 server.dynamic.d2003.computeclusters()
 server.dynamic.d2003.clustering.stats()
+server.dynamic.rho.analysis()
+fig.dynamic.rho_slices()
 
 server.dynamic.mixture.d2003.estimate()
 server.dynamic.mixture.d2003.boostrap()

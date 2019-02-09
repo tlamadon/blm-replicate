@@ -67,7 +67,6 @@ server.static.mixture.estimate.robust.nk()    # varying number of worker types
 server.static.mixt.estimate.robustess.residuals()
 server.static.estimate.clustersplits("rk-prank")
 server.static.estimate.clustersplits("rk-va")
-# missing splits, starting from means
 
 tab.satic.robust()
 
@@ -75,6 +74,8 @@ tab.satic.robust()
 
 server.dynamic.d2003.computeclusters()
 server.dynamic.d2003.clustering.stats()
+server.dynamic.rho.analysis()
+fig.dynamic.rho_slices()
 
 server.dynamic.mixture.d2003.estimate()
 server.dynamic.mixture.d2003.boostrap()

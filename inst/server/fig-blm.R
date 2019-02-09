@@ -931,11 +931,20 @@ fig.dyn.rho <-function() {
     theme_bw() + geom_vline(aes(xintercept=best),linetype=2) +
     coord_cartesian(ylim = c(0,40)) + xlab("value of rho") + ylab("value of the objective")
   ggsave("inst/figuresfig-rho-slice.pdf",dpi=100,width = 8,height = 4)
+
+}
+
+fig.dynamic.rho_slices <- function(){
+  rr = res.load("rho-analysis")
+  gp = ggplot(rr,aes(x=x,y=y)) + geom_line() + facet_grid(~name) + theme_bw() + geom_vline(aes(xintercept=best))
+
+  ggsave(paste0(local_opts$wdir,"/fig-mixt4-rho-slices.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating fig-mixt4-rho-slices.pdf")
 }
 
 fig.dyn.rho.fit <-function() {
   res_main   = res.load("m4-mixt-d2003-main")
-  res_rhos = res_main$res_rhos
+  res_rhos   = res_main$res_rhos
   ddres = data.table(data=res_rhos$dep,model=res_rhos$fitted,w=res_rhos$weights)
 
   ggplot(ddres,aes(x=data,y=model,size=w^4)) +geom_point(alpha=0.3) +
