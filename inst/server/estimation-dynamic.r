@@ -240,9 +240,8 @@ server.dynamic.mini.estimate.bootstrap <-function() {
 
 }
 
-
+#' Explores the sensitivity to rho
 server.dynamic.mini.estimate.explore_rho <- function(){
-
   load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
   clus = unique(sdata[,list(fid=f1,clus=j1)])
   load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
@@ -266,113 +265,9 @@ server.dynamic.mini.estimate.explore_rho <- function(){
     rtmp$neg_b = sum(model_mini$B1<0)
     rrr = rbind(rrr,rtmp)
   }
-
 }
 
 # ======= MIXTURE MODEL 2003 =============
-
-
-
-
-server.dynamic.mixture.d2003.estimate.old <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sdata = sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  # get the groups
-  grps = res.load("m4-mixt-2003data-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-  sim$sdata[,list(y1,y2,y3,y4)]
-
-  set.seed(54140598)
-  rs      = rkiv0.start("m4-mixt-d2003-main")
-  rs$info = "dynamic mixture on 2003 data"
-
-  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
-                       nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                       sd_floor=1e-7,posterior_reg=1e-8,
-                       est_rep=50,est_nbest=10,sdata_subsample=0.1)
-  res_mixt  = m4.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  res.save(rs,res_mixt)
-
-  # ------ decomposition on best likelihood ----- #
-  # get main estimate
-  res_main  = res.load("m4-mixt-d2003-main")
-  rrm.order = res_main$second_stage_reps
-  name = rrm.order[order(-lik_mixt)][1,i]
-  res  = res_main$second_stage_reps_all[[name]]
-  sim$sdata[,S1 := rank(runif(.N))/.N<=ctrl$sdata_subsample,j1]
-  sim$sdata[,y1:=y1_bu]
-  sim$sdata[,S1 := rank(runif(.N))/.N<=ctrl$sdata_subsample,j1]
-  res = m4.mixt.rhoext.stayers(sim$jdata, sim$sdata[S1==1], res$model, em.control(ctrl,cstr_type="akm",cstr_val=0.05,fixb=FALSE))
-  sim$sdata[,y1:=y1_bu]
-  res = m4.mixt.rhoext.stayers(sim$jdata, sim$sdata[S1==1], res$model, em.control(ctrl,cstr_type="none"))
-
-  proj = m4.mixt.vdec(res$model,1e6,sim$sdata[,.N]/(sim$sdata[,.N]+sim$jdata[,.N]),"y2")
-  res$vdec = proj
-
-  rs    = rkiv0.start("m4-mixt-d2003-main-highestlik",
-                      info="dynamic 2003 main estimate, vdec on highest likelihood of movers")
-  res.save(rs,res)
-
-
-
-  # ---- all best 10 liks ------ #
-  res_mixt = res.load("m4-mixt-d2003-main")
-  rrm.order = res_mixt$second_stage_reps
-  rrs = list()
-  for (ii in 1:10) {
-    name = rrm.order[order(-lik_mixt)][ii,i]
-    res  = res_mixt$second_stage_reps_all[[name]]
-    sim$sdata[,y1:=y1_bu]
-    sim$sdata[,S1 := rank(runif(.N))/.N<=ctrl$sdata_subsample,j1]
-    res = m4.mixt.rhoext.stayers(sim$jdata, sim$sdata[move==FALSE][S1==1], res$model, em.control(ctrl,cstr_type="akm",cstr_val=0.05,fixb=FALSE))
-    sim$sdata[,y1:=y1_bu]
-    res = m4.mixt.rhoext.stayers(sim$jdata, sim$sdata[move==FALSE][S1==1], res$model, em.control(ctrl,cstr_type="none"))
-
-    # simulate movers/stayers, and combine
-    NNm = res$model$NNm
-    NNs = res$model$NNs/ctrl$sdata_subsample
-    NNm[!is.finite(NNm)]=0
-    NNs[!is.finite(NNs)]=0
-    share_s  = sum(NNs)/(sum(NNm) + sum(NNs))
-    share_m  = sum(NNm)/(sum(NNm) + sum(NNs))
-
-    NNs = round(NNs*ctrl$vdec_sim_size*share_s/sum(NNs))
-    NNm = round(NNm*ctrl$vdec_sim_size*share_m/sum(NNm))
-
-    # we simulate from the model both movers and stayers
-    sdata.sim = m4.mixt.simulate.stayers(res$model,NNs)
-    jdata.sim = m4.mixt.simulate.movers(res$model,NNm)
-    sdata.sim = rbind(sdata.sim[,list(j1,k,y2)],jdata.sim[,list(j1,k,y2)])
-    proj_unc  = lin.proj(sdata.sim,"y2","k","j1");
-
-    res$proj = proj_unc
-    res$tau=NULL
-    rrs[[name]]=res
-  }
-
-  rs      = rkiv0.start("m4-mixt-d2003-main-stayer-reps")
-  rs$info = "variance decompositions for 10 best starting values"
-  res.save(rs,rrs)
-
-  # ---- MINI MODEL ---- #
-  # running mini model unconstrained ad with B=1 on same data
-  set.seed(690923542)
-  rs         = rkiv0.start("m4-mini-d2003-profandlinear")
-  rs$info    = "dynamic mini model on pooled data, using profiling and with B=1"
-  sim$sdata[,y1:=y1_bu]
-  res_rhos   = m4.mini.getvar.stayers.unc2.opt(sim$sdata)
-
-  sim$sdata[,y1:=y1_bu]
-  model_mini = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-  sim$sdata[,y1:=y1_bu]
-  model_minilin      = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="linear")
-  res.save(rs,list(mini=model_mini,mini_lin=model_minilin))
-}
 
 server.dynamic.mixture.d2003.estimate <- function() {
   sim = server.dynamic.data()
@@ -395,13 +290,23 @@ server.dynamic.mixture.d2003.estimate <- function() {
   res.save("m4-mixt-d2003-main",res_mixt)
 }
 
-server.dynamic.mixture.d2003.estimate.reclassify <- function() {
+server.dynamic.mixture.d2003.estimate.model_iteration <- function() {
   sim = server.dynamic.data()
-  grps = res.load("m4-mixt-2003data-groups")
+  grps = res.load("m4-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster,drop = T)
 
-  res   = m4.mixt.estimate.reclassify(sim,maxiter=10)
-  res.save("m4-mixt-d2003-dirty-reclassification",res)
+  ctrl      = em.control(nplot=2000,tol=1e-7,dprior=1.001,fixb=TRUE,
+                         sd_floor=1e-7,posterior_reg=1e-8,
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
+  cl = makeCluster(local_opts$cpu_count)
+  clusterEvalQ(cl,require(blmrep))
+  res   = m4.mixt.estimate.reclassify(sim,maxiter=10,ctrl=ctrl,cl=cl)
+  stopCluster(cl)
+
+  res.save("m4-mixt-d2003-reclassify",res)
 }
 
 server.dynamic.mixture.d2003.fit <- function() {
@@ -471,60 +376,6 @@ server.dynamic.mixture.d2003.fit <- function() {
   res.save(rs,list(dd_s=dd_s,dd_m=dd_m,rr_s=rr_s,rr_m=rr_m,dd_s_g=dd_s_g,dd_m_g=dd_m_g))
 }
 
-server.dynamic.mixture.estimate.2003data.split <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sdata = sdata[move==FALSE] # do not include movers in sdata
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  # get the groups
-  grps = res.load("m4-mixt-2003data-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-  sim$sdata[,list(y1,y2,y3,y4)]
-
-  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
-                         nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
-
-  no_cores = 17
-  cl <- makeCluster(no_cores)
-  clusterEvalQ(cl,require(blm))
-
-  # --- SPLITTING SAMPLEs ----- #
-  set.seed(13928498)
-  rs    = rkiv0.start("m4-mixt-d2003-splits",dependson="m4-mixt-d2003-groups",
-                      info="dynamic 2003 main estimate")
-  sim$sdata[,splitdata := rank(runif(.N)) - 0.5 +0.1*(runif(1)-0.5) <= .N/2,f1] # splitting stayers
-  sim$jdata[,splitdata := rank(runif(.N)) - 0.5 +0.1*(runif(1)-0.5) <= .N/2,f1] # splitting movers
-
-  sim.sp          = list(sdata= sim$sdata[splitdata==TRUE],jdata = sim$jdata[splitdata==TRUE])
-  ms              = grouping.getMeasures(sim.sp,"ecdf",Nw=20,y_var = "y2")
-  grps            = grouping.classify.once(ms,k10, nstart= 500, verbose=10, iter.max=200,step=50)
-  sim.sp          = grouping.append(sim.sp,grps$best_cluster,drop = T)
-  res_mixt_split1 = m4.mixt.estimate.all(sim.sp,nk=6,ctrl,cl=cl)
-  model_mini1     = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_mixt_split1$model$B12,res_mixt_split1$model$B43,method="prof")
-  model_minilin1  = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_mixt_split1$model$B12,res_mixt_split1$model$B43,method="linear")
-
-  sim.sp          = list(sdata= sim$sdata[splitdata==FALSE],jdata = sim$jdata[splitdata==FALSE])
-  ms              = grouping.getMeasures(sim.sp,"ecdf",Nw=20,y_var = "y2")
-  grps            = grouping.classify.once(ms,k10, nstart= 500, verbose=10, iter.max=200,step=50)
-  sim.sp          = grouping.append(sim.sp,grps$best_cluster,drop=T)
-  res_mixt_split2 = res_mixt = m4.mixt.estimate.all(sim.sp,nk=6,ctrl,cl=cl)
-  model_mini2     = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_mixt_split2$model$B12,res_mixt_split2$model$B43,method="prof")
-  model_minilin2  = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_mixt_split2$model$B12,res_mixt_split2$model$B43,method="linear")
-
-  stopCluster(cl)
-
-  res.save(rs,list(
-    split1=list(mixt=res_mixt_split1,mini=model_mini1,minilin=model_minilin1),
-    split2=list(mixt=res_mixt_split2,mini=model_mini2,minilin=model_minilin2)))
-
-}
-
-
 #' this estimates the model with different values of K to check
 #' robustness. We recluster every time
 server.dynamic.mixture.estimate.robust.nf <- function() {
@@ -591,8 +442,7 @@ server.dynamic.mixture.estimate.robust.nk <- function() {
   res.save("m4-mixt-d2003-change-nf",rr_mixt)
 }
 
-server.dynamic.mixture.estimate.robust.different.rho <- function() {
-
+server.dynamic.mixture.estimate.robust.different_rho <- function() {
   sim = server.dynamic.data()
   grps = res.load("m4-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster,drop = T)
@@ -613,19 +463,7 @@ server.dynamic.mixture.estimate.robust.different.rho <- function() {
   res_mixt = m4.mixt.estimate.all(sim,nk=6,ctrl=ctrl,cl=cl)
   stopCluster(cl)
 
-  rs    = rkiv0.start("m4-mixt-d2003-rho-check",
-                      info="estimating rho in differences")
-  res.save(rs,res_mixt_rho)
-
-  sim$sdata[,y1:=y1_bu]
-  model_mini = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-
-  ddres = data.table(data=res_rhos$dep,model=res_rhos$fitted,w = res_rhos$weights)
-  ggplot(ddres,aes(x=data,y=model,size=w)) +
-    geom_point() + geom_abline(linetype=2) + theme_bw()
-
-  # check the fit of the covariance matrix
-  res_mixt_rho = res.load("m4-mixt-d2003-rho-check")
+  res.save("m4-mixt-d2003-rho-check",res_mixt)
 }
 
 server.dynamic.mixture.d2003.boostrap <- function(){
@@ -687,286 +525,80 @@ server.dynamic.mixture.d2003.boostrap <- function(){
   }
 
   stopCluster(cl)
-  res.save(m4-mixt-d2003-bootstrap,list(vdecs=rr,mixt_all=rr_mixt_all))
+  res.save("m4-mixt-d2003-bootstrap",list(vdecs=rr,mixt_all=rr_mixt_all))
 }
 
-server.dynamic.mixture.d2003.boostrap.resample <- function(){
+# ============== computing counter factuals ===============
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sdata=sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  # get the groups
-  grps = res.load("m4-mixt-2003data-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-  sim$sdata[,list(y1,y2,y3,y4)]
-
-  # get main estimate
-  res_main = res.load("m4-mixt-d2003-main")
-
-  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
-                         nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-5,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1)
-
-  no_cores = 15
-  cl <- makeCluster(no_cores)
-  clusterEvalQ(cl,require(blm))
-
-  # --- SPLITTING SAMPLEs ----- #
-  nfirms=0
+#' This is for the second part of the main results for dynamic
+server.dynamic.analysis.meaneffects <- function() {
+  res_main    = res.load("m4-mixt-d2003-main")
+  res_bs      = res.load("m4-mixt-d2003-bootstrap")
 
   rr = data.frame()
-  rr_mixt_all = list()
-  rep_start=1
-
-  #load("tmpbootstrap-dyn-bis.dat")
-  #rep_start = max(rr$rep)+1
-  Ntot = sim$jdata[,.N] + sim$sdata[,.N]
-
-  for (rep in rep_start:100) {
-    # we resample
-    wids = sample(c(sim$jdata$wid,sim$sdata$wid),Ntot,replace=T)
-
-    setkey(sim$sdata,wid)
-    I = (wids %in% c(sim$sdata$wid))
-    sdata.sim = sim$sdata[wids[I]]
-    setkey(sim$jdata,wid)
-    I = (wids %in% c(sim$jdata$wid))
-    jdata.sim = sim$jdata[wids[I]]
-
-    sdata.sim = m4.mixt.impute.stayers(sdata.sim,res_main$model)
-    jdata.sim = m4.mixt.impute.movers(jdata.sim,res_main$model)
-    sdata.sim = sdata.sim[,y1:=y1_imp][,y2:=y2_imp][,y3:=y3_imp][,y4:=y4_imp][,jt:=j1][,y1_bu:=y1]
-    jdata.sim = jdata.sim[,y1:=y1_imp][,y2:=y2_imp][,y3:=y3_imp][,y4:=y4_imp]
-    sim.sp = list(jdata=jdata.sim,sdata=sdata.sim)
-    rm(jdata.sim,sdata.sim)
-
-    sim.sp$sdata[,y1:=y1_bu]
-    res_rhos        = m4.mini.getvar.stayers.unc2.opt(sim.sp$sdata)
-    model_mini1     = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-    model_minilin1  = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_rhos$r1,res_rhos$r4,method="linear")
-
-    rt = data.frame(model_mini1$vdec$stats)
-    rt$name="mini-truecluster";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_rhos$r1
-    rt$r4=res_rhos$r4
+  for (nn in names(res_bs$mixt_all)) {
+    res = res_bs$mixt_all[[nn]]
+    rt = m4.mixt.meaneffect(res$model)
     rr = rbind(rr,rt)
-    rt = data.frame(model_minilin1$vdec$stats)
-    rt$name="linear-truecluster";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_rhos$r1
-    rt$r4=res_rhos$r4
-    rr = rbind(rr,rt)
-
-    # re-cluster
-    ms              = grouping.getMeasures(sim.sp,"ecdf",Nw=20,y_var = "y2")
-    grps            = grouping.classify.once(ms,k=10, nstart= 1000, verbose=10, iter.max=200)
-    sim.sp          = grouping.append(sim.sp,grps$best_cluster,drop = T)
-
-    sim.sp$sdata[,y1:=y1_bu]
-    res_rhos        = m4.mini.getvar.stayers.unc2.opt(sim.sp$sdata)
-    model_mini1     = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-    model_minilin1  = m4.mini.estimate(sim.sp$jdata,sim.sp$sdata,res_rhos$r1,res_rhos$r4,method="linear")
-
-    rt = data.frame(model_mini1$vdec$stats)
-    rt$name="mini";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_rhos$r1
-    rt$r4=res_rhos$r4
-    rr = rbind(rr,rt)
-
-    rt = data.frame(model_minilin1$vdec$stats)
-    rt$name="linear";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_rhos$r1
-    rt$r4=res_rhos$r4
-    rr = rbind(rr,rt)
-
-    # run mixture
-    res_mixt = m4.mixt.estimate.all(sim.sp,nk=6,ctrl,cl=cl)
-    rt = data.frame(res_mixt$vdec$stats)
-    rt$name="mixt";rt$rep=rep;rt$nfirms=nfirms
-    rt$r1=res_mixt$model$B12
-    rt$r4=res_mixt$model$B43
-    rr = rbind(rr,rt)
-
-    res_mixt$clusi_cor = sim.sp$sdata[,cor(jt,j1)]
-    res_mixt$second_stage_reps_all = NULL
-    rr_mixt_all[[paste(rep)]] = res_mixt
-    rm(sim.sp)
-
-    save(rr,rr_mixt_all,file = "tmpbootstrap-dyn-resample.dat")
-
-    print(rr)
+    flog.info("done with %s",nn)
   }
 
-  stopCluster(cl)
+  rr  = data.table(rr)
+  rrm = melt(rr,id.vars = "type")
+  rrs = rrm[, list(m1=mean(value), q0 = quantile(value,0.025), q1 = quantile(value,0.975),sd = sd(value)) , list(variable,type)]
 
-  load("tmpbootstrap-dyn-resample.dat")
-  rs      = rkiv0.start("m4-mixt-d2003-bootstrap-resample")
-  rs$info = "parametric bootstrap of dynamic mixture on 2003 data"
-  res.save(rs,list(vdecs=rr,mixt_all=rr_mixt_all))
+  # -----------  finally attach the main results --------- #
+  rt = m4.mixt.meaneffect(res_main$model)
+  #rt = m4.mixt.meaneffect(res_main_hl$model)
+  rrs[type=="pk0",main := as.numeric(rt[type=="pk0",1:7])]
+  rrs[type=="pku",main := as.numeric(rt[type=="pku",1:7])]
+  rrs = rrs[,list(variable, type, main, m1,q0,q1)]
 
+  # ---- do in differences ----- #
+  rrd  = rrm[,value:= value[type=="pku"] - value[type=="pk0"] , list(variable)]
+  rrds = rrd[, list(m1=mean(value), q0 = quantile(value,0.025), q1 = quantile(value,0.975),sd = sd(value)) , list(variable)]
+  rrds[,main := as.numeric(rt[type=="pku",1:7]) - as.numeric(rt[type=="pk0",1:7]) ]
+  rrds = rrds[,list(variable, main, m1,q0,q1,sd)]
 
+  res.save("m4-mixt-d2003-meffects",list(level=rrs,diff=rrds))
 }
 
+#' This is the endogenous mobility results
+server.dynamic.analysis.endogenousmobility <- function() {
 
-server.dynamic.d2003.changeK <- function() {
+  # get the main result
+  res_main      = res.load("m4-mixt-d2003-main")
+  model         = res_main$model
+  dd = compute.mob.matrix(res_main$model)
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
+  # get boostrap replications
+  res_bs      = res.load("m4-mixt-d2003-bootstrap")
+  rr = ldply(res_bs$mixt_all, function(x) {
+    compute.mob.matrix(x$model)},.progress = "text")
+  rr = data.table(rr)
 
-  rs    = rkiv0.start("m4-mixt-d2003-changeK",
-                      info="dynamic 2003 estimation with different number of clusters")
-  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
-                         nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1)
-
-  no_cores = 15
-  cl <- makeCluster(no_cores)
-  clusterEvalQ(cl,require(blm))
-
-  rr_mixt = list()
-  for (nf_size in c(6,8,12,15)) {
-      ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y2")
-      grps  = grouping.classify(ms,ksupp = nf_size,stop = TRUE,nstart = 500,verbose =10,iter.max = 200)
-      sim   = grouping.append(sim,grps$best_cluster)
-      res_mixt       = m4.mixt.estimate.all(sim,nk=6,ctrl,cl=cl)
-      model_mini     = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-      model_minilin  = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="linear")
-      rr_mixt[[paste("nf",nf_size,sep="-")]] = list(mixt = res_mixt, mini=model_mini,mini_lin=model_mini_lin)
-  }
-  res.save(rs,rr_mixt)
-  stopCluster(cl)
+  drr = rr[.id>100,list(m=mean(value),q0=quantile(value,0.025),q1=quantile(value,0.975),sd=sd(value)),list(j1,j2,cond)]
+  res.save("m4-cf-mobility",list(stats=drr,all=rr,main=dd))
 }
 
+server.dynamic.analysis.stateDependence <- function() {
 
+  res_main    = res.load("m4-mixt-d2003-main")
+  res_bs      = res.load("m4-mixt-d2003-bootstrap")
+  model = res_main$model
 
+  # combine everything
+  rr = analysis.dynamic.dec.bis(model,1e6)
 
-server.dynamic.mixture.estimate.2003data.localmax <- function() {
+  # run the bootstrap
+  rr.bs = ldply(res_bs$mixt_all,function(m) analysis.dynamic.dec.bis(m$model,1e6),.progress = "text")
+  rrm = data.table(melt(rr.bs,id=".id"))
+  rrs = rrm[, list(m1=mean(value,na.rm=T), q0 = quantile(value,0.025,na.rm=T), q1 = quantile(value,0.975,na.rm=T),sd = sd(value,na.rm=T)) , list(variable)]
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
+  rrs[,main:=as.numeric(rr)]
+  rrs = rrs[,list(variable,main,m1,sd,q0,q1)]
 
-  # get the groups
-  grps = res.load("m4-mixt-2003data-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-  sim$sdata[,list(y1,y2,y3,y4)]
-
-  # get best estimates
-  res_mixt = res.load("m4-mixt-2003data-main-para-bis")
-
-  # try data perturbation
-  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
-                         nplot=500,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,ncat=1,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
-  ctrl$pert_type="data"
-  ctrl$pert_beta=10
-  res2 = m4.mixt.rhoext.movers.pert(sim$jdata,sim$sdata,res_mixt$model,ctrl = ctrl)
-
-  ctrl$pert_type="sa"
-  ctrl$pert_beta=0.01
-  res2 = m4.mixt.rhoext.movers.pert(sim$jdata,sim$sdata,res_mixt$model,ctrl = ctrl)
-  for (i in 1:20) {
-    ctrl$pert_beta=ctrl$pert_beta^0.7
-    res2 = m4.mixt.rhoext.movers.pert(sim$jdata,sim$sdata,res2$model,ctrl = ctrl)
-  }
-
-
-  # try to strart from para with error to see if we get higher
-  res = res.load("m4-mixt-2003data-main-para")
-  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
-                         nplot=500,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,ncat=1,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
-  res2 = m4.mixt.rhoext.movers(sim$jdata,sim$sdata,res$model,ctrl = ctrl)
-
-
-  # start from the high variance result, amd re-estimate
-  res = res.load("m4-mixt-2003data-main")
-  ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
-                         nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,ncat=1,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
-  res2 = m4.mixt.rhoext.movers(sim$jdata,sim$sdata,res$model,ctrl = ctrl)
-
-  ctrl$pert_type="sa"
-  ctrl$pert_beta=0.4
-  res2 = m4.mixt.rhoext.movers.pert(sim$jdata[sample.int(.N,ceiling(.N/2))],sim$sdata,res$model,ctrl = ctrl)
-  for (i in 1:20) {
-    ctrl$pert_beta=ctrl$pert_beta^0.5
-    flog.info("beta=%f",ctrl$pert_beta)
-    res2 = m4.mixt.rhoext.movers.pert(sim$jdata,sim$sdata,res2$model,ctrl = ctrl)
-  }
-  res2 = m4.mixt.rhoext.movers(sim$jdata,sim$sdata,res2$model,ctrl = ctrl)
-
-  # compute decomposition
-  sim$sdata[,S1 := rank(runif(.N))/.N<=ctrl$sdata_subsample,j1]
-  sim$sdata[,y1:=y1_bu]
-  res2 = m4.mixt.rhoext.stayers(sim$jdata, sim$sdata[move==FALSE][S1==1], res2$model, em.control(ctrl,cstr_type="akm",cstr_val=0.05))
-  sim$sdata[,y1:=y1_bu]
-  res2 = m4.mixt.rhoext.stayers(sim$jdata, sim$sdata[move==FALSE][S1==1], res2$model, em.control(ctrl,cstr_type="none"))
-  sim$sdata[,y1:=y1_bu]
-  sdatae.sim = m4.mixt.impute.stayers( sim$sdata[move==FALSE][S1==1],res$model)
-  proj_unc   = blm:::lin.proj(sdatae.sim[k_imp!=5],"y2_imp","k_imp","j1");
-
-  model.connectiveness3(res2$model,T)
-
-}
-
-
-server.dynamic.mini.explore <- function() {
-
-  fmeas <- function(dt) {
-      res = lm(y2~y1,dt);
-      v = c(mean(dt$y2),sd(dt$y2),coef(res)[1],coef(res)[2]);
-      v[is.na(v)]=0
-      data.frame(m=c("m1","m2","m3","m4"),value=v)
-  }
-
-  fmeas <- function(dt) {
-    res = lm(y2~y1,dt);
-    v = c(mean(dt$y2),sd(dt$y2),cov(dt$y1,dt$y2));
-    v[is.na(v)]=0
-    data.frame(m=c("m1","m2","m3"),value=v)
-  }
-
-  fmeas <- function(dt) {
-    v = c(mean(dt$y1 -res_rhos$r1 * dt$y2 ),sd(dt$y1 -res_rhos$r1 * dt$y2 ));
-    v[is.na(v)]=0
-    data.frame(m=c("m1","m2"),value=v)
-  }
-
-  meas2 = cluster.getMeasures(sdata,jdata,measure="user_dyn",user_fn=fmeas,normalize = TRUE)
-
-  source("../../aclus/aclus/R/firm-clustering.R")
-
-  grp2 = firm.group(meas2,ksupp=10)
-  jdata[,j1:= as.integer(grp2$best_cluster[[f1]]),f1]
-  jdata[,j2:= as.integer(grp2$best_cluster[[f2]]),f2]
-  sdata[,j1:=NULL]
-  sdata[,j1:= as.integer(grp2$best_cluster[[f1]]),f1]
-
-  acast(jdata[,.N,list(j1,j2)],j1~j2)
-
-  res_rhos = model.mini4.getvar.stayers.unc2.opt(sdata)
-  model_mini      = model.mini4.estimate(jdata,sdata,res_rhos$r1,res_rhos$r4,fixb=T)
-  sdata.sim       = model.mini4.impute.stayers(model_mini,sdata)
-  proj_unc_mini   = lin.proja(sdata.sim,"y2_imp","k_imp","j1");
-
-  rbind(model_mini$B2,model_mini$A1)
-
-  # check the fit
-  sdata[,as.list(coef(lm(y2~y1))),j1]
-  sdata.sim[,as.list(coef(lm(y2~y1))),j1]
-
-
+  res.save("m4-cf-state-dependence",rrs)
 }
 
 

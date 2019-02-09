@@ -206,7 +206,8 @@ fig.static.mixt.means <- function() {
 
   # proportions
   dpk1 = m2.get.pk1(res_main$model)
-  pk_m  = acast(dpk1[,sum(pr_j1j2k),list(j1,k)],j1~k,value.var = "V1")
+  dpk1[, pr_j1 := sum(pr_j1j2k),list(j1)]
+  pk_m  = acast(dpk1[,sum(pr_j1j2k)/pr_j1[1],list(j1,k)],j1~k,value.var = "V1")
   NNs = res_main$model$NNs*10 # used 10% sample
   NNm = res_main$model$NNm
   share_s  = sum(NNs)/(sum(NNm) + sum(NNs))
@@ -403,105 +404,7 @@ tab.satic.robust <- function() {
 
 
 
-table.dynamic.mixt.vdec <- function() {
 
-  res_main        = res.load("m4-mixt-d2003-main")
-  model_mixt_bs   = m4.getboostrap()
-
-  vdec.extract <- function(vdec) {
-    VV = vdec$cc
-    r = data.frame(var_y=VV[1,1],var_k=VV[2,2],var_l=VV[3,3],var_e=VV[4,4],cov_kl=VV[2,3])
-    r$cor_kl        = r$cov_kl/sqrt(r$var_k*r$var_l)
-    r$var_l_tshare  = r$var_l/r$var_y
-    r$var_k_tshare  = r$var_k/r$var_y
-    r$var_e_tshare  = r$var_e/r$var_y
-    r$cov_kl_tshare = 2*r$cov_kl/r$var_y
-    r
-  }
-
-  df2list <- function(dd,values,names="variable") {
-    res = as.list(dd[,get(values)])
-    names(res) = dd[,get(names)]
-    res
-  }
-
-  # compute boostrap s.e.
-  res_mixt_bs = data.table(ldply(model_mixt_bs$mixt_all,function(x) vdec.extract(x$vdec)))
-  res_mixt_bs = data.table(melt(res_mixt_bs,id=".id"))
-  res_sd      = res_mixt_bs[,list(q0=quantile(value,0.025),q1=quantile(value,0.975),m=mean(value),sd=sd(value)),variable]
-  main_sd     = df2list(res_sd,"sd")
-  bs_vdec_m1  = df2list(res_sd,"m")
-  bs_vdec_q0  = df2list(res_sd,"q0")
-  bs_vdec_q1  = df2list(res_sd,"q1")
-
-  main = vdec.extract(res_main$vdec)
-
-  # ===== EXTRACT REALLOCATION RESULTS ====== #
-  rr_mean_effects = res.load("m4-mixt-d2003-meffects-leg2")
-  res_means         = df2list(rr_mean_effects$diff,"main")
-  res_means_sd      = df2list(rr_mean_effects$diff,"sd")
-  res_means_m1      = df2list(rr_mean_effects$diff,"m1")
-  res_means_q0      = df2list(rr_mean_effects$diff,"q0")
-  res_means_q1      = df2list(rr_mean_effects$diff,"q1")
-
-  require(textables)
-  vnames = c("var_k_tshare","var_l_tshare","cov_kl_tshare","var_e_tshare","cor_kl")
-
-  tt =
-    tt_rule_top() +
-    tt_text_row("{ \\bf Variance decomposition ($\\times 100$) }",cspan = 5,center = "c") + tt_spacer_row(-3) +
-    tt_text_row(c("$\\frac{Var(\\alpha)}{Var(y)}$",
-                  "$\\frac{Var(\\psi)}{Var(y)}$",
-                  "$\\frac{2 Cov(\\alpha,\\psi)}{Var(y)}$",
-                  "$\\frac{Var(\\varepsilon)}{Var(y)}$",
-                  "$Corr(\\alpha,\\psi)$")) +
-    tt_rule_mid() +
-    tt_numeric_row(100*as.numeric(main[vnames]),percent=F,dec=2) +
-    tt_spacer_row(-9) +
-    tt_numeric_row(100*as.numeric(main_sd[vnames]),percent=F,dec=2,surround="{\\scriptsize (%s)}")  + tt_spacer_row(6) +
-    tt_text_row(" { \\bf Reallocation exercise ($\\times 100$) }",cspan = 5,center = "c") + tt_spacer_row(-5) +
-    tt_text_row( c("Mean","Median","10\\%-quantile", "90\\%-quantile", "Variance")) + tt_spacer_row(-5) +
-    tt_rule_mid() +
-    tt_numeric_row(100*as.numeric(res_means[c("mean","median","d1","d9","var")]),dec=2) +
-    tt_spacer_row(-9) +
-    tt_numeric_row(100*as.numeric(res_means_sd[c("mean","median","d1","d9","var")]),dec=2,surround="{\\scriptsize (%s)}") +
-    tt_rule_bottom()
-
-  tab = tt_tabularize(tt,header = "ccccc", pretty_rules=F)
-  tt_save(tab,filename="inst/figures/tab-dynamic-main.tex",stand_alone=F)
-  tt_save(tab,filename="~/tmp/tmp.tex",stand_alone=T)
-
-
-  # SECOND TABLE
-  tt =
-    tt_rule_top() +
-    TR("") %:% tt_text_row("{ \\bf Variance decomposition ($\\times 100$) }",cspan = 5,center = "c") + tt_spacer_row(-3) +
-    tt_text_row(c("","$\\frac{Var(\\alpha)}{Var(y)}$",
-                  "$\\frac{Var(\\psi)}{Var(y)}$",
-                  "$\\frac{2 Cov(\\alpha,\\psi)}{Var(y)}$",
-                  "$\\frac{Var(\\varepsilon)}{Var(y)}$",
-                  "$Corr(\\alpha,\\psi)$")) +
-    tt_rule_mid() +
-    TR("estimate") %:% tt_numeric_row(100*as.numeric(main[vnames]),percent=F,dec=2) +
-    tt_rule_mid_partial(list(c(2,6))) +
-    TR("bootstrap mean")             %:% TR(100*as.numeric(bs_vdec_m1[vnames]),percent=F,dec=2)  +
-    TR("bootstrap 2.5\\%-quantile")  %:% TR(100*as.numeric(bs_vdec_q0[vnames]),percent=F,dec=2)  +
-    TR("bootstrap 97.5\\%-quantile") %:% TR(100*as.numeric(bs_vdec_q1[vnames]),percent=F,dec=2)  +
-    tt_spacer_row(6) +
-    TR("") %:% tt_text_row(" { \\bf Reallocation exercise ($\\times 100$) }",cspan = 5,center = "c") + tt_spacer_row(-5) +
-    TR("") %:% tt_text_row( c("Mean","Median","10\\%-quantile", "90\\%-quantile", "Variance")) + tt_spacer_row(-5) +
-    tt_rule_mid() +
-    TR("estimate") %:% TR(100*as.numeric(res_means[c("mean","median","d1","d9","var")]),dec=2)  +
-    tt_rule_mid_partial(list(c(2,6))) +
-    TR("bootstrap mean")             %:% TR(100*as.numeric(res_means_m1[c("mean","median","d1","d9","var")]),dec=2)  +
-    TR("bootstrap 2.5\\%-quantile")  %:% TR(100*as.numeric(res_means_q0[c("mean","median","d1","d9","var")]),dec=2)  +
-    TR("bootstrap 97.5\\%-quantile") %:% TR(100*as.numeric(res_means_q1[c("mean","median","d1","d9","var")]),dec=2)  +
-    tt_rule_bottom()
-
-  tab = tt_tabularize(tt,header = "lccccc", pretty_rules=F)
-  tt_save(tab,filename="inst/figures/tab-dynamic-main-bootstrap-details.tex",stand_alone=F)
-
-}
 
 
 
@@ -730,6 +633,106 @@ fig.akm <- function() {
 
 # =========================  DYNAMIC -- MIXTURE =====================
 
+
+tab.dynamic.mixt.vdec <- function() {
+
+  res_main        = res.load("m4-mixt-d2003-main")
+  model_mixt_bs   = res.load("m4-mixt-d2003-bootstrap")
+
+  vdec.extract <- function(vdec) {
+    VV = vdec$cc
+    r = data.frame(var_y=VV[1,1],var_k=VV[2,2],var_l=VV[3,3],var_e=VV[4,4],cov_kl=VV[2,3])
+    r$cor_kl        = r$cov_kl/sqrt(r$var_k*r$var_l)
+    r$var_l_tshare  = r$var_l/r$var_y
+    r$var_k_tshare  = r$var_k/r$var_y
+    r$var_e_tshare  = r$var_e/r$var_y
+    r$cov_kl_tshare = 2*r$cov_kl/r$var_y
+    r
+  }
+
+  df2list <- function(dd,values,names="variable") {
+    res = as.list(dd[,get(values)])
+    names(res) = dd[,get(names)]
+    res
+  }
+
+  # compute boostrap s.e.
+  res_mixt_bs = data.table(ldply(model_mixt_bs$mixt_all,function(x) vdec.extract(x$vdec)))
+  res_mixt_bs = data.table(melt(res_mixt_bs,id=".id"))
+  res_sd      = res_mixt_bs[,list(q0=quantile(value,0.025),q1=quantile(value,0.975),m=mean(value),sd=sd(value)),variable]
+  main_sd     = df2list(res_sd,"sd")
+  bs_vdec_m1  = df2list(res_sd,"m")
+  bs_vdec_q0  = df2list(res_sd,"q0")
+  bs_vdec_q1  = df2list(res_sd,"q1")
+
+  main = vdec.extract(res_main$vdec)
+
+  # ===== EXTRACT REALLOCATION RESULTS ====== #
+  rr_mean_effects   = res.load("m4-mixt-d2003-meffects")
+  res_means         = df2list(rr_mean_effects$diff,"main")
+  res_means_sd      = df2list(rr_mean_effects$diff,"sd")
+  res_means_m1      = df2list(rr_mean_effects$diff,"m1")
+  res_means_q0      = df2list(rr_mean_effects$diff,"q0")
+  res_means_q1      = df2list(rr_mean_effects$diff,"q1")
+
+  require(textables)
+  vnames = c("var_k_tshare","var_l_tshare","cov_kl_tshare","var_e_tshare","cor_kl")
+
+  tt =
+    tt_rule_top() +
+    tt_text_row("{ \\bf Variance decomposition ($\\times 100$) }",cspan = 5,center = "c") + tt_spacer_row(-3) +
+    tt_text_row(c("$\\frac{Var(\\alpha)}{Var(y)}$",
+                  "$\\frac{Var(\\psi)}{Var(y)}$",
+                  "$\\frac{2 Cov(\\alpha,\\psi)}{Var(y)}$",
+                  "$\\frac{Var(\\varepsilon)}{Var(y)}$",
+                  "$Corr(\\alpha,\\psi)$")) +
+    tt_rule_mid() +
+    tt_numeric_row(100*as.numeric(main[vnames]),percent=F,dec=2) +
+    tt_spacer_row(-9) +
+    tt_numeric_row(100*as.numeric(main_sd[vnames]),percent=F,dec=2,surround="{\\scriptsize (%s)}")  + tt_spacer_row(6) +
+    tt_text_row(" { \\bf Reallocation exercise ($\\times 100$) }",cspan = 5,center = "c") + tt_spacer_row(-5) +
+    tt_text_row( c("Mean","Median","10\\%-quantile", "90\\%-quantile", "Variance")) + tt_spacer_row(-5) +
+    tt_rule_mid() +
+    tt_numeric_row(100*as.numeric(res_means[c("mean","median","d1","d9","var")]),dec=2) +
+    tt_spacer_row(-9) +
+    tt_numeric_row(100*as.numeric(res_means_sd[c("mean","median","d1","d9","var")]),dec=2,surround="{\\scriptsize (%s)}") +
+    tt_rule_bottom()
+
+  tab = tt_tabularize(tt,header = "ccccc", pretty_rules=F)
+  tt_save(tab,filename=paste0(local_opts$wdir,"/tab-dynamic-main.tex"),stand_alone=F)
+  flog.info("creating %s",paste0(local_opts$wdir,"/tab-dynamic-main.tex"))
+
+  # SECOND TABLE
+  tt =
+    tt_rule_top() +
+    TR("") %:% tt_text_row("{ \\bf Variance decomposition ($\\times 100$) }",cspan = 5,center = "c") + tt_spacer_row(-3) +
+    tt_text_row(c("","$\\frac{Var(\\alpha)}{Var(y)}$",
+                  "$\\frac{Var(\\psi)}{Var(y)}$",
+                  "$\\frac{2 Cov(\\alpha,\\psi)}{Var(y)}$",
+                  "$\\frac{Var(\\varepsilon)}{Var(y)}$",
+                  "$Corr(\\alpha,\\psi)$")) +
+    tt_rule_mid() +
+    TR("estimate") %:% tt_numeric_row(100*as.numeric(main[vnames]),percent=F,dec=2) +
+    tt_rule_mid_partial(list(c(2,6))) +
+    TR("bootstrap mean")             %:% TR(100*as.numeric(bs_vdec_m1[vnames]),percent=F,dec=2)  +
+    TR("bootstrap 2.5\\%-quantile")  %:% TR(100*as.numeric(bs_vdec_q0[vnames]),percent=F,dec=2)  +
+    TR("bootstrap 97.5\\%-quantile") %:% TR(100*as.numeric(bs_vdec_q1[vnames]),percent=F,dec=2)  +
+    tt_spacer_row(6) +
+    TR("") %:% tt_text_row(" { \\bf Reallocation exercise ($\\times 100$) }",cspan = 5,center = "c") + tt_spacer_row(-5) +
+    TR("") %:% tt_text_row( c("Mean","Median","10\\%-quantile", "90\\%-quantile", "Variance")) + tt_spacer_row(-5) +
+    tt_rule_mid() +
+    TR("estimate") %:% TR(100*as.numeric(res_means[c("mean","median","d1","d9","var")]),dec=2)  +
+    tt_rule_mid_partial(list(c(2,6))) +
+    TR("bootstrap mean")             %:% TR(100*as.numeric(res_means_m1[c("mean","median","d1","d9","var")]),dec=2)  +
+    TR("bootstrap 2.5\\%-quantile")  %:% TR(100*as.numeric(res_means_q0[c("mean","median","d1","d9","var")]),dec=2)  +
+    TR("bootstrap 97.5\\%-quantile") %:% TR(100*as.numeric(res_means_q1[c("mean","median","d1","d9","var")]),dec=2)  +
+    tt_rule_bottom()
+
+  tab = tt_tabularize(tt,header = "lccccc", pretty_rules=F)
+  tt_save(tab,filename=paste0(local_opts$wdir,"/tab-dynamic-main-bootstrap-details.tex"),stand_alone=F)
+  flog.info("creating %s",paste0(local_opts$wdir,"/tab-dynamic-main-bootstrap-details.tex"))
+}
+
 #' this plots the connectedness versus likelood for the 50
 #' starting values in the main estimatation.
 fig.dynamic.mixt.connectedness <- function() {
@@ -750,11 +753,11 @@ fig.dynamic.mixt.connectedness <- function() {
 #' plotting the means and proportions for the main estimate
 #' of the mixture model.
 fig.dynamic.mixt.means <- function() {
-  res_main   = res.load("m4-mixt-d2003-main")
-  model_mixt_bs  = m4.getboostrap()$mixt_all
+  res_main    = res.load("m4-mixt-d2003-main")
+  model_mixt_bs      = res.load("m4-mixt-d2003-bootstrap")$mixt_all
+  cstats      = res.load("m4-stats-d2003")$cstats
   flog.info("using %i bootstrap replications", length(model_mixt_bs))
 
-  cstats        = res.load("m4-stats-d2003")$cstats
   cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
   res_mixt_bs = data.table(ldply(model_mixt_bs,function(x) {
@@ -771,35 +774,26 @@ fig.dynamic.mixt.means <- function() {
   lmax = max(cstats[,m1+3*sd1])
   cstats$k=1
 
-  wplot(res_main$model$A2s[,I]) + xlab("firm class k") +theme_bw() +
-    scale_y_continuous("log-earnings")+theme(legend.position = "none") +
-    geom_errorbar(aes(ymin=q0,ymax=q1),data=res_sd,width=0.2) +
-    coord_cartesian(ylim = c(lmin,lmax)) #+
-  #geom_ribbon(aes(ymin=m1-2*sd1,ymax=m1+2*sd1,x=j1,y=m1),data=cstats,alpha=0.1,color="grey")
-
   gp = wplot(res_main$model$A2s[,I]) + xlab("firm class k") +theme_bw() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none") +
     geom_errorbar(aes(ymin=value-(q1-q0)/2,ymax=value+(q1-q0)/2),data=res_sd,width=0.2) +
-    #coord_cartesian(ylim = c(lmin,lmax)) +
-    #geom_ribbon(aes(ymin=m1-2*sd1,ymax=m1+2*sd1,x=j1,y=m1),data=cstats,alpha=0.05,color=NA)+
     scale_color_brewer(palette="Spectral")
 
-  ggsave("inst/figures/fig-mixt4-d2003-wage.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-mixt4-d2003-wage.pdf"),gp,width = 6.5,height = 5)
   flog.info("creating fig-mixt4-d2003-wage.png")
 
   gp = wplot(res_main$model$A2s[,I]) + xlab("firm class k") +theme_bw() +
     scale_y_continuous("log-earnings")+theme(legend.position = "none") +
     geom_errorbar(aes(ymin=q0,ymax=q1),data=res_sd,width=0.2) +
-    #coord_cartesian(ylim = c(lmin,lmax)) +
-    # geom_ribbon(aes(ymin=m1-2*sd1,ymax=m1+2*sd1,x=j1,y=m1),data=cstats,alpha=0.05,color=NA) +
     scale_color_brewer(palette="Spectral")
 
-  ggsave("inst/figures/fig-mixt4-d2003-wage-uc.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-mixt4-d2003-wage-uc.pdf"),gp,width = 6.5,height = 5)
   flog.info("creating fig-mixt4-d2003-wage-uc.png")
 
   # proportions
   dpk1 = m2.get.pk1(res_main$model)
-  pk_m  = acast(dpk1[,sum(pr_j1j2k),list(j1,k)],j1~k,value.var = "V1")
+  dpk1[, pr_j1 := sum(pr_j1j2k),list(j1)]
+  pk_m  = acast(dpk1[,sum(pr_j1j2k)/pr_j1[1],list(j1,k)],j1~k,value.var = "V1")
   NNs = res_main$model$NNs*10 # used 10% sample
   NNm = res_main$model$NNm
   share_s  = sum(NNs)/(sum(NNm) + sum(NNs))
@@ -813,55 +807,9 @@ fig.dynamic.mixt.means <- function() {
     xlab("firm class k") + ylab("type proportions") +
     scale_fill_brewer(palette="Spectral")
 
-  ggsave("inst/figuresfig-mixt4-d2003-pk.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-mixt4-d2003-pk.pdf"),gp,width = 6.5,height = 5)
   flog.info("creating fig-mixt4-d2003-pk.png")
 }
-
-
-#' plotting the means and proportions for the split sample
-#' estimates
-fig.dynamic.mixt.splits <- function() {
-  res_split  = res.load("m4-mixt-d2003-splits")
-
-  I = order(-colSums(res_split$split1$mixt$model$A2s))
-  gp = wplot(res_split$split1$mixt$model$A2s[,I]) +  xlab("firm class k") +theme_bw() +
-    scale_y_continuous("log-earnings")+theme(legend.position = "none") +
-    scale_color_brewer(palette="Spectral")
-  ggsave("inst/figuresfig-mixt4-d2003-S1-wage.pdf",gp,width = 6.5,height = 5)
-
-  dpk1 = m2.get.pk1(res_split$split1$mixt$model)
-  pk_m  = acast(dpk1[,sum(pr_j1j2k),list(j1,k)],j1~k,value.var = "V1")
-  NNs = res_split$split1$mixt$model$NNs*10 # used 10% sample
-  NNm = res_split$split1$mixt$model$NNm
-  share_s  = sum(NNs)/(sum(NNm) + sum(NNs))
-  pk_unc = share_s*rdim(res_split$split1$mixt$model$pk0[,I],res_split$split1$mixt$model$nf,res_split$split1$mixt$model$nk) +
-    (1- share_s) * pk_m
-
-  gp = pplot(pk_unc)+
-    theme(legend.position = "none") +  xlab("firm class k") + ylab("type proportions") +
-    scale_fill_brewer(palette="Spectral")
-  ggsave("inst/figuresfig-mixt4-d2003-S1-pk.pdf",gp,width = 6.5,height = 5)
-
-  # I = order(-colSums(res_split$split2$model$A1))
-  # gp = wplot(res_split$split2$model$A1[,I]) +  xlab("firm class k") +theme_bw() +
-  #   scale_y_continuous("log-earnings")+theme(legend.position = "none") +
-  #   scale_color_brewer(palette="Spectral")
-  # ggsave("inst/figuresfig-mixt2-d2003-S2-wage.png",gp,width = 6.5,height = 5)
-  #
-  # dpk1 = m2.get.pk1(res_split$split2$model)
-  # pk_m  = acast(dpk1[,sum(pr_j1j2k),list(j1,k)],j1~k,value.var = "V1")
-  # NNs = res_split$split2$model$NNs*10 # used 10% sample
-  # NNm = res_split$split2$model$NNm
-  # share_s  = sum(NNs)/(sum(NNm) + sum(NNs))
-  # pk_unc = share_s*rdim(res_split$split2$model$pk0[,,I],res_split$split2$model$nf,res_split$split2$model$nk) +
-  #   (1- share_s) * pk_m
-  #
-  # gp = pplot(pk_unc)+
-  #   theme(legend.position = "none") +
-  #   scale_fill_brewer(palette="Spectral")
-  # ggsave("inst/figuresfig-mixt2-d2003-S2-pk.png",gp,width = 6.5,height = 5)
-}
-
 
 fig.dynamic.mixture.fit <- function() {
   m2.fit = res.load("m4-mixt-d2003-main-fit")
@@ -942,10 +890,10 @@ fig.dyn.rho.fit <-function() {
   ggsave("inst/figuresfig-rho-diff-fit.pdf",dpi=100,width = 5,height = 4)
 }
 
-table.m4.parameters <- function() {
+tab.dynamic.parameters <- function() {
 
-  res_main   = res.load("m4-mixt-d2003-main")
-  res_bs     = m4.getboostrap()
+  res_main  = res.load("m4-mixt-d2003-main")
+  res_bs    = res.load("m4-mixt-d2003-bootstrap")
 
   model_mixt_bs = data.table(ldply(res_bs$mixt_all,function(x) {
     I = order(colSums(-x$model$A2s))
@@ -988,14 +936,13 @@ table.m4.parameters <- function() {
     tt_rule_bottom()
 
     tab = tt_tabularize(tt,"l ccccccccc")
-    tt_save(tab,filename="inst/figures/tab-dyn-params.tex",stand_alone=F)
-
-
+    tt_save(tab,filename=paste0(local_opts$wdir,"/tab-dyn-params.tex"),stand_alone=F)
+    flog.info("creating %s",paste0(local_opts$wdir,"/tab-dyn-params.tex"))
 }
 
 
 
-table.endogeneousMobility <- function() {
+tab.dynamic.endogeneousMobility <- function() {
   rr = res.load("m4-cf-mobility")
 
   tt =
@@ -1032,10 +979,11 @@ table.endogeneousMobility <- function() {
     tt_rule_top()
 
   tab = tt_tabularize(tt,header = "l cccc", pretty_rules=F)
-  tt_save(tab,filename="inst/figures/tab-dyn-endogenous-mobility.tex",stand_alone=F)
+  tt_save(tab,filename=paste0(local_opts$wdir,"/tab-dyn-endogenous-mobility.tex"),stand_alone=F)
+  flog.info("creating %s",paste0(local_opts$wdir,"/tab-dyn-endogenous-mobility.tex"))
 }
 
-table.statedependence <- function() {
+tab.dynamic.statedependence <- function() {
 
   rr = res.load("m4-cf-state-dependence")
   r1 =as.list(rr$main)
@@ -1065,10 +1013,8 @@ table.statedependence <- function() {
     tt_rule_bottom()
 
   tab = tt_tabularize(tt,header = "l ccc", pretty_rules=F)
-  tt_save(tab,filename="inst/figures/tab-dyn-state-dependence.tex",stand_alone=F)
-
-
-
+  tt_save(tab,filename=paste0(local_opts$wdir,"/tab-dyn-state-dependence.tex"),stand_alone=F)
+  flog.info("creating %s",paste0(local_opts$wdir,"/tab-dyn-state-dependence.tex"))
 }
 
 

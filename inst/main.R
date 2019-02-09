@@ -76,19 +76,32 @@ server.dynamic.d2003.clustering.stats()
 server.dynamic.mixture.d2003.estimate()
 server.dynamic.mixture.d2003.boostrap()
 
+fig.dynamic.mixt.means()
+fig.dynamic.mixt.connectedness()
+tab.dynamic.parameters()
+
+# create counterfactuals
+server.dynamic.analysis.meaneffects()
+server.dynamic.analysis.endogenousmobility()
+server.dynamic.analysis.stateDependence()
+
+tab.dynamic.mixt.vdec()
+tab.dynamic.statedependence()
+tab.dynamic.endogeneousMobility()
 
 # robustness
 server.dynamic.mini.estimate()
 server.dynamic.mixture.estimate.robust.nf()
 server.dynamic.mixture.estimate.robust.nk()
+server.dynamic.mixture.estimate.robust.different_rho()
+server.dynamic.mixture.d2003.estimate.model_iteration()
+
 
 
 # ===== Andrews, Kline, BLM comparaison ========
 # server.fe.trace()
 # figure.hybrid()
 
-#table.statedependence()
-#table.endogeneousMobility()
 
 # ====== probabilistic estimation ========
 server.static.proba.results()
