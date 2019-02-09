@@ -344,13 +344,15 @@ tab.satic.robust <- function() {
   res_nk            = res.load("m2-mixt-d2003-change-nk")
   res_nf            = res.load("m2-mixt-d2003-change-nf")
   res_mixtofmixt    = res.load("m2-mixt-d2003-main-mixtofmixt")
-  # res_resid       = res.load("")
+  res_resid         = res.load("m2-mixt-d2003-main-residuals")
   res_fsize         = res.load("m2-mixt-d2003-firmsize")
   res_ns            = res.load("m2-mixt-d2003-main-ns")
   res_mini          = res.load("m2-mini-prof")
   res_mini_lin      = res.load("m2-mini-linear")
   #res_other_cluster = res.load("m2-mixt-d2003-main-ns.dat")
   res_iter          = res.load("m2-mixt-d2003-main-reclassify-mainresults")
+  res_split_pr      = res.load("m2-mixt-d2003-clus_split-rk-prank")
+  res_split_va      = res.load("m2-mixt-d2003-clus_split-rk-va")
 
   vdec.extract <- function(vdec) {
     VV = vdec$cc
@@ -390,6 +392,9 @@ tab.satic.robust <- function() {
     TR("firm less than 50")      %:% row.dec(res_fsize$mixt_leq_50) +
     TR("firm more than 50")      %:% row.dec(res_fsize$mixt_gt_50) +
     TR("fully non stationary")   %:% row.dec(res_ns) +
+    TR("using rediduals")        %:% row.dec(res_resid) +
+    TR("split poaching rank")    %:% row.dec(res_split_pr) +
+    TR("split V.A")              %:% row.dec(res_split_va) +
     TR("interacted model")       %:% row.dec(res_mini) +
     TR("linear model")           %:% row.dec(res_mini_lin) +
     TR("1 iteration")            %:% row.dec(res_iter[[1]]) +
@@ -731,6 +736,64 @@ tab.dynamic.mixt.vdec <- function() {
   tab = tt_tabularize(tt,header = "lccccc", pretty_rules=F)
   tt_save(tab,filename=paste0(local_opts$wdir,"/tab-dynamic-main-bootstrap-details.tex"),stand_alone=F)
   flog.info("creating %s",paste0(local_opts$wdir,"/tab-dynamic-main-bootstrap-details.tex"))
+}
+
+
+tab.dynamic.robust <- function() {
+
+  res_main          = res.load("m4-mixt-d2003-main")
+  res_nk            = res.load("m4-mixt-d2003-change-nk")
+  res_nf            = res.load("m4-mixt-d2003-change-nf")
+  res_rho_diff      = res.load("m4-mixt-d2003-rho-check")
+  res_mini          = res.load("m4-mini-prof")
+  res_mini_lin      = res.load("m4-mini-linear")
+  res_iter          = res.load("m4-mixt-d2003-reclassify")
+
+  vdec.extract <- function(vdec) {
+    VV = vdec$cc
+    r = data.frame(var_y=VV[1,1],var_k=VV[2,2],var_l=VV[3,3],var_e=VV[4,4],cov_kl=VV[2,3])
+    r$cor_kl        = r$cov_kl/sqrt(r$var_k*r$var_l)
+    r$var_l_tshare  = r$var_l/r$var_y
+    r$var_k_tshare  = r$var_k/r$var_y
+    r$var_e_tshare  = r$var_e/r$var_y
+    r$cov_kl_tshare = 2*r$cov_kl/r$var_y
+    r
+  }
+
+  row.dec = function(model) {
+    tt_numeric_row(100*as.numeric(vdec.extract(model$vdec)[vnames]),percent=F,dec=2)
+  }
+
+  require(textables)
+  vnames = c("var_k_tshare","var_l_tshare","cov_kl_tshare","var_e_tshare","cor_kl")
+
+  tt =
+    tt_rule_top() +
+    tt_text_row(c("","{ \\bf Variance decomposition ($\\times 100$) }"),cspan = c(1,5),center = c("c","c")) + tt_spacer_row(-3) +
+    tt_text_row(c("",
+                  "$\\frac{Var(\\alpha)}{Var(y)}$",
+                  "$\\frac{Var(\\psi)}{Var(y)}$",
+                  "$\\frac{2 Cov(\\alpha,\\psi)}{Var(y)}$",
+                  "$\\frac{Var(\\varepsilon)}{Var(y)}$",
+                  "$Corr(\\alpha,\\psi)$")) +
+    tt_rule_mid() +
+    TR("baseline") %:% row.dec(res_main) +
+    TR("rho in diff")      %:% row.dec(res_rho_diff) +
+    TR("K=3")      %:% row.dec(res_nf[["nf-3"]]) +
+    TR("K=15")     %:% row.dec(res_nf[["nf-15"]]) +
+    TR("L=3")      %:% row.dec(res_nk[["nk-3"]]) +
+    TR("L=5")      %:% row.dec(res_nk[["nk-5"]]) +
+    TR("L=9")      %:% row.dec(res_nk[["nk-9"]]) +
+    TR("interacted model")       %:% row.dec(res_mini) +
+    TR("linear model")           %:% row.dec(res_mini_lin) +
+    TR("1 iteration")            %:% row.dec(res_iter[[1]]) +
+    TR("10 iterations")          %:% row.dec(res_iter[[10]]) +
+    tt_rule_bottom()
+
+  tab = tt_tabularize(tt,header = "lccccc", pretty_rules=F)
+  tt_save(tab,filename=paste0(local_opts$wdir,"/tab-dynamic-main-robust.tex"),stand_alone=F)
+  flog.info("creating %s",paste0(local_opts$wdir,"/tab-dynamic-main-robust.tex"))
+
 }
 
 #' this plots the connectedness versus likelood for the 50

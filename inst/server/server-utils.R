@@ -363,14 +363,30 @@ generate_simulated_data = function(force=FALSE) {
     sdata[,wid:=sprintf("W%i",1:.N)]
     ns =sdata[,.N]
     jdata[,wid:=sprintf("W%i", ns+ (1:.N))]
-    sdata[, ind1:= sample(c("Manufacturing","Services","Retail trade","Construction etc."),.N,replace=T)]
-    jdata[, ind1:= sample(c("Manufacturing","Services","Retail trade","Construction etc."),.N,replace=T)]
+
+    # draw industry for each firm
+    fdata = data.table(f1 = unique(c(sdata$f1,jdata$f1,jdata$f2)))
+    fdata [, ind := sample(c("Manufacturing","Services","Retail trade","Construction etc."),.N,replace=T)]
+    fdata [, va := exp(rnorm(.N)),f1]
+    setkey(fdata,f1)
+
+    setkey(sdata,f1)
+    sdata[, ind1:= fdata[sdata,ind]]
+    sdata[, va1 := fdata[sdata,va]]
+    setkey(sdata,f2)
+    sdata[, ind2:= fdata[sdata,ind]]
+    sdata[, va2 := fdata[sdata,va]]
+    setkey(jdata,f1)
+    jdata[, ind1:= fdata[jdata,ind]]
+    jdata[, va1 := fdata[jdata,va]]
+    setkey(jdata,f2)
+    jdata[, ind2:= fdata[jdata,ind]]
+    jdata[, va2 := fdata[jdata,va]]
+
     sdata[, educ:= sample(1:3,.N,replace=T)]
     jdata[, educ:= sample(1:3,.N,replace=T)]
     sdata[,size1 := .N,f1]
     jdata[,size1 := .N,f1]
-    sdata[,va1 := exp(rnorm(.N)),f1]
-    jdata[,va1 :=exp(rnorm(.N)),f1]
     sdata = rbind(jdata,sdata)
     save(sdata,jdata,file=sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
 
@@ -380,7 +396,7 @@ generate_simulated_data = function(force=FALSE) {
   if ( (force==FALSE) & file.exists(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))) {
     flog.info("data already exists, skipping simulation.")
   } else {
-    load("int/m4-mixt-d2003-main.rkiv")
+    load("inst/m4-mixt-d2003-main.rkiv")
     res_main = value
     model = res_main$model
     sim = m4.mixt.simulate.sim(model,fsize = 50)

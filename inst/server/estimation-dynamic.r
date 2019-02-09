@@ -99,7 +99,8 @@ server.dynamic.mini.estimate <-function() {
   model_mini  = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
   model_lin   = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="linear")
 
-  res.save("m4-mini-d2003")
+  res.save("m4-mini-prof",model_mini)
+  res.save("m4-mini-linear",model_lin)
 }
 
 #' estimate the mini-model with different cluster sizes
@@ -439,7 +440,7 @@ server.dynamic.mixture.estimate.robust.nk <- function() {
     })}
   stopCluster(cl)
 
-  res.save("m4-mixt-d2003-change-nf",rr_mixt)
+  res.save("m4-mixt-d2003-change-nk",rr_mixt)
 }
 
 server.dynamic.mixture.estimate.robust.different_rho <- function() {

@@ -6,19 +6,19 @@ dir.create("./tmp",showWarnings = FALSE)
 dir.create("./tmp/data-tmp",showWarnings = FALSE)
 local_opts$wdir="./tmp"
 
-local_opts$use_simulated_data       = FALSE
-local_opts$cpu_count                = detectCores()    # number of cores that are available
-local_opts$bootstrap_nreps          = 200  # number of replications to use for bootstrap
-local_opts$estimation.mixture       = list(maxiter = 2000,est_rep=50,est_nbest=10)
-local_opts$estimation.probabilistic = list(maxiter = 200,gibbs_nfirm=100)
-local_opts$trace$nm_list            = c(1,2,3,4,5,10,15,20,50,100)
+# ---------   dry run configuration ---------
+local_opts$use_simulated_data = TRUE
+local_opts$cpu_count                = 2    # number of cores that are available
+local_opts$bootstrap_nreps          = 10  # number of replications to use for bootstrap
+local_opts$estimation.mixture       = list(maxiter = 50,est_rep=4,est_nbest=2)
+local_opts$estimation.probabilistic = list(maxiter = 10,gibbs_nfirm=10)
+local_opts$trace$nm_list            = c(1)
 
 # ==== prepapre options for running all results =====
 source("inst/server/server-utils.R")
 source("inst/server/estimation-static.r")
 source("inst/server/estimation-dynamic.r")
 source("inst/server/fig-blm.R")
-generate_simulated_data();
 
 # ==== construct intermediate data files ====
 
@@ -67,7 +67,6 @@ server.static.mixture.estimate.robust.nk()    # varying number of worker types
 server.static.mixt.estimate.robustess.residuals()
 server.static.estimate.clustersplits("rk-prank")
 server.static.estimate.clustersplits("rk-va")
-# missing splits, starting from means
 
 tab.satic.robust()
 

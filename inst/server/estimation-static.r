@@ -433,15 +433,11 @@ server.static.mixture.estimate.boostrap <- function(){
   res.save("m2-mixt-d2003-bootstrap",list(vdecs=rrr,mixt_all=rr_mixt2))
 }
 
-server.static.estimate.clustersplits <- function() {
-  # === EXERCICE 2 ===
-  # we take our clusters, we then split each cluster into
-  # 2 sub-groups, one with high IN, one with low IN
-  # then use it for estimation
-  arch_static = "res-2003-static.dat"
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
+server.static.estimate.clustersplits <- function(measure="rk-prank") {
+
+  sim = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster)
 
   frank <- sim$sdata[,mean(y1),f1][,list(fq=rank(V1)/.N,f1)]
   setkey(frank,f1)
@@ -452,10 +448,8 @@ server.static.estimate.clustersplits <- function() {
 
   # create the measure
   # for each firm we count number of movers coming/going going to each firm-quartile
-  if (measure=="poachingrk") {
-    rr = sim$jdata[,list(r=median(fq1)),list(f=f2)]
-
-  } else if (measure=="poachingrk-nmover") {
+  if (measure=="rk-prank") {
+    #rr = sim$jdata[,list(r=median(fq1)),list(f=f2)]
     rr = sim$jdata[,list(r=.N),list(f=f1)]
     rr2 = sim$sdata[,list(r2=.N),list(f=f1)]
     setkey(rr,f)
@@ -468,7 +462,7 @@ server.static.estimate.clustersplits <- function() {
   }
 
   # attach this to the data with cluster
-  grps  = res.load("m2-mixt-y2003-groups")
+  grps  = res.load("m2-mixt-d2003-groups")
   clus  = data.table(f = names(grps$best_cluster), j = grps$best_cluster)
   setkey(rr,f)
   setkey(clus,f)
@@ -480,24 +474,23 @@ server.static.estimate.clustersplits <- function() {
   clus = rr[,jn]
   names(clus) = rr[,f]
 
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-  sim   = grouping.append(sim,clus,drop=T)
+  sim = server.static.data()
+  sim = grouping.append(sim,clus,drop=T)
 
   # we then estimate the model
   ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1,sdata_subredraw=TRUE)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
+
   cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
   res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
   stopCluster(cl)
 
-  rs      = rkiv0.start("m2-mixt-d2003-poachingrk-va")
-  rs$info = "splitting classes with rank in value added"
-  rkiv0.put(rs,res_mixt)
+  res.save(sprintf("m2-mixt-d2003-clus_split-%s",measure),res_mixt)
 }
 
 #' Using the model to reclassify
@@ -634,8 +627,12 @@ server.static.mixt.estimate.fit.bs <- function() {
 # Werun the whole BLM procedure but only using residuals
 server.static.mixt.estimate.robustess.residuals <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
+  sim = server.static.data()
+  grps  = res.load("m2-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster)
+
+  sdata = sim$sdata
+  jdata = sim$jdata
 
   # create some variables
   # get industry for all firms
@@ -645,6 +642,8 @@ server.static.mixt.estimate.robustess.residuals <- function() {
   sdata[,ind2:= firm_info[sdata,ind1]]
   sdata[,educ_f := factor(educ)]
   jdata[,educ_f := factor(educ)]
+  sdata[,age:=2002 - birthyear]
+  jdata[,age:=2002 - birthyear]
 
   # compute a wage regression or wages
   adata = rbind(sdata[,list(wid,age,ind=ind1,educ_f,t=1,y=y1)],sdata[,list(wid,age,ind=ind2,educ_f,t=2,y=y2)])
@@ -671,14 +670,12 @@ server.static.mixt.estimate.robustess.residuals <- function() {
   grps  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200,step=100)
   sim   = grouping.append(sim,grps$best_cluster)
 
-  rs    = rkiv0.start("m2-mixt-d2003-residuals-groups",info="static 2003 data cluster outcome for mixture on residuals",location = "serverdata")
-  rkiv0.put(rs,grps)
-  grps = res.load("m2-mixt-d2003-residuals-groups")
-
-  # estimation
-  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
+  ctrl      = em.control(nplot=1000,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
   cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
@@ -686,14 +683,7 @@ server.static.mixt.estimate.robustess.residuals <- function() {
   res_mixt = m2.mixt.estimate.all(sim,nk=6,ctrl,cl)
   stopCluster(cl)
 
-  rs = rkiv0.start("m2-mixt-d2003-main-residuals",info="estimates the mixture model using residual wages")
-  rkiv0.put(rs,res_mixt)
-
-  # also do re-classification
-  res =  m2.mixt.estimate.reclassify(sim,10)
-  rs  = rkiv0.start("m2-mixt-d2003-main-reclassify-residuals",
-                    info="static 2003 dirty iteration, no split")
-  rkiv0.put(rs,res)
+  res.save("m2-mixt-d2003-main-residuals",res_mixt)
 }
 
 #' This is for the second part of the main results for static
