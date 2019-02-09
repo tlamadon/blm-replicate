@@ -1,7 +1,7 @@
 
 server.dynamic.data <- function(remove_movers_from_sdata=T) {
   load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
+  sdata <- sdata[,x:=1][,y1_bu:=y1]
   if (remove_movers_from_sdata) {
     sdata=sdata[move==FALSE]
   }
@@ -82,6 +82,24 @@ server.static.rho.analysis <- function(){
 
   #ggplot(rr,aes(x=x,y=y)) + geom_line() + facet_grid(~name) + theme_bw() + geom_vline(aes(xintercept=best))
   res.save("rho-analysis",rr)
+}
+
+#' estimate the mini-model once, then resimulate from it, then re-cluster
+#' and re-estimate. repeat theis many times
+server.dynamic.mini.estimate <-function() {
+
+  sim   = server.dynamic.data()
+  grps  = res.load("m4-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster)
+
+  set.seed(12345)
+
+  # estimate
+  res_rhos    = m4.mini.getvar.stayers.unc2.opt(sim$sdata)
+  model_mini  = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
+  model_lin   = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="linear")
+
+  res.save("m4-mini-d2003")
 }
 
 #' estimate the mini-model with different cluster sizes
@@ -358,45 +376,35 @@ server.dynamic.mixture.d2003.estimate.old <- function() {
 
 server.dynamic.mixture.d2003.estimate <- function() {
   sim = server.dynamic.data()
-  grps = res.load("m4-mixt-2003data-groups")
+  grps = res.load("m4-mixt-d2003-groups")
   sim   = grouping.append(sim,grps$best_cluster,drop = T)
 
   set.seed(54140598)
-  cl = makeCluster(15)
+  cl = makeCluster(local_opts$cpu_count)
   clusterEvalQ(cl,require(blmrep))
 
   ctrl      = em.control(est_rho=c(FALSE,TRUE,FALSE,FALSE,TRUE,FALSE),
                          nplot=10000,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
   res_mixt  = m4.mixt.estimate.all(sim,nk=6,ctrl,cl)
   stopCluster(cl)
   res.save("m4-mixt-d2003-main",res_mixt)
-
 }
 
 server.dynamic.mixture.d2003.estimate.reclassify <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sdata = sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  # get the groups
+  sim = server.dynamic.data()
   grps = res.load("m4-mixt-2003data-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-  sim$sdata[,list(y1,y2,y3,y4)]
+  sim   = grouping.append(sim,grps$best_cluster,drop = T)
 
-  res = m4.mixt.estimate.reclassify(sim,maxiter=10)
-  rs      = rkiv0.start("m4-mixt-d2003-dirty-reclassification")
-  rs$info = "running reclassificaiton on dynamic model"
-  res.save(rs,res)
-
+  res   = m4.mixt.estimate.reclassify(sim,maxiter=10)
+  res.save("m4-mixt-d2003-dirty-reclassification",res)
 }
 
 server.dynamic.mixture.d2003.fit <- function() {
-
   load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
   sdata[,y1_bu := y1]
   sim=list(sdata=sdata,jdata=jdata)
@@ -461,76 +469,6 @@ server.dynamic.mixture.d2003.fit <- function() {
 
   rs    = rkiv0.start("m4-mixt-d2003-main-fit",info="fit of the model")
   res.save(rs,list(dd_s=dd_s,dd_m=dd_m,rr_s=rr_s,rr_m=rr_m,dd_s_g=dd_s_g,dd_m_g=dd_m_g))
-
-
-}
-
-
-# here we retain 10% of the stayers in classification
-server.static.mixture.d2003.estimate.holdout <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-  sdata = sdata[move==FALSE]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  rs    = rkiv0.start("m4-mixt-d2003-main-holdout",
-                      info="dynamic 2003 main estimate, holding stayers in clustering")
-
-  # create holdout
-  sim$sdata[,HO := rank(runif(.N))/.N <= 0.1 ,f1]
-
-  ms    = grouping.getMeasures(list(sdata=sim$sdata[HO==FALSE],jdata=sim$jdata),"ecdf",Nw=20,y_var = "y2")
-  grps  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200,step=100)
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=34,est_nbest=10,sdata_subsample=1,sdata_subredraw=FALSE)
-  cl = makeCluster(17)
-  clusterEvalQ(cl,require(blm))
-
-  sim$sdata[,sample:=HO]
-  res_mixt = m4.mixt.estimate.all(sim,nk=6,ctrl,cl)
-  stopCluster(cl)
-
-  res.save(rs,res_mixt)
-
-  # ---- split stayers ----- #
-  # try to include half the stayers in clustering
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,x:=1][,y1_bu:=y1]
-
-  # split movers in 2
-  jdata[,splitdata := rank(runif(.N)) - 0.5 +0.1*(runif(1)-0.5) <= .N/2,f1]
-  mwids = jdata[splitdata==TRUE,unique(wid)]
-  sdata = sdata[!(wid %in% mwids)]
-  jdata = jdata[wid %in% mwids]
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  rs    = rkiv0.start("m4-mixt-d2003-main-holdout2",
-                      info="dynamic 2003 main estimate, using 50% of movers in clustering")
-
-  ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y2")
-  grps  = grouping.classify.once(ms,k = 10,nstart = 1000,iter.max = 200,step=100)
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
-  cl = makeCluster(17)
-  clusterEvalQ(cl,require(blm))
-  res_mixt = m4.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata),nk=6,ctrl,cl)
-  stopCluster(cl)
-
-  res.save(rs,res_mixt)
-
-
-
-
-
 }
 
 server.dynamic.mixture.estimate.2003data.split <- function() {
@@ -591,34 +529,34 @@ server.dynamic.mixture.estimate.2003data.split <- function() {
 #' robustness. We recluster every time
 server.dynamic.mixture.estimate.robust.nf <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sdata = sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
+  sim = server.dynamic.data()
+  grps = res.load("m4-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster,drop = T)
 
   set.seed(87954352)
-  rs    = rkiv0.start("m4-mixt-y2003-changeK",
-                      info="dynamic 2003 estimation with different number of clusters")
   ctrl      = em.control(nplot=2000,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
-  cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  cl = makeCluster(local_opts$cpu_count)
+  clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
-  for (nf_size in c(3:15,17,20)) {
+  for (nf_size in c(3,5,20)) {
     tryCatch({
       ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y2")
       grps  = grouping.classify.once(ms,k = nf_size,nstart = 1000,iter.max = 200)
       sim   = grouping.append(sim,grps$best_cluster)
       res_mixt = m4.mixt.estimate.all(sim,nk=6,ctrl,cl=cl)
       rr_mixt[[paste("nf",nf_size,sep="-")]] = res_mixt
-    })}
+    })
+  }
   stopCluster(cl)
 
-  res.save(rs,rr_mixt)
+  res.save("m4-mixt-d2003-change-nf",rr_mixt)
 }
 
 
@@ -626,38 +564,33 @@ server.dynamic.mixture.estimate.robust.nf <- function() {
 #' robustness. We recluster every time
 server.dynamic.mixture.estimate.robust.nk <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata[,y1_bu := y1]
-  sdata = sdata[move==FALSE]
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
 
-  # get the groups
-  grps = res.load("m4-mixt-2003data-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
+  sim = server.dynamic.data()
+  grps = res.load("m4-mixt-d2003-groups")
+  sim   = grouping.append(sim,grps$best_cluster,drop = T)
 
   set.seed(87954352)
-  rs    = rkiv0.start("m4-mixt-d2003-change-nk",
-                      info="dynamic 2003 estimation with different number of worker types")
   ctrl      = em.control(nplot=2000,tol=1e-7,dprior=1.001,fixb=TRUE,
                          sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=45,est_nbest=10,sdata_subsample=0.1)
+                         est_rep=local_opts$estimation.mixture$est_rep,
+                         est_nbest=local_opts$estimation.mixture$est_nbest,
+                         sdata_subsample=0.1,
+                         maxiter = local_opts$estimation.mixture$maxiter)
 
-  cl = makeCluster(15)
-  clusterEvalQ(cl,require(blm))
+  cl = makeCluster(local_opts$cpu_count)
+  clusterEvalQ(cl,require(blmrep))
 
   rr_mixt = list()
-  rr_mixt = list()
-  for (nk_size in c(3:5,7:9)) {
+  for (nk_size in c(3,5,9)) {
     tryCatch({
       res_mixt = m4.mixt.estimate.all(sim,nk=nk_size,ctrl=ctrl,cl=cl)
       res_mixt$second_stage_reps_all=NA
       rr_mixt[[paste("nk",nk_size,sep="-")]] = res_mixt
       save(rr_mixt,file="tmp-m4-chg-nk.dat")
     })}
-  stopClsuter(cl)
-  res.save(rs,rr_mixt)
+  stopCluster(cl)
 
+  res.save("m4-mixt-d2003-change-nf",rr_mixt)
 }
 
 server.dynamic.mixture.estimate.robust.different.rho <- function() {

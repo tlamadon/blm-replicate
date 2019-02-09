@@ -345,7 +345,7 @@ analysis.dynamic.dec.bis <- function(model,nsim=1e7) {
   return(data.frame(res))
 }
 
-generate_simualted_data = function(force=FALSE) {
+generate_simulated_data = function(force=FALSE) {
   if ( (force==FALSE) & file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
     flog.info("data already exists, skipping simulation.")
   } else {

@@ -17,8 +17,9 @@ local_opts$trace$nm_list            = c(1)
 # ==== prepapre options for running all results =====
 source("inst/server/server-utils.R")
 source("inst/server/estimation-static.r")
+source("inst/server/estimation-dynamic.r")
 source("inst/server/fig-blm.R")
-generate_simualted_data();
+generate_simulated_data();
 
 # ==== construct intermediate data files ====
 
@@ -55,28 +56,34 @@ server.static.analysis.meaneffects()
 # Create the main table
 tab.static.mixt.vdec()
 
-# Main regression results
-server.static.mini.estimate.main()      # short
-server.static.mini.estimate.bootstrap() # ~ 2 cpu.h
-
 # Model iteration - reclassifying
 server.static.mixt.estimate.model_iteration() # ~ 100 cpu.h
 
 # Robustness
-server.static.mixture.mixtofmixt()            #  Mixture of mixture model ~ 12 cpu.h
+server.static.mini.estimate.main()            # linear and interacted regressions
+server.static.mixture.mixtofmixt()            # Mixture of mixture model ~ 12 cpu.h
 server.static.mixture.estimate.robust.fsize() # less than 50, larger than 50
 server.static.mixture.estimate.robust.nf()    # varying number of firm types
 server.static.mixture.estimate.robust.nk()    # varying number of worker types
 # missing splits, starting from means
 tab.satic.robust()
 
+# ===== dynamic estimation ========
+
+server.dynamic.d2003.computeclusters()
+server.dynamic.d2003.clustering.stats()
+
+server.dynamic.mixture.d2003.estimate()
+
+# robustness
+server.dynamic.mini.estimate()
+server.dynamic.mixture.estimate.robust.nf()
+server.dynamic.mixture.estimate.robust.nk()
+
+
 # ===== Andrews, Kline, BLM comparaison ========
 # server.fe.trace()
 # figure.hybrid()
-
-# ===== dynamic estimation ========
-server.dynamic.d2003.computeclusters()
-server.dynamic.d2003.clustering.stats()
 
 #table.statedependence()
 #table.endogeneousMobility()
