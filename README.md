@@ -20,13 +20,15 @@ Make sure you have [docker app](https://www.docker.com/get-started) installed on
 
     docker run -d --rm -e PASSWORD=blm -p 8787:8787 tlamadon/blm-replicate
 
-This will automatically download our docker container from dockerhub and start it. This will give you access to a fully functioning RStudio with the installed libraries and the code necessary to run the replication code. It should be available at [http://localhost:8787](http://localhost:8787), which points to your local computer. Use login `rstudio` and password `blm`. 
+This will automatically download our docker container from dockerhub and start it. This will give you access to a fully functioning RStudio with the installed libraries and the code necessary to run the replication code. After completion of the previous command, this Rstudio environment should be available in your browser at [http://localhost:8787](http://localhost:8787), which points to your local computer. Use login `rstudio` and password `blm`. 
 
 From there calling `source("inst/main.R")` will start the full replication, create all necessary intermediate results and generates all figures and tables, saving them in the `tmp` folder. We invite the researcher however to explore the `main.R`.
 
 By default, this will run all of the code using a __synthetic data set__. See belwo how to get access to Swedish data, and load it into the container.
 
-__Note:__ make sure the docker app does not limit memory access to less than 16Gb. See [here](https://stackoverflow.com/questions/44417159/docker-process-killed-with-cryptic-killed-message). 
+__Note 1:__ make sure the docker app does not limit memory access to less than 16Gb. See [here](https://stackoverflow.com/questions/44417159/docker-process-killed-with-cryptic-killed-message). 
+
+__Note 2:__ you can stop the container by running `docker stop blm-replicate`. If you want to keep working on the environment, you should not use the `--rm` argument in the original call. Such argument enforces the container to be destroyed unpon stopping.
 
 ### Solution 2: install the replication package into your R environment
 

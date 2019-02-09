@@ -380,7 +380,7 @@ generate_simulated_data = function(force=FALSE) {
   if ( (force==FALSE) & file.exists(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))) {
     flog.info("data already exists, skipping simulation.")
   } else {
-    load("/Users/thibautlamadon/git/sortinglda/blm/inst/rkiv/m4-mixt-d2003-main.rkiv")
+    load("int/m4-mixt-d2003-main.rkiv")
     res_main = value
     model = res_main$model
     sim = m4.mixt.simulate.sim(model,fsize = 50)
