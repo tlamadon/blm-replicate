@@ -22,7 +22,7 @@ source("inst/server/server-utils.R")
 source("inst/server/estimation-static.r")
 source("inst/server/estimation-dynamic.r")
 source("inst/server/fig-blm.R")
-generate_simualted_data()
+generate_simulated_data()
 
 # ==== construct intermediate data files ====
 
