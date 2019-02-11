@@ -71,13 +71,11 @@ We invite resesearchers to read through [inst/main.r](https://github.com/tlamado
 
 #### Access to necessary data files 
 
-__Researchers can directly apply__ for access to `tmp-2003-static.dat` and `tmp-2003-dynamic.dat` by contacting the [IFAU](https://www.ifau.se/). These two files are the inputs to the replication package and a copy is stored as part of the replication package on the servers at the IFAU. The reference name for our project is IFAU-2015-65.
-
-These files should be placed in the folder `<working-directory>/data-tmp`.  
+__Researchers can directly apply__ for access to `tmp-2003-static.dat` and `tmp-2003-dynamic.dat` by contacting the [IFAU](https://www.ifau.se/). These two files are the inputs to the replication code and a copy is stored as part of the replication package on the servers at the IFAU. Our two data sets (data-static.dta and data-dynamic.dta) will be stored on a server at IFAU, as part of the project`“IFAU-2015-65 (“dnr65/2015”)`. The files will be in a separate folder that can be accessed by anyone who gets clearance from IFAU.
 
 #### Re-creating these data files
 
-These two input files are generated using the Swedish employer employee match data. The main data source should be the following list of: `selectedf0educ1.dta`, `selectedf0educ2.dta`, `selectedf0educ3.dta`, `selectedf1educ1.dta`, `selectedf1educ2.dta`, `selectedf1educ3.dta`, `selectedfirms9708.dta`.
+Researchers could also re-construct these data sets from the original files, which are available on a server at IFAU, as part of the project `dnr167/2009` that was put together by Benjamin Friedrich, Lisa Laun, Costas Meghir, and Luigi Pistaferri. This project and ours will be linked.  The main data source should be the following list of files: `selectedf0educ1.dta`, `selectedf0educ2.dta`, `selectedf0educ3.dta`, `selectedf1educ1.dta`, `selectedf1educ2.dta`, `selectedf1educ3.dta`, `selectedfirms9708.dta`.
 
 The following two scripts use these data sources to construct two data files `tmp-2003-static.dat` and `tmp-2003-dynamic.dat`:
 
