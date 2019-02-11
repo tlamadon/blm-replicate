@@ -146,9 +146,8 @@ selectedfirms9708.dta.
 The following two scripts use these data sources to construct two data
 files tmp-2003-static.dat and tmp-2003-dynamic.dat:
 
--   inst/server/data-section-static.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-static.r)
-    contains the code that PROCESSES THE DATA INPUTS to prepare the data
-    for the static estimation.
+-   inst/server/data-section-static.r contains the code that PROCESSES
+    THE DATA INPUTS to prepare the data for the static estimation.
 -   inst/server/data-section-dynamic.r contains the code that PROCESSES
     THE DATA INPUTS to prepare the data for the dynamic estimation.
 
