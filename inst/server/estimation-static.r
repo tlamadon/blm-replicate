@@ -2,7 +2,7 @@
 
 #' loads static data
 server.static.data <- function(remove_movers_from_sdata=T) {
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
+  load(sprintf("%s/data-tmp/data-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   if (remove_movers_from_sdata) {
     sdata=sdata[move==FALSE]
@@ -88,59 +88,7 @@ server.static.mini.estimate.main <- function(){
   res.save("m2-mini-linear",mini_model)
 }
 
-server.static.mini.d2003.estimate.within_re <- function() {
 
-  rr = data.frame()
-
-  for (nc in (5:30)) {
-
-    load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-    sdata[,x:=1][,y1_bu:=y1]
-    sdata = sdata[move==FALSE]
-
-    # on connected set
-    #f0s   = get.largest.conset.fid(sim$jdata)
-    #jdata = sim$jdata[f1%in%f0s][f2%in%f0s]
-    #sdata = sim$sdata[f1%in%f0s]
-
-    sim = list(jdata=jdata,sdata=sdata)
-    rm(sdata,jdata)
-
-    ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y1")
-    grps  = grouping.classify.once(ms,k = nc,nstart = 1000,iter.max = 200,step=100)
-    sim   = grouping.append(sim,grps$best_cluster)
-
-    # --- MINI ESTIMATION ---- #
-    model_minilin = m2.mini.estimate(sim$jdata,sim$sdata,method="linear")
-    # --- WITHIN RE ESTIMATION ---- #
-    sim$jdata[,psi1 := model_minilin$A1[j1]]
-    sim$jdata[,psi2 := model_minilin$A2[j2]]
-    S = sim$sdata[,.N,j1][order(j1),N]
-
-    rrr = list()
-    rrr$nc = nc
-    rrr$y_var       = model_minilin$vdec$cc[1,1]
-    rrr$cluster_var = model_minilin$vdec$cc[3,3]
-
-    omega = m2.trace.reExt(sim$jdata)
-    rrr$omega_var = wt.mean(omega,S)
-    rrr$omega_var_pos = wt.mean(pmax(omega,0),S)
-
-    omega = m2.trace.reExt(sim$jdata,2)
-    rrr$omega_var_sub2 = wt.mean(omega,S)
-    rrr$omega_var_sub2_pos = wt.mean(pmax(omega,0),S)
-
-    rr = rbind(rr,data.frame(rrr))
-    print(rr)
-  }
-
-  # 20  clusters  4.07% ( 2.1% within )
-  # 20 (sub=2)    4.54% ( 2.6% within )
-  # 10 clusters   4.69%
-  # 5  clusters   3.50% ( 2.1% within )
-  # 5 (sub=2)     4.2%  ( 2.7% within )
-
-}
 
 # ==== MIXTURE MODEL =====
 
@@ -176,44 +124,10 @@ server.static.mixture.d2003.estimate <- function() {
   stopCluster(cl)
 }
 
-server.static.mixture.d2003.estimate.withx <- function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
-  sdata[,ageg:= (age<=30) + 2*((age >= 31)&(age<=50)) + 3*(age>50)]
-  sdata[,x := educ + 3*(ageg-1)]
-  sdata[,x := as.integer(x)]
-  sdata[,y1_bu:=y1]
-  # we include the m
-  sim = list(jdata=jdata,sdata=sdata)
-  rm(sdata,jdata)
-
-  # get clsuters
-  grps  = res.load("m2-mixt-y2003-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  # get main estimate
-  res_main = res.load("m2-mixt-y2003-main-fixb")
-
-  # estimate using observables
-  ctrl      = em.control(nplot=50,tol=1e-7,dprior=1.001,fixb=TRUE,
-                         sd_floor=1e-7,posterior_reg=1e-8,
-                         est_rep=50,est_nbest=10,sdata_subsample=0.1)
-
-  sim$sdata[,sample := rank(runif(.N))/.N<=ctrl$sdata_subsample,j1]
-  res_main$model$pk0 = spread(rdim(res_main$model$pk0,10,6),1,9)
-  res_main$model = m2.mixt.stayers(sim$sdata[sample==1],res_main$model,ctrl = em.control(ctrl,textapp="stayers"))
-
-  sprop = sim$sdata[,.N,list(x,j1)]
-
-  rs    = rkiv0.start("m2-mixt-d2003-main-withx",
-                      info="static 2003 main estimate, with observables")
-  rkiv0.put(rs,list(mix=res_main,sprop=sprop))
-
-}
 
 server.static.mixture.d2003.fit <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
+  load(sprintf("%s/data-tmp/data-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sim = list(jdata=jdata,sdata=sdata)
   rm(sdata,jdata)
@@ -596,7 +510,7 @@ server.static.mixt.estimate.model_iteration <- function() {
 
 server.static.mixt.estimate.fit.bs <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
+  load(sprintf("%s/data-tmp/data-static.dat",local_opts$wdir))
   sdata[,x:=1][,y1_bu:=y1]
   sim = list(jdata=jdata,sdata=sdata)
   rm(sdata,jdata)

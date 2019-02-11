@@ -1,6 +1,6 @@
 
 server.dynamic.data <- function(remove_movers_from_sdata=T) {
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
+  load(sprintf("%s/data-tmp/data-dynamic.dat",local_opts$wdir))
   sdata <- sdata[,x:=1][,y1_bu:=y1]
   if (remove_movers_from_sdata) {
     sdata=sdata[move==FALSE]
@@ -99,170 +99,9 @@ server.dynamic.mini.estimate <-function() {
   res.save("m4-mini-linear",model_lin)
 }
 
-#' estimate the mini-model with different cluster sizes
-server.dynamic.mini.estimate.ksize <- function() {
 
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
 
-  rr_models = list()
-  rr_vardecs =list()
-  for (k in 3:20) {
-    jdata =  cluster.append.data(jdata,res[[paste(k)]])
-    sdata =  cluster.append.data(sdata,res[[paste(k)]])
-    res_rhos_bis        = model.mini4.getvar.stayers.unc2.opt(sdata)
-    model_mini_bis      = model.mini4.estimate(jdata,sdata,res_rhos_bis$r1,res_rhos_bis$r4,fixb=T)
-    sdata.sim.sim       = model.mini4.impute.stayers(model_mini_bis,sdata)
-    proj_unc_mini_bis1  = lin.proja(sdata.sim.sim,"y2_imp","k_imp","j1");
-    proj_unc_mini_bis1$between_var_explained = sdata[, list(mean(y2),.N),j1][,wtd.var(V1,N)]/sdata[, list(mean(y2),.N),f1][,wtd.var(V1,N)]*100
-    rr_models[[paste(k)]] = model_mini_bis
-    rr_vardecs[[paste(k)]] = proj_unc_mini_bis1
-  }
 
-  archive.put(mini_ksize = rr_models ,m="mini model for different k sizes",file = arch_dyn)
-  archive.put(mini_ksize_vardec=rr_vardecs,m="all variance decomposition for each cluster size",file = arch_dyn)
-}
-
-server.dynamic.cf <- function(){
-
-  load(sprintf("%s/data-tmp/tmp-2003-static",local_opts$wdir))
-  clus = unique(sdata[,list(fid=f1,clus=j1)])
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-  clus2 = clus$clus
-  names(clus2)=clus$fid
-  sim = grouping.append(sim,clus2)
-
-  mstats = sim$jdata[,list(m1=mean(y1),sd1=sd(y1),
-                       m2=mean(y2),sd2=sd(y2),
-                       m1=mean(y3),sd1=sd(y3),
-                       m1=mean(y4),sd1=sd(y4),.N),list(j1,j2)]
-  cstats = sim$sdata[,list(m1=mean(y1),sd1=sd(y1),
-                       m2=mean(y2),sd2=sd(y2),
-                       m1=mean(y3),sd1=sd(y3),
-                       m1=mean(y4),sd1=sd(y4),.N),list(j1)]
-
-  res_rhos = m4.mini.getvar.stayers.unc2.opt(sim$sdata)
-  model_mini      = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-  m4.mini.plotw(model_mini)
-
-  sdata.sim       = m4.mini.impute.stayers(model_mini,sim$sdata)
-  vdec_minimodel  = lin.proja(sdata.sim,"y2_imp","k_imp","j1");
-
-  sdata.sim[,move:=FALSE]
-  jdata.sim       = model.mini4.impute.movers(model_mini,jdata)
-  data.sim=rbind(sdata.sim,jdata.sim)
-  reg=list()
-  reg[["ana_y2_move"]]      = coef((data.sim[,lm(y2_imp~factor(j1)+move+k_imp)]))
-  reg[["ana_y2_move_i"]]    = coef((data.sim[,lm(y2_imp~factor(j1)*k_imp+move)]))
-  reg[["ana_y2_k1k2"]]      = coef((jdata.sim[,lm(y2_imp~factor(j1)+factor(j2)+k_imp)]))
-  reg[["ana_y3_k1k2"]]      = coef((jdata.sim[,lm(y3_imp~factor(j1)+factor(j2)+k_imp)]))
-  reg[["ana_y3_k1k2y2"]]    = coef((jdata.sim[,lm(y3_imp~factor(j1)+factor(j2)+k_imp+y2_imp)]))
-  reg[["ana_y3_k1k2y2_i"]]  = coef((jdata.sim[,lm(y3_imp~factor(j1)+factor(j2)*k_imp+y2_imp)]))
-
-}
-
-#' estimate the mini-model once, then resimulate from it, then re-cluster
-#' and re-estimate. repeat theis many times
-server.dynamic.mini.estimate.bootstrap <-function() {
-
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sim=list(sdata=sdata,jdata=jdata)
-  rm(sdata,jdata)
-
-  set.seed(12345)
-
-  ms    = grouping.getMeasures(sim,"ecdf",Nw=20,y_var = "y2")
-  grps  = grouping.classify(ms,ksupp = 10,stop = TRUE,nstart = 1000,verbose =10,iter.max = 200)
-  sim   = grouping.append(sim,grps$best_cluster)
-
-  # estimate
-  res_rhos = m4.mini.getvar.stayers.unc2.opt(sim$sdata)
-  model0   = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-  # m4.mini.plotw(model0)
-  sdata.sim   = m4.mini.impute.stayers(model0,sim$sdata)
-  vdec2 = lin.proja(sdata.sim,"y2_imp","k_imp","j1")
-
-  dclus0 = sim$sdata[,list(j1=j1[1]),f1]
-  clus0  = dclus0$j1
-  names(clus0) = dclus0$f1
-
-  rrr=data.frame()
-  rr_mix = list()
-  rr_mini = list()
-  for (i in 1:100) {
-    sim   = grouping.append(sim,clus0,sort = F)
-    sim$sdata = m4.mini.impute.stayers(model0,sim$sdata)
-    sim$jdata = m4.mini.impute.movers(model0,sim$jdata)
-    sim$sdata[,c('y1','y2','y3','y4'):=list(y1_imp,y2_imp,y3_imp,y4_imp)]
-    sim$jdata[,c('y1','y2','y3','y4'):=list(y1_imp,y2_imp,y3_imp,y4_imp)]
-
-    ms    = grouping.getMeasures(sim,"ecdf",Nw=10,y_var = "y2")
-    grps  = grouping.classify(ms,ksupp = 10,stop = TRUE,nstart = 200,verbose =10,iter.max = 200)
-    sim   = grouping.append(sim,grps$best_cluster)
-
-    res_rhos         = m4.mini.getvar.stayers.unc2.opt(sim$sdata)
-    mini_model_bis   = m4.mini.estimate(sim$jdata,sim$sdata,res_rhos$r1,res_rhos$r4,method="prof")
-
-    sdata.sim   = m4.mini.impute.stayers(mini_model_bis,sim$sdata[sample.int(.N,1e5)])
-    vdec2 = lin.proja(sdata.sim,"y2_imp","k_imp","j1")
-    rr_mini[[paste(i)]] = mini_model_bis
-    rr2 = data.frame(vdec2$stats)
-    rr2$model="mini"
-    rr2$i= i
-
-    catf("don with rep %i\n",i)
-    rrr = rbind(rrr,rr2)
-  }
-
-  gg = data.table(ldply(rr_mini,function(x) x$B1/x$B1[2]))
-  mg = melt(gg,id.vars = ".id")[,list(m=mean(value),sd=sd(value)),variable]
-
-  # need to boostrap they actual figure :-/
-  gg = data.table(ldply(rr_mini,function(x) m4.mini.plotw(x,getvals=T)))
-  gg = gg[,list(value=mean(value),ql=quantile(value,0.05),qh=quantile(value,0.95)),list(l,k,variable)]
-  ggplot(gg,aes(x=l,y=value,color=factor(k))) + geom_line() +
-    geom_point() + geom_errorbar(aes(ymin=ql,ymax=qh),width=0.2)+
-    theme_bw() + facet_wrap(~variable,nrow = 2,scales="free") + coord_cartesian(ylim=c(9.3,11.5))
-
-  # compute the covariance
-  gg = data.table(ldply(rr_mini,function(x) cov.wt(cbind(x$B1,x$Em),x$Ns)$cov[2,1]))
-  gg[,list(m=mean(V1),q0=quantile(V1,0.025),q1=quantile(V1,0.975))]
-  cov.wt(cbind(model0$B1,model0$Em),model0$Ns)$cov[2,1]
-
-  I = 2:10
-  gg = data.table(ldply(rr_mini,function(x) cov.wt(cbind(x$B1[I],x$Em[I]),x$Ns[I])$cov[2,1]))
-  gg[,list(m=mean(V1),q0=quantile(V1,0.025),q1=quantile(V1,0.975))]
-  cov.wt(cbind(model0$B1[I],model0$Em[I]),model0$Ns[I])$cov[2,1]
-
-}
-
-#' Explores the sensitivity to rho
-server.dynamic.mini.estimate.explore_rho <- function(){
-  load("L:\\Tibo\\qtrdata\\tmp-2003-static.dat")
-  clus = unique(sdata[,list(fid=f1,clus=j1)])
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
-  sdata = cluster.append.data(sdata,clus)
-  jdata = cluster.append.data(jdata,clus)
-
-  res_rhos             = model.mini4.getvar.stayers.unc2.opt(sdata)
-  mini_model_true      = model.mini4.estimate(jdata,sdata,res_rhos$r1,res_rhos$r4,fixb=T)
-
-  # generate values at which we are going to evaluate the model
-  pw = 4
-  rr = data.frame(r1 = seq( (0.3*res_rhos$r1)^pw,0.95^pw,l=20)^(1/pw),r4 = seq( (0.3*res_rhos$r4)^pw,0.95^pw,l=20)^(1/pw))
-  rrr = data.frame()
-  for (i in 1:nrow(rr)) {
-    model_mini      = model.mini4.estimate(jdata,sdata,rr$r1[i],rr$r4[i],fixb=T)
-    sdata.sim       = model.mini4.impute.stayers(model_mini,sdata)
-    vdec_minimodel  = lin.proja(sdata.sim,"y2_imp","k_imp","j1");
-    rtmp = data.frame(vdec_minimodel$stats)
-    rtmp$r1=rr$r1[i]
-    rtmp$r4=rr$r4[i]
-    rtmp$neg_b = sum(model_mini$B1<0)
-    rrr = rbind(rrr,rtmp)
-  }
-}
 
 # ======= MIXTURE MODEL 2003 =============
 
@@ -307,7 +146,7 @@ server.dynamic.mixture.d2003.estimate.model_iteration <- function() {
 }
 
 server.dynamic.mixture.d2003.fit <- function() {
-  load(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
+  load(sprintf("%s/data-tmp/data-dynamic.dat",local_opts$wdir))
   sdata[,y1_bu := y1]
   sim=list(sdata=sdata,jdata=jdata)
   rm(sdata,jdata)
@@ -369,8 +208,7 @@ server.dynamic.mixture.d2003.fit <- function() {
     data.frame(x=d1$x,y1=d1$y,y2=d2$y)
   }, list(j1) ]
 
-  rs    = rkiv0.start("m4-mixt-d2003-main-fit",info="fit of the model")
-  res.save(rs,list(dd_s=dd_s,dd_m=dd_m,rr_s=rr_s,rr_m=rr_m,dd_s_g=dd_s_g,dd_m_g=dd_m_g))
+  res.save("m4-mixt-d2003-main-fit",list(dd_s=dd_s,dd_m=dd_m,rr_s=rr_s,rr_m=rr_m,dd_s_g=dd_s_g,dd_m_g=dd_m_g))
 }
 
 #' this estimates the model with different values of K to check

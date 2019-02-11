@@ -219,7 +219,7 @@ ggplot(rr,aes(x=m,y=value,color=factor(variable))) + geom_line() +geom_point(aes
 ggplot(rr,aes(x=factor(variable),y=value,color=factor(m),group=factor(m))) + geom_line() +geom_point(aes(size=N))+theme_bw()
 
 save(rrs,rrj,file=sprintf("%s/data-tmp/tab-summary-dynamic.dat",local_opts$wdir))
-save(sdata,jdata,file=sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
+save(sdata,jdata,file=sprintf("%s/data-tmp/data-dynamic.dat",local_opts$wdir))
 
 
 
