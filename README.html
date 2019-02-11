@@ -1,0 +1,83 @@
+<h1 id="replication-package-for-blm">Replication package for BLM</h1>
+<p>This git repository contains all the code to replicate the results of <strong>Bonhomme Lamadon and Manresa &quot;A distributional Framework for matched employer-employee data&quot;</strong>, forthcoming at <strong>Econometrica</strong>. The working-paper version is available <a href="http://lamadon.com/paper/blm.pdf">here</a>. Virtually all code is based on the R platform.</p>
+<p>If you are looking for the R package to use the method of the apper, you should use the <a href="https://tlamadon.github.io/rblm/index.html">rblm package</a>. It includes most of the estimators available here, and we keep updating it.</p>
+<p>The present replication package is built as an R package that can be easily installed on any system. All package dependencies can be handled using <a href="https://rstudio.github.io/packrat/">packrat</a>. This option guarantees that results can be reproduced using the exact versions of all the libraries that were used at the time the paper was written. We also provide a <a href="https://cloud.docker.com/u/tlamadon/repository/docker/tlamadon/blm-replicate">Docker container</a> to ensure full portability. This provides a full linux stack with RStudio and all libraries installed and configured.</p>
+<p>Importantly, reproducing the results on Swedish data <strong>requires access to the administrative data from Sweden</strong>. Researchers need to apply to get access to such data. We recommend contacting the <a href="https://www.ifau.se/">IFAU</a>. The institute is hosting this replication package that can be accessed and ran on the data on their servers. The reference name for our project is <code>IFAU-2015-65</code>.</p>
+<h2 id="how-do-i-run-this">How do I run this?</h2>
+<p>The simplest way to use this replication package is to rely on the docker container that we have created as described in solution 1. This will get it running almost instantly.</p>
+<h3 id="solution-1-get-it-running-in-less-than-10-minutes-run-our-docker-container">Solution 1: get it running in less than 10 minutes, run our docker container</h3>
+<p>Make sure you have the <a href="https://www.docker.com/get-started">docker app</a> installed on your computer. Then run the following command:</p>
+<pre><code>docker run -d --rm -e PASSWORD=blm -p 8787:8787 tlamadon/blm-replicate</code></pre>
+<p>This will automatically download our docker container from dockerhub and start it. This will give you access to a fully functioning <code>RStudio</code> with the installed libraries and the code necessary to run the replication code. After completion of the previous command, this Rstudio environment should be available in your browser at <a href="http://localhost:8787" class="uri">http://localhost:8787</a>, which points to your local computer. Use login <code>rstudio</code> and password <code>blm</code>.</p>
+<p>From there calling <code>source(&quot;inst/main.R&quot;)</code> will start the full replication, create all necessary intermediate results and generates all figures and tables, saving them in the <code>tmp</code> folder. We invite the researcher however to explore the <a href="https://github.com/tlamadon/blm-replicate/blob/master/inst/main.R">inst/main.r</a> file.</p>
+<p>By default, this will run all of the code using a <strong>synthetic data set</strong>. See belwo how to get access to Swedish data, and load it into the container.</p>
+<p><strong>Note 1:</strong> make sure the docker app does not limit memory access to less than 16Gb. See <a href="https://stackoverflow.com/questions/44417159/docker-process-killed-with-cryptic-killed-message">here</a>.</p>
+<p><strong>Note 2:</strong> you can stop the container by running <code>docker stop blm-replicate</code>. If you want to keep working on the environment, you should not use the <code>--rm</code> argument in the original call. Such argument enforces the container to be destroyed unpon stopping.</p>
+<p><strong>Note 3:</strong> you can easily move files in and out of a running container using the <code>docker copy SOURCE DEST</code> command. Or you can mount a folder from your host computer. See details <a href="https://docs.docker.com/storage/bind-mounts/">here</a>.</p>
+<h3 id="solution-2-install-the-replication-package-into-your-r-environment">Solution 2: install the replication package into your R environment</h3>
+<p>If you have your own running R system, and you want to run this replication package in your environment, you can directly install the package. In this case we recommend that you make use of the <a href="https://rstudio.github.io/packrat/">packrat</a> configuration we are providing.</p>
+<ol style="list-style-type: decimal">
+<li>Download the replication package. We recommend to simply clone the github repository, ie: <code>git clone https://github.com/tlamadon/blm-replicate.git</code></li>
+<li>Start R inside the replication package.</li>
+</ol>
+<p>In R, run the following commands:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># installing the package locally in your R env.</span>
+
+<span class="kw">install.packages</span>(<span class="st">&quot;pakcrat&quot;</span>) <span class="co"># make sure that packrat is available</span>
+<span class="kw">install.packages</span>(<span class="st">&quot;devtools&quot;</span>) <span class="co"># make sure that devtools is available</span>
+
+<span class="kw">source</span>(<span class="st">&quot;packrat/init.R&quot;</span>) <span class="co"># initialize the packrat environment</span>
+packrat::<span class="kw">restore</span>()       <span class="co"># make sure all is up to date</span>
+
+devtools::<span class="kw">install</span>(<span class="st">&quot;.&quot;</span>)   <span class="co"># build the replication package</span>
+
+<span class="kw">source</span>(<span class="st">&quot;inst/main.R&quot;</span>)    <span class="co"># fire up the replication</span></code></pre></div>
+<h2 id="overview-of-the-replication-package">Overview of the replication package</h2>
+<p>The main enty point is <a href="https://github.com/tlamadon/blm-replicate/blob/master/inst/main.R">inst/main.r</a>. It will <strong>automatically</strong> run all the necessary steps in the other files in order to reproduce all the results of the paper. Note however that this would take a very long time as it will starts some bootstraps procedure. The code will generate all figures and tables and put them into folder called <code>tmp</code> by default.</p>
+<p>We invite resesearchers to read through <a href="https://github.com/tlamadon/blm-replicate/blob/master/inst/main.R">inst/main.r</a> which has explicit calls for each subsets of the paper.</p>
+<h4 id="organization-of-the-code">Organization of the code</h4>
+<ul>
+<li>All the heavy lifting such as the estimators and simulation codes are in the <a href="https://github.com/tlamadon/blm-replicate/tree/master/R">R/*.r</a> folder. This is the usual way to store functions in an R package.</li>
+<li><a href="https://github.com/tlamadon/blm-replicate/blob/master/inst/server/estimation-static.r">inst/server/estimation-static.r</a> contains the code that runs the estimations for the <strong>static</strong> version of the model</li>
+<li><a href="https://github.com/tlamadon/blm-replicate/blob/master/inst/server/estimation-dynamic.r">inst/server/estimation-dynamic.r</a> contains code that runs the different estimations for the <strong>dynamic</strong> version of the model.</li>
+<li><a href="https://github.com/tlamadon/blm-replicate/blob/master/inst/server/fig-blm.R">inst/server/fig-blm.R</a> contrains functions that generate all of the <strong>figures and tables</strong> in the paper.</li>
+</ul>
+<h2 id="replicating-the-results-on-swedish-data">Replicating the results on Swedish data</h2>
+<h4 id="access-to-necessary-data-files">Access to necessary data files</h4>
+<p><strong>Researchers can directly apply</strong> for access to <code>tmp-2003-static.dat</code> and <code>tmp-2003-dynamic.dat</code> by contacting the <a href="https://www.ifau.se/">IFAU</a>. These two files are the inputs to the replication package and a copy is stored as part of the replication package on the servers at the IFAU. The reference name for our project is IFAU-2015-65.</p>
+<p>These files should be placed in the folder <code>&lt;working-directory&gt;/data-tmp</code>.</p>
+<h4 id="re-creating-these-data-files">Re-creating these data files</h4>
+<p>These two input files are generated using the Swedish employer employee match data. The main data source should be the following list of: <code>selectedf0educ1.dta</code>, <code>selectedf0educ2.dta</code>, <code>selectedf0educ3.dta</code>, <code>selectedf1educ1.dta</code>, <code>selectedf1educ2.dta</code>, <code>selectedf1educ3.dta</code>, <code>selectedfirms9708.dta</code>.</p>
+<p>The following two scripts use these data sources to construct two data files <code>tmp-2003-static.dat</code> and <code>tmp-2003-dynamic.dat</code>:</p>
+<ul>
+<li>inst/server/data-section-static.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-static.r) contains the code that <strong>processes the data inputs</strong> to prepare the data for the static estimation.</li>
+<li><a href="https://github.com/tlamadon/blm-replicate/blob/master/inst/server/data-selection-dynamic.r">inst/server/data-section-dynamic.r</a> contains the code that <strong>processes the data inputs</strong> to prepare the data for the dynamic estimation.</li>
+</ul>
+<h2 id="using-your-own-data-source">Using your own data source</h2>
+<p>This is similar to using the Swedish data. You only need to provide two data sources in the form of a <code>data.frame</code>. One should be called <code>sdata</code> and contain information on all workers, and one should be called <code>jdata</code> and contain information only about the movers. To see the structure that this data.frames should have. The sdata and jdata frames should be saved into <code>data-tmp/tmp-2003-dynamic.dat</code> and <code>data-tmp/tmp-2003-dynamic.dat</code> for the static and the dynamic estimation.</p>
+<p>We recommend to have a look at the function <code>generate_simulated_data</code> in <a href="https://github.com/tlamadon/blm-replicate/blob/master/inst/server/server-utils.R">inst/server/server-utils.R</a>. It creates synthetic data simulated from our main specifications and save files to the same format as the actual data. This is your best source to match the structure exactly.</p>
+<p>Here is what <code>sdata</code> looks like:</p>
+<pre><code>      k        y1        y2 j1 j2 j1true    f1   f2 move birthyear x    wid              ind1
+    1: 1  9.846396  9.747927  5  1      5 F1335   F1    1      1961 1 W64819 Construction etc.
+    2: 2 10.040879 10.075224  5  1      5  F135   F1    1      1963 1 W64807      Retail trade
+    3: 5 10.638532 10.744525  3  1      3  F143   F1    1      1979 1 W60513      Retail trade
+    4: 3  8.894678 10.195521  4  1      4  F144   F1    1      1963 1 W62818 Construction etc.
+    5: 3  9.718155  9.438086  1  1      1  F181   F1    1      1965 1 W58054          Services
+   ---                                                                                        
+77571: 2  9.983228 10.219231  8  8      8  F998 F998    0      1964 1 W51166          Services
+77572: 4 10.471325 10.398645  8  8      8  F998 F998    0      1971 1 W51331          Services
+77573: 4 10.331180 10.516750  8  8      8  F998 F998    0      1967 1 W51434          Services
+77574: 6 11.375500 11.292524  8  8      8  F998 F998    0      1968 1 W51496          Services
+77575: 4 10.399596 10.501993  8  8      8  F998 F998    0      1973 1 W51543          Services
+              va1          ind2       va2 educ size1
+    1:  3.3505830 Manufacturing 3.8792234    1    17
+    2: 13.7959329 Manufacturing 3.8792234    3    24
+    3:  0.2839520 Manufacturing 3.8792234    2    13
+    4:  3.0592294 Manufacturing 3.8792234    1    12
+    5:  1.0255445 Manufacturing 3.8792234    3    27
+   ---                                              
+77571:  0.4115116      Services 0.4115116    3    64
+77572:  0.4115116      Services 0.4115116    1    64
+77573:  0.4115116      Services 0.4115116    2    64
+77574:  0.4115116      Services 0.4115116    3    64
+77575:  0.4115116      Services 0.4115116    1    64</code></pre>
