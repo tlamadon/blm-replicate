@@ -346,7 +346,7 @@ analysis.dynamic.dec.bis <- function(model,nsim=1e7) {
 }
 
 generate_simulated_data = function(force=FALSE) {
-  if ( (force==FALSE) & file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
+  if ( (force==FALSE) & file.exists(sprintf("%s/data-tmp/data-static.dat",local_opts$wdir))) {
     flog.info("data already exists, skipping simulation.")
   } else {
     load("inst/m2-mixt-y2003-main-fixb.rkiv")
@@ -388,12 +388,12 @@ generate_simulated_data = function(force=FALSE) {
     sdata[,size1 := .N,f1]
     jdata[,size1 := .N,f1]
     sdata = rbind(jdata,sdata)
-    save(sdata,jdata,file=sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))
+    save(sdata,jdata,file=sprintf("%s/data-tmp/data-static.dat",local_opts$wdir))
 
     flog.info("!!! Using simulated data for static")
   }
 
-  if ( (force==FALSE) & file.exists(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))) {
+  if ( (force==FALSE) & file.exists(sprintf("%s/data-tmp/data-dynamic.dat",local_opts$wdir))) {
     flog.info("data already exists, skipping simulation.")
   } else {
     load("inst/m4-mixt-d2003-main.rkiv")
@@ -441,7 +441,7 @@ generate_simulated_data = function(force=FALSE) {
     sdata[,j2:=j1]
     sdata = rbind(jdata,sdata)
 
-    save(sdata,jdata,file=sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))
+    save(sdata,jdata,file=sprintf("%s/data-tmp/data-dynamic.dat",local_opts$wdir))
     flog.info("!!! Using simulated data for dynamic")
   }
 

@@ -23,10 +23,10 @@ generate_simulated_data();
 # ==== construct intermediate data files ====
 
 # prepare data file for dynamic and static estimations
-if (!file.exists(sprintf("%s/data-tmp/tmp-2003-static.dat",local_opts$wdir))) {
+if (!file.exists(sprintf("%s/data-tmp/data-static.dat",local_opts$wdir))) {
   source("inst/server/data-selection-static.r")
 }
-if (!file.exists(sprintf("%s/data-tmp/tmp-2003-dynamic.dat",local_opts$wdir))) {
+if (!file.exists(sprintf("%s/data-tmp/data-dynamic.dat",local_opts$wdir))) {
   source("inst/server/data-selection-dynamic.r")
 }
 

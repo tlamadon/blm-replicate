@@ -9,7 +9,7 @@ EMPLOYER-EMPLOYEE DATA", forthcoming at ECONOMETRICA. The working-paper
 version is available here. Virtually all code is based on the R
 platform.
 
-If you are looking for the R package to use the method of the apper, you
+If you are looking for the R package to use the method of the paper, you
 should use the rblm package. It includes most of the estimators
 available here, and we keep updating it.
 
@@ -26,7 +26,10 @@ THE ADMINISTRATIVE DATA FROM SWEDEN. Researchers need to apply to get
 access to such data. We recommend contacting the IFAU. The institute is
 hosting this replication package that can be accessed and ran on the
 data on their servers. The reference name for our project is
-IFAU-2015-65.
+“IFAU-2015-65 (“dnr65/2015”). See at the end of this page for more info.
+
+If you have any question or comment, please contact us or use directly
+use the issue page on the github repository.
 
 
 How do I run this?
@@ -55,7 +58,7 @@ figures and tables, saving them in the tmp folder. We invite the
 researcher however to explore the inst/main.r file.
 
 By default, this will run all of the code using a SYNTHETIC DATA SET.
-See belwo how to get access to Swedish data, and load it into the
+See below how to get access to Swedish data, and load it into the
 container.
 
 NOTE 1: make sure the docker app does not limit memory access to less
@@ -101,11 +104,11 @@ source("inst/main.R")    # fire up the replication
 
 Overview of the replication package
 
-The main enty point is inst/main.r. It will AUTOMATICALLY run all the
+The main entry point is inst/main.r. It will AUTOMATICALLY run all the
 necessary steps in the other files in order to reproduce all the results
 of the paper. Note however that this would take a very long time as it
-will starts some bootstraps procedure. The code will generate all
-figures and tables and put them into folder called tmp by default.
+will start some bootstrap procedures. The code will generate all figures
+and tables and put them into a folder called tmp .
 
 We invite resesearchers to read through inst/main.r which has explicit
 calls for each subsets of the paper.
@@ -119,7 +122,7 @@ Organization of the code
     estimations for the STATIC version of the model
 -   inst/server/estimation-dynamic.r contains code that runs the
     different estimations for the DYNAMIC version of the model.
--   inst/server/fig-blm.R contrains functions that generate all of the
+-   inst/server/fig-blm.R contains functions that generate all of the
     FIGURES AND TABLES in the paper.
 
 
@@ -127,24 +130,27 @@ Replicating the results on Swedish data
 
 Access to necessary data files
 
-RESEARCHERS CAN DIRECTLY APPLY for access to tmp-2003-static.dat and
-tmp-2003-dynamic.dat by contacting the IFAU. These two files are the
-inputs to the replication package and a copy is stored as part of the
-replication package on the servers at the IFAU. The reference name for
-our project is IFAU-2015-65.
-
-These files should be placed in the folder <working-directory>/data-tmp.
+RESEARCHERS CAN DIRECTLY APPLY for access to data-static.dat and
+data-dynamic.dat by contacting the IFAU. These two files are the inputs
+to the replication code and a copy is stored as part of the replication
+package on the servers at the IFAU. Our two data sets (data-static.dta
+and data-dynamic.dta) will be stored on a server at IFAU, as part of the
+project“IFAU-2015-65 (“dnr65/2015”). The files will be in a separate
+folder that can be accessed by anyone who gets clearance from IFAU.
 
 Re-creating these data files
 
-These two input files are generated using the Swedish employer employee
-match data. The main data source should be the following list of:
+Researchers could also re-construct these data sets from the original
+files, which are available on a server at IFAU, as part of the project
+dnr167/2009 that was put together by Benjamin Friedrich, Lisa Laun,
+Costas Meghir, and Luigi Pistaferri. This project and ours are linked.
+The main data source should be the following list of files:
 selectedf0educ1.dta, selectedf0educ2.dta, selectedf0educ3.dta,
 selectedf1educ1.dta, selectedf1educ2.dta, selectedf1educ3.dta,
 selectedfirms9708.dta.
 
-The following two scripts use these data sources to construct two data
-files tmp-2003-static.dat and tmp-2003-dynamic.dat:
+The following two scripts use these data sources to construct the two
+data files data-static.dat and data-dynamic.dat:
 
 -   inst/server/data-section-static.r contains the code that PROCESSES
     THE DATA INPUTS to prepare the data for the static estimation.
@@ -157,14 +163,13 @@ Using your own data source
 This is similar to using the Swedish data. You only need to provide two
 data sources in the form of a data.frame. One should be called sdata and
 contain information on all workers, and one should be called jdata and
-contain information only about the movers. To see the structure that
-this data.frames should have. The sdata and jdata frames should be saved
-into data-tmp/tmp-2003-dynamic.dat and data-tmp/tmp-2003-dynamic.dat for
-the static and the dynamic estimation.
+contain information only about the movers. The sdata and jdata frames
+should be saved into data-tmp/data-static.dat and
+data-tmp/data-dynamic.dat for the static and the dynamic estimation.
 
 We recommend to have a look at the function generate_simulated_data in
 inst/server/server-utils.R. It creates synthetic data simulated from our
-main specifications and save files to the same format as the actual
+main specifications and saves files to the same format as the actual
 data. This is your best source to match the structure exactly.
 
 Here is what sdata looks like:
