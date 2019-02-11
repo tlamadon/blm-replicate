@@ -29,7 +29,7 @@ data on their servers. The reference name for our project is
 “IFAU-2015-65 (“dnr65/2015”). See at the end of this page for more info.
 
 If you have any question or comment, please contact us or use directly
-use the issue page on the github repository.
+the issue page on the github repository.
 
 
 How do I run this?

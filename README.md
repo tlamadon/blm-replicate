@@ -8,7 +8,7 @@ The present replication package is built as an R package that can be easily inst
 
 Importantly, reproducing the results on Swedish data __requires access to the administrative data from Sweden__. Researchers need to apply to get access to such data. We recommend contacting the [IFAU](https://www.ifau.se/). The institute is hosting this replication package that can be accessed and ran on the data on their servers. The reference name for our project is `“IFAU-2015-65 (“dnr65/2015”)`. See at the end of this page for more info.
 
-If you have any question or comment, please contact us or use directly use the [issue page](https://github.com/tlamadon/blm-replicate/issues) on the github repository.
+If you have any question or comment, please contact us or use directly the [issue page](https://github.com/tlamadon/blm-replicate/issues) on the github repository.
 
 ## How do I run this?
 
