@@ -512,7 +512,6 @@ fig.static.mixt.splits <- function() {
 #' this plots the connectedness versus likelood for the 50
 #' starting values in the main estimatation.
 fig.static.mixt.connectedness <- function() {
-
   res_main      = res.load("m2-mixt-d2003-main-fixb")
   res_reps = res_main$second_stage_reps
 
@@ -522,7 +521,8 @@ fig.static.mixt.connectedness <- function() {
     scale_shape_manual(values=c(20,17,8)) +
       theme(legend.position = "none")
 
-  ggsave("inst/figuresfig-mixt2-d2003-startings.pdf",gp,width = 6.5,height = 5)
+  ggsave(paste0(local_opts$wdir,"/fig-mixt2-d2003-startings.pdf"),gp,width = 6.5,height = 5)
+  flog.info("creating %s",paste0(local_opts$wdir,"/fig-mixt2-d2003-startings.pdf"))
 }
 
 #' ploits the earnings before and after a move
