@@ -1,6 +1,6 @@
 PackratFormat: 1.4
 PackratVersion: 0.4.9.2
-RVersion: 3.5.2
+RVersion: 3.5.1
 Repos: CRAN=https://ftp.ussg.iu.edu/CRAN/
 
 Package: Ckmeans.1d.dp
@@ -440,8 +440,8 @@ Requires: digest
 
 Package: mgcv
 Source: CRAN
-Version: 1.8-26
-Hash: e02928c5c84951987f5c0d55079e6576
+Version: 1.8-27
+Hash: ea84e8ca58f9b2dc99be628600f470d1
 Requires: Matrix, nlme
 
 Package: mime
