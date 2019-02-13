@@ -606,7 +606,7 @@ m2.mixt.estimate.all <- function(sim,nk=6,ctrl,cl=NA) {
   mm = mean(sdata$y1)
   ms = 2*sd(sdata$y1)
 
-  nf = max(sdata$j1);
+  nf = max(max(sdata$j1,na.rm=T),max(jdata$j1,na.rm = T),max(jdata$j2,na.rm=T));
   model_start = m2.mixt.new(nk,nf)
 
   res_para = m2.mixt.movers(jdata,model_start,ctrl=em.control(ctrl,cstr_type="para",textapp="para0",fixb=F))
