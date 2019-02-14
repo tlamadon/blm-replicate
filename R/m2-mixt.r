@@ -587,7 +587,10 @@ m2.mixt.stayers <- function(sdata,model,ctrl) {
 
   model$pk0  = rdim(PI,nx,nf,nk)
   model$liks = lik
-  model$NNs  = sdata[,.N,j1][order(j1)][,N]
+
+  model$NNs  = rep(0,nf)
+  counting = sdata[,.N,j1][order(j1)]
+  model$NNs[counting$j1] = counting$N
 
   return(model)
 }
@@ -779,6 +782,8 @@ m2.mixt.estimate.reclassify <- function(sim,maxiter=20,split_movers=FALSE,ctrl=c
     # create clusters out of it
     clus        = data.pos[,jp]
     names(clus) = data.pos[,fid]
+
+    if(any(is.na(clus))) browser();
 
     # attach groups
     sim   = grouping.append(sim,clus)
