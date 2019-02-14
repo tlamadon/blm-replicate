@@ -56,7 +56,7 @@ server.static.analysis.meaneffects()
 tab.static.mixt.vdec()
 
 # Model iteration - reclassifying
-server.static.mixt.estimate.model_iteration() # ~ 100 cpu.h
+server.static.mixt.estimate.model_iteration("main") # ~ 100 cpu.h
 
 # Robustness
 server.static.mini.estimate.main()            # linear and interacted regressions
