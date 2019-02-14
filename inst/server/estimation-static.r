@@ -408,7 +408,7 @@ server.static.estimate.clustersplits <- function(measure="rk-prank") {
 }
 
 #' Using the model to reclassify
-server.static.mixt.estimate.model_iteration <- function() {
+server.static.mixt.estimate.model_iteration <- function(start_conditions=c("prank","movers","main","va","akm")) {
 
   # --- use cluster ---#
   cl = makeCluster(local_opts$cpu_count)
@@ -434,57 +434,66 @@ server.static.mixt.estimate.model_iteration <- function() {
   # res.save("m2-mixt-d2003-main-reclassify-startwithprank",res)
 
   # ===== RATIO OF MOVERS ========= #
-  sim = server.static.data(remove_movers_from_sdata = F)
-  fmean = sim$sdata[,list(V1=sum(move==TRUE)/.N,.N),f1]
-  sim$sdata = sim$sdata[move==FALSE]
-  clusters   = Ckmeans.1d.dp(fmean$V1, 10,fmean$N)
-  grp_akm    = clusters$cluster;names(grp_akm) = fmean$f1
-  sim        = grouping.append(sim,grp_akm,drop=T)
+  if ("movers" %in% start_conditions) tryCatch({
+    sim = server.static.data(remove_movers_from_sdata = F)
+    fmean = sim$sdata[,list(V1=sum(move==TRUE)/.N,.N),f1]
+    sim$sdata = sim$sdata[move==FALSE]
+    clusters   = Ckmeans.1d.dp(fmean$V1, 10,fmean$N)
+    grp_akm    = clusters$cluster;names(grp_akm) = fmean$f1
+    sim        = grouping.append(sim,grp_akm,drop=T)
 
-  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
-  res.save("m2-mixt-d2003-main-reclassify-startwithratiomover",res)
+    res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+    res.save("m2-mixt-d2003-main-reclassify-startwithratiomover",res)
+  })
 
   # ===== Using residuals ========= #
   # see section on residuals
 
   # ===== START WITH MAIN RESULTS ========= #
-  sim = server.static.data()
-  grps  = res.load("m2-mixt-d2003-groups")
-  sim   = grouping.append(sim,grps$best_cluster)
-  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
-  res.save("m2-mixt-d2003-main-reclassify-mainresults",res)
+  if ("main" %in% start_conditions) tryCatch({
+    sim = server.static.data()
+    grps  = res.load("m2-mixt-d2003-groups")
+    sim   = grouping.append(sim,grps$best_cluster)
+    res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+    res.save("m2-mixt-d2003-main-reclassify-mainresults",res)
+  })
 
   # ===== START WITH VALUE ADDED ========= #
-  sim = server.static.data()
-  fmean = sim$sdata[,log(va1[1]/size1[1]),f1][is.finite(V1)]
-  clusters   = Ckmeans.1d.dp(fmean$V1, 10)
-  grp_akm        = clusters$cluster
-  names(grp_akm) = fmean$f1
-  sim        = grouping.append(sim,grp_akm,drop=T)
-
-  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
-  res.save("m2-mixt-d2003-main-reclassify-startwithva",res)
+  if ("va" %in% start_conditions) tryCatch({
+    sim = server.static.data()
+    fmean = sim$sdata[,log(va1[1]/size1[1]),f1][is.finite(V1)]
+    clusters   = Ckmeans.1d.dp(fmean$V1, 10)
+    grp_akm        = clusters$cluster
+    names(grp_akm) = fmean$f1
+    sim        = grouping.append(sim,grp_akm,drop=T)
+    res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+    res.save("m2-mixt-d2003-main-reclassify-startwithva",res)
+  })
 
   # ===== START WITH MEANS ========= #
-  sim   = server.static.data()
-  fmean = sim$sdata[,list(mean(y1),.N),f1]
-  clusters   = Ckmeans.1d.dp(fmean$V1, 10,fmean$N)
-  grp_akm    = clusters$cluster; names(grp_akm) = fmean$f1
-  sim        = grouping.append(sim,grp_akm,drop=T)
+  if ("mean" %in% start_conditions) tryCatch({
+    sim   = server.static.data()
+    fmean = sim$sdata[,list(mean(y1),.N),f1]
+    clusters   = Ckmeans.1d.dp(fmean$V1, 10,fmean$N)
+    grp_akm    = clusters$cluster; names(grp_akm) = fmean$f1
+    sim        = grouping.append(sim,grp_akm,drop=T)
 
-  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
-  res.save("m2-mixt-d2003-main-reclassify-startwithmean",res)
+    res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+    res.save("m2-mixt-d2003-main-reclassify-startwithmean",res)
+  })
 
   # ===== START WITH AKM ========= #
-  sim   = server.static.data()
-  firm.fe = m2.fe.firms(sim$jdata)                 # use AKM grouping
-  clusters   = Ckmeans.1d.dp(firm.fe$fe$psi, 10)   # classify using AKM FE
-  grp_akm        = clusters$cluster
-  names(grp_akm) = firm.fe$fe$f1
-  sim        = grouping.append(sim,grp_akm,drop=T)
+  if ("akm" %in% start_conditions) tryCatch({
+    sim   = server.static.data()
+    firm.fe = m2.fe.firms(sim$jdata)                 # use AKM grouping
+    clusters   = Ckmeans.1d.dp(firm.fe$fe$psi, 10)   # classify using AKM FE
+    grp_akm        = clusters$cluster
+    names(grp_akm) = firm.fe$fe$f1
+    sim        = grouping.append(sim,grp_akm,drop=T)
 
-  res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
-  res.save("m2-mixt-d2003-main-reclassify-startwithakm",res)
+    res =  m2.mixt.estimate.reclassify(sim,10,ctrl=ctrl,cl=cl)
+    res.save("m2-mixt-d2003-main-reclassify-startwithakm",res)
+  })
 
   stopCluster(cl)
 
