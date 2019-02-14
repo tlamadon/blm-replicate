@@ -783,10 +783,9 @@ m2.mixt.estimate.reclassify <- function(sim,maxiter=20,split_movers=FALSE,ctrl=c
     clus        = data.pos[,jp]
     names(clus) = data.pos[,fid]
 
-    if(any(is.na(clus))) browser();
-
     # attach groups
     sim   = grouping.append(sim,clus)
+    #if(any(is.na(sim$sdata$j1))) browser();
 
     # we then estimate the model
     res_mixt = m2.mixt.estimate.all(list(sdata=sim$sdata[move==FALSE],jdata=sim$jdata[split_estimation==TRUE]),nk=6,ctrl,cl)
