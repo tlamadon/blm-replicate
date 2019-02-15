@@ -194,18 +194,32 @@ data. This is your best source to match the structure exactly.
 
 Here is what sdata looks like:
 
-          k        y1        y2 j1 j2 j1true    f1   f2 move birthyear x    wid              ind1
-        1: 1  9.846396  9.747927  5  1      5 F1335   F1    1      1961 1 W64819 Construction etc.
-        2: 2 10.040879 10.075224  5  1      5  F135   F1    1      1963 1 W64807      Retail trade
-        3: 5 10.638532 10.744525  3  1      3  F143   F1    1      1979 1 W60513      Retail trade
-        4: 3  8.894678 10.195521  4  1      4  F144   F1    1      1963 1 W62818 Construction etc.
-        5: 3  9.718155  9.438086  1  1      1  F181   F1    1      1965 1 W58054          Services
-       ---                                                                                        
-    77571: 2  9.983228 10.219231  8  8      8  F998 F998    0      1964 1 W51166          Services
-    77572: 4 10.471325 10.398645  8  8      8  F998 F998    0      1971 1 W51331          Services
-    77573: 4 10.331180 10.516750  8  8      8  F998 F998    0      1967 1 W51434          Services
-    77574: 6 11.375500 11.292524  8  8      8  F998 F998    0      1968 1 W51496          Services
-    77575: 4 10.399596 10.501993  8  8      8  F998 F998    0      1973 1 W51543          Services
+           k        y1        y2 j1 j2 j1true    f1   f2 move 
+        1: 1  9.846396  9.747927  5  1      5 F1335   F1    1
+        2: 2 10.040879 10.075224  5  1      5  F135   F1    1
+        3: 5 10.638532 10.744525  3  1      3  F143   F1    1
+        4: 3  8.894678 10.195521  4  1      4  F144   F1    1
+        5: 3  9.718155  9.438086  1  1      1  F181   F1    1
+       ---                                                   
+    77571: 2  9.983228 10.219231  8  8      8  F998 F998    0
+    77572: 4 10.471325 10.398645  8  8      8  F998 F998    0
+    77573: 4 10.331180 10.516750  8  8      8  F998 F998    0
+    77574: 6 11.375500 11.292524  8  8      8  F998 F998    0
+    77575: 4 10.399596 10.501993  8  8      8  F998 F998    0
+
+           birthyear x    wid              ind1
+        1:      1961 1 W64819 Construction etc.
+        2:      1963 1 W64807      Retail trade
+        3:      1979 1 W60513      Retail trade
+        4:      1963 1 W62818 Construction etc.
+        5:      1965 1 W58054          Services
+       ---                                     
+    77571:      1964 1 W51166          Services
+    77572:      1971 1 W51331          Services
+    77573:      1967 1 W51434          Services
+    77574:      1968 1 W51496          Services
+    77575:      1973 1 W51543          Services
+
                   va1          ind2       va2 educ size1
         1:  3.3505830 Manufacturing 3.8792234    1    17
         2: 13.7959329 Manufacturing 3.8792234    3    24
