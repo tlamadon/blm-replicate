@@ -76,11 +76,11 @@ From the IFAU:
 
 > Due to strict regulations regarding access to and processing of personal data, the Swedish microdata cannot be uploaded to journal servers. However, [IFAU](https://www.ifau.se/) ensures data availability in accordance with requirements by allowing access to researchers who wish to replicate our analyses. 
 >
-> Researchers wishing to perform replication analyses can apply for access to the data by contacting the authors. The researcher will be granted remote (or site) access to the data to the extent necessary to perform replication, provided he/she signs a reservation of secrecy. The reservation states the terms of access, most importantly that the data can only be used for the stated purposes (replication), only be accessed from within the EU/EEA, and not transferred to any third party (see template in appendix). The authors will be available for consultation. 
+> Researchers wishing to perform replication analyses can apply for access to the data by contacting the authors. The researcher will be granted remote (or site) access to the data to the extent necessary to perform replication, provided he/she signs a reservation of secrecy. The reservation states the terms of access, most importantly that the data can only be used for the stated purposes (replication), only be accessed from within the EU/EEA, and not transferred to any third party. The authors will be available for consultation. 
 >
 > Apart from allowing access for replication purposes, any researcher can apply to Statistics Sweden to obtain the same data for research projects, subject to their conditions. 
 
-__Researchers can directly apply__ for access to `data-static.dat` and `data-dynamic.dat` by contacting the [IFAU](https://www.ifau.se/). These two files are the inputs to the replication code and a copy is stored as part of the replication package on the servers at the IFAU. Our two data sets (data-static.dta and data-dynamic.dta) will be stored on a server at IFAU, as part of the project`“IFAU-2015-65 (“dnr65/2015”)`. The files will be in a separate folder that can be accessed by anyone who gets clearance from IFAU.
+__Researchers can directly apply__ for access to `data-static.dat` and `data-dynamic.dat` by contacting us and the [IFAU](https://www.ifau.se/). These two files are the inputs to the replication code and a copy is stored as part of the replication package on the servers at the IFAU. Our two data sets (data-static.dta and data-dynamic.dta) will be stored on a server at IFAU, as part of the project`“IFAU-2015-65 (“dnr65/2015”)`. The files will be in a separate folder that can be accessed by anyone who gets clearance from IFAU.
 
 #### Re-creating these data files
 
