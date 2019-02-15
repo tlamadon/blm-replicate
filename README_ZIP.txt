@@ -9,8 +9,8 @@ version is available here. This package is also available online at
 github:blm-replicate. Virtually all code is based on the R platform.
 
 If you are looking for the R package to use the method of the paper, you
-should use the rblm package. It includes most of the estimators
-available here, and we keep updating it.
+should use the rblm package (https://tlamadon.github.io/rblm/index.html). 
+It includes most of the estimators available here, and we keep updating it.
 
 The present replication package is built as an R package that can be
 easily installed on any system. All package dependencies can be handled
@@ -29,6 +29,8 @@ IFAU-2015-65 (dnr65/2015). See at the end of this page for more info.
 
 If you have any question or comment, please contact us or use directly
 the issue page on the github repository.
+
+See https://github.com/tlamadon/blm-replicate for more.
 
 
 How do I run this?
@@ -110,7 +112,7 @@ data-dynamic.dat by contacting us and the IFAU. These two files are the
 inputs to the replication code and a copy is stored as part of the
 replication package on the servers at the IFAU. Our two data sets
 (data-static.dta and data-dynamic.dta) will be stored on a server at
-IFAU, as part of the project?IFAU-2015-65 (dnr65/2015). The files will
+IFAU, as part of the project IFAU-2015-65 (dnr65/2015). The files will
 be in a separate folder that can be accessed by anyone who gets
 clearance from IFAU.
 
