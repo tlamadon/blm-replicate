@@ -29,6 +29,8 @@ devtools::install(".")   # build the replication package
 source("inst/main.R")    # fire up the replication
 ```
 
+By default, this will run all of the code using a __synthetic data set__. See below how to get access to Swedish data, and load it into the container.
+
 ## Overview of the replication package
 
 The main entry point is [inst/main.r](https://github.com/tlamadon/blm-replicate/blob/master/inst/main.R). It will __automatically__ run all the necessary steps in the other files in order to reproduce all the results of the paper. Note however that this would take a very long time as it will start some bootstrap procedures. The code will generate all figures and tables and put them into a folder called `tmp` .

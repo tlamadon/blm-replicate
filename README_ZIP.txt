@@ -1,8 +1,6 @@
 
-
 REPLICATION PACKAGE FOR BLM
 ===========================
-
 
 This folder contains all the code to replicate the results of BONHOMME
 LAMADON AND MANRESA "A DISTRIBUTIONAL FRAMEWORK FOR MATCHED
@@ -38,23 +36,26 @@ How do I run this?
 
 In R, run the following commands:
 
-# installing the package locally in your R env.
-# make sure you are running this from within the package folder
 
-install.packages("pakcrat") # make sure that packrat is available
-install.packages("devtools") # make sure that devtools is available
+  # installing the package locally in your R env.
+  # make sure you are running this from within the package folder
 
-source("packrat/init.R") # initialize the packrat environment
-packrat::restore()       # make sure all is up to date
+  install.packages("pakcrat") # make sure that packrat is available
+  install.packages("devtools") # make sure that devtools is available
 
-devtools::install(".")   # build the replication package
+  source("packrat/init.R") # initialize the packrat environment
+  packrat::restore()       # make sure all is up to date
 
-source("inst/main.R")    # fire up the replication
+  devtools::install(".")   # build the replication package
 
+  source("inst/main.R")    # fire up the replication
+
+By default, this will run all of the code using a SYNTHETIC DATA SET.
+See below how to get access to Swedish data, and load it into the
+container.
 
 Overview of the replication package
 -----------------------------------
-
 
 The main entry point is inst/main.r. It will AUTOMATICALLY run all the
 necessary steps in the other files in order to reproduce all the results
@@ -62,7 +63,7 @@ of the paper. Note however that this would take a very long time as it
 will start some bootstrap procedures. The code will generate all figures
 and tables and put them into a folder called tmp .
 
-We invite resesearchers to read through inst/main.r which has explicit
+We invite researchers to read through inst/main.r which has explicit
 calls for each subsets of the paper.
 
 Organization of the code
@@ -81,7 +82,7 @@ Organization of the code
 Replicating the results on Swedish data
 ---------------------------------------
 
-Data availability requirements - requests for replication
+Data availability requirements, requests for replication
 
 From the IFAU:
 
@@ -109,7 +110,7 @@ data-dynamic.dat by contacting us and the IFAU. These two files are the
 inputs to the replication code and a copy is stored as part of the
 replication package on the servers at the IFAU. Our two data sets
 (data-static.dta and data-dynamic.dta) will be stored on a server at
-IFAU, as part of the project IFAU-2015-65 (dnr65/2015). The files will
+IFAU, as part of the project?IFAU-2015-65 (dnr65/2015). The files will
 be in a separate folder that can be accessed by anyone who gets
 clearance from IFAU.
 
@@ -145,4 +146,3 @@ We recommend to have a look at the function generate_simulated_data in
 inst/server/server-utils.R. It creates synthetic data simulated from our
 main specifications and saves files to the same format as the actual
 data. This is your best source to match the structure exactly.
-
