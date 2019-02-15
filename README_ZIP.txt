@@ -4,9 +4,9 @@ REPLICATION PACKAGE FOR BLM
 
 This folder contains all the code to replicate the results of BONHOMME
 LAMADON AND MANRESA "A DISTRIBUTIONAL FRAMEWORK FOR MATCHED
-EMPLOYER-EMPLOYEE DATA", forthcoming at ECONOMETRICA. The working-paper
-version is available here. This package is also available online at
-github:blm-replicate. Virtually all code is based on the R platform.
+EMPLOYER-EMPLOYEE DATA", forthcoming at ECONOMETRICA. This package is 
+also available online at github:blm-replicate. Virtually all code is 
+based on the R platform.
 
 If you are looking for the R package to use the method of the paper, you
 should use the rblm package (https://tlamadon.github.io/rblm/index.html). 
