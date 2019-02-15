@@ -74,7 +74,7 @@ We invite resesearchers to read through [inst/main.r](https://github.com/tlamado
 
 From the IFAU:
 
-> Due to strict regulations regarding access to and processing of personal data, the Swedish microdata cannot be uploaded to journal servers. However, [IFAU](https://www.ifau.se/) ensures data availability in accordance with requirements by allowing access to researchers who wish to replicate our analyses. 
+> Due to strict regulations regarding access to and processing of personal data, the Swedish microdata cannot be uploaded to journal servers. However the [IFAU](https://www.ifau.se/) ensures data availability in accordance with requirements by allowing access to researchers who wish to replicate the analyses. 
 >
 > Researchers wishing to perform replication analyses can apply for access to the data. The researcher will be granted remote (or site) access to the data to the extent necessary to perform replication, provided he/she signs a reservation of secrecy. The reservation states the terms of access, most importantly that the data can only be used for the stated purposes (replication), only be accessed from within the EU/EEA, and not transferred to any third party. The authors will be available for consultation. 
 >
