@@ -1115,52 +1115,93 @@ fig.shimersmith.model <- function() {
 }
 
 fig.shimersmith.CK_event_study <- function() {
+	
+	p <- blmrep:::initp( b=0.3, c=0, sz=1, nx=6, ny = 10)
+	p$pf = function(x,y,z=0,p)  ( 0.5*x^p$rho +  0.5*y^p$rho )^(1/p$rho) + p$ay # haggerdorn law manovski
+	p$ay  = 0.7 #0.5
+	p$rho = -3 # 2.5 #-1.5 # 2.5 # -1.5
+	
+	r = list()
+	p$rho = -3 # 2.5 #-1.5 # 2.5 # -1.5
+	p$lb1=0
+	model <- shimersmith.solve.otj(p,maxiter=1000,enditer=1000)
+	model$wage = model$wage +1  # shift everything up to have well defined logs
+	
+	# set sep to large value for simulation
+	p$sep=1.0
+	p$lb0=1.0
+	cdata <- shimersmith.simulate.otj(model,p,1e6,rsq=1)
+	
+	# plot the wage by worker type
+	rrw = melt(log(model$wage),c("k","l"))
+	gp = ggplot(rrw,aes(x=factor(l),y=value,group=factor(k),color=factor(k))) +
+	  geom_line() + geom_point() +theme_bw() +  theme(legend.position = "none") +
+	  xlab("firm class") + ylab("log earnings")
+	
+	ggsave(paste0(local_opts$wdir,"/fig-shimersmith-CHK-wages.pdf"), gp, width = 6,height = 4)
+	
+	flog.info("creating %s",paste0(local_opts$wdir,"/figuresplot-shimer-model.pdf"))
+	
+	# construct the plot for movers between 2 periods
+	jdata = cdata[mover>0]
+	rr = jdata[,list(m2=mean(y1),m3=mean(y2)),list(t1,t2)]
+	rr[,m1:=m2][,m4:=m3]
+	rrm = melt(rr,id=c("t1","t2"))
+	rrm$variable = paste(rrm$variable)
+	setkey(rrm,variable)
+	rrm[variable=="m1",period:=1]
+	rrm[variable=="m2",period:=2]
+	rrm[variable=="m3",period:=3]
+	rrm[variable=="m4",period:=4]
+	rrm[,trans := sprintf("%s-%s",t1,t2)]
+	rrm[t1!=t2, ltype:= 2 ]
+	rrm[t1==t2, ltype:= 1 ]
+	rrm[,ltype := as.integer(ltype)]
+	
+	gp <- ggplot(rrm[t1%in%c(4,10)][t2%in%c(4,10)],aes(x=factor(period),y=value,color=interaction(t1,t2),group=interaction(t1,t2),linetype=factor(ltype) )) +
+	  geom_line(size=1.5) + theme_bw() + xlab("period") + ylab("log earnings") + theme(legend.position = "none")
+	
+	ggsave(paste0(local_opts$wdir,"/fig-shimersmith-CK.pdf"),gp,width = 4.5,height = 3)
+	flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-CK.pdf"))
+	
+	gp = wplot(t(log(model$wage))) + xlab("firm class k") +theme_bw() + geom_point() +
+	  scale_y_continuous("log-earnings")+theme(legend.position = "none")
+	ggsave(paste0(local_opts$wdir,"/fig-shimersmith-CK-wages.pdf"),gp,width = 5,height = 4)
+	
+	# group firms by quartile
+	
+	# create the mean firm wage
+	fdata = rbind(cdata[, list(y=y1, f=f1)], cdata[, list(y=y2, f=f2)] )
+	fdata[, mw := mean(y), f]
+	fdata[, yq := as.integer(cut(mw,quantile(mw, c(0,0.25,0.5,0.75,1.0)), labels = c(1,2,3,4), include.lowest=TRUE)) ] 
+	fdata = unique(fdata[,list(f,yq)])
+	
+	# attach quartile to firm id in perdio 2
+	jdata = cdata[mover>0]
+	jdata = merge(jdata, fdata[, list(f1=f,yq1=yq)], by="f1")
+	jdata = merge(jdata, fdata[, list(f2=f,yq2=yq)], by="f2")
+	
+	rr = jdata[,list(m2=mean(y1),m3=mean(y2)),list(t1=yq1,t2=yq2)]
+	rr[,m1:=m2][,m4:=m3]
+	rrm = melt(rr,id=c("t1","t2"))
+	rrm$variable = paste(rrm$variable)
+	setkey(rrm,variable)
+	rrm[variable=="m1",period:=1]
+	rrm[variable=="m2",period:=2]
+	rrm[variable=="m3",period:=3]
+	rrm[variable=="m4",period:=4]
+	rrm[,trans := sprintf("%s-%s",t1,t2)]
+	rrm[,transition := sprintf("%s-%s",pmin(t1,t2),pmax(t1,t2))]
+	rrm[t1!=t2, ltype:= 2 ]
+	rrm[t1==t2, ltype:= 1 ]
+	rrm[,ltype := as.integer(ltype)]
+	
+	gp <- ggplot(rrm[trans %in% c("1-4","4-1","2-4","4-2","3-1","1-3")],
+	             aes( x=factor(period) , y=value, color=transition, group=interaction(t1,t2) )) +
+	  geom_line(size=1.5) + theme_bw() + xlab("period") + ylab("log earnings") #+ theme(legend.position = "none")
+	
+	ggsave(paste0(local_opts$wdir,"/fig-shimersmith-CHK-quartiles.pdf"),gp,width = 6,height = 4)
 
-  p <- blmrep:::initp( b=0.3, c=0, sz=1, nx=6, ny = 10)
-  p$pf = function(x,y,z=0,p)  ( 0.5*x^p$rho +  0.5*y^p$rho )^(1/p$rho) + p$ay # haggerdorn law manovski
-  p$ay  = 0.7 #0.5
-  p$rho = -3 # 2.5 #-1.5 # 2.5 # -1.5
-
-  r = list()
-  p$rho = -3 # 2.5 #-1.5 # 2.5 # -1.5
-  p$lb1=0
-  model <- shimersmith.solve.otj(p,maxiter=1000,enditer=1000)
-  model$wage = model$wage +1  # shift everything up to have well defined logs
-
-  # set sep to large value for simulation
-  p$sep=1.0
-  p$lb0=1.0
-  cdata <- shimersmith.simulate.otj(model,p,1e6,rsq=1)
-
-  # plot the wage by worker type
-  rrw = melt(log(model$wage),c("k","l"))
-  gp = ggplot(rrw,aes(x=factor(l),y=value,group=factor(k),color=factor(k))) +
-    geom_line() + geom_point() +theme_bw() +  theme(legend.position = "none") +
-    xlab("firm class") + ylab("log earnings")
-  ggsave("inst/figuresfig-shimersmith-wages.pdf",gp,width = 4.5,height = 3)
-  flog.info("creating %s",paste0(local_opts$wdir,"/figuresplot-shimer-model.pdf"))
-
-  # construct the plot for movers between 2 periods
-  jdata = cdata[mover>0]
-  rr = jdata[,list(m2=mean(y1),m3=mean(y2)),list(t1,t2)]
-  rr[,m1:=m2][,m4:=m3]
-  rrm = melt(rr,id=c("t1","t2"))
-  rrm$variable = paste(rrm$variable)
-  setkey(rrm,variable)
-  rrm[variable=="m1",period:=1]
-  rrm[variable=="m2",period:=2]
-  rrm[variable=="m3",period:=3]
-  rrm[variable=="m4",period:=4]
-  rrm[,trans := sprintf("%s-%s",t1,t2)]
-  rrm[t1!=t2, ltype:= 2 ]
-  rrm[t1==t2, ltype:= 1 ]
-  rrm[,ltype := as.integer(ltype)]
-
-  gp <- ggplot(rrm[t1%in%c(4,10)][t2%in%c(4,10)],aes(x=factor(period),y=value,color=interaction(t1,t2),group=interaction(t1,t2),linetype=factor(ltype) )) +
-    geom_line(size=1.5) + theme_bw() + xlab("period") + ylab("log earnings") + theme(legend.position = "none")
-
-  ggsave(paste0(local_opts$wdir,"/fig-shimersmith-CK.pdf"),gp,width = 4.5,height = 3)
-  flog.info("creating %s",paste0(local_opts$wdir,"/fig-shimersmith-CK.pdf"))
 }
 
 fig.shimersmith.wages <- function() {
