@@ -139,4 +139,12 @@ Here is what `sdata` looks like:
 77575:  0.4115116      Services 0.4115116    1    64
 ```
 
+## Just using the results
+
+You can load the estimated model into R by using the result file. Simply run 
+```R
+load("inst/m2-mixt-y2003-main-fixb.rkiv")
+```
+rand the variable `value` will be holding the estimated two period model.
+
 
